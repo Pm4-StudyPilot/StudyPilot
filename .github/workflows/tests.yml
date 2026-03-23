@@ -40,7 +40,7 @@ jobs:
           --health-retries=5
 
       minio:
-        image: minio/minio
+        image: bitnami/minio:latest
         ports:
           - 9000:9000
         env:
@@ -135,7 +135,7 @@ jobs:
           --health-retries=5
 
       minio:
-        image: minio/minio
+        image: bitnami/minio:latest
         ports:
           - 9000:9000
         env:
@@ -232,7 +232,7 @@ jobs:
           --health-retries=5
 
       minio:
-        image: minio/minio
+        image: bitnami/minio:latest
         ports:
           - 9000:9000
         env:
