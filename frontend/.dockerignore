@@ -1,0 +1,8 @@
+node_modules
+dist
+coverage
+cypress
+*.test.tsx
+*.test.ts
+__tests__
+.env
