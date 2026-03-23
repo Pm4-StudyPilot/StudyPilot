@@ -64,11 +64,11 @@ jobs:
 
       - name: Generate Prisma client
         working-directory: backend
-        run: bunx prisma generate
+        run: bunx prisma generate --config prisma/prisma.config.ts
 
       - name: Run database migrations
         working-directory: backend
-        run: bunx prisma migrate deploy
+        run: bunx prisma migrate deploy --config prisma/prisma.config.ts
 
       - name: Run backend tests with coverage
         working-directory: backend
@@ -154,11 +154,11 @@ jobs:
 
       - name: Generate Prisma client
         working-directory: backend
-        run: bunx prisma generate
+        run: bunx prisma generate --config prisma/prisma.config.ts
 
       - name: Run database migrations
         working-directory: backend
-        run: bunx prisma migrate deploy
+        run: bunx prisma migrate deploy --config prisma/prisma.config.ts
 
       - name: Build frontend
         working-directory: frontend
@@ -246,11 +246,11 @@ jobs:
 
       - name: Generate Prisma client
         working-directory: backend
-        run: bunx prisma generate
+        run: bunx prisma generate --config prisma/prisma.config.ts
 
       - name: Run database migrations
         working-directory: backend
-        run: bunx prisma migrate deploy
+        run: bunx prisma migrate deploy --config prisma/prisma.config.ts
 
       - name: Build frontend
         working-directory: frontend
