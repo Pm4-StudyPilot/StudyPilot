@@ -12,6 +12,7 @@ export default function InputField({
   error,
   id,
   label,
+  value,
   ...props
 }: InputFieldProps) {
   const [showPassword, setShowPassword] = useState(false)
@@ -29,7 +30,7 @@ export default function InputField({
             <input
             id={finalId}
             type={isPassword ? (showPassword ? "text" : "password") : type}
-            className={`${error ? " is-invalid" : ""}${isCheck ? ' form-check-input' : 'form-control'}`}
+            className={`form-${type}${error ? " is-invalid" : ""}${isCheck ? ' form-check-input' : ' form-control'}`}
             autoComplete={
                 props.autoComplete ??
                 (isPassword ? "current-password" : undefined)
