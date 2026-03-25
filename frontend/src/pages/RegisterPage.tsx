@@ -6,6 +6,7 @@ import Button from "../components/shared/Button";
 import Form from "../components/shared/Form";
 import Modal from "../components/shared/Modal";
 import InputField from "../components/shared/InputField";
+import PasswordField from "../components/shared/PasswordField";
 import ProgressBar from "../components/shared/ProgressBar";
 import Logo from "../components/shared/Logo";
 import { useForm } from "../hooks/useForm"
@@ -34,7 +35,6 @@ export default function RegisterPage() {
       password: values.password,
     });
 
-
     login(data.token, data.user);
     navigate("/");
   }
@@ -60,10 +60,9 @@ export default function RegisterPage() {
           autoComplete="username"
         />
 
-        <InputField
+        <PasswordField
           label="Password"
-          type="password"
-          passwordToggle
+          noMargin
           value={values.password}
           onChange={(e) => handleChange("password", e.target.value)}
           error={errors.password}
@@ -72,10 +71,8 @@ export default function RegisterPage() {
 
         <ProgressBar value={getPasswordStrength(values.password)}/>
 
-        <InputField
+        <PasswordField
           label="Confirm Password"
-          type="password"
-          passwordToggle
           value={values.confirmPassword}
           onChange={(e) => handleChange("confirmPassword", e.target.value)}
           error={errors.confirmPassword}

@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react";
+import { FormEvent, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
@@ -7,23 +7,32 @@ import Button from "../components/shared/Button";
 import Logo from "../components/shared/Logo";
 import Form from "../components/shared/Form";
 import InputField from "../components/shared/InputField";
-import Modal from "../components/shared/Modal";
+import PasswordField from "../components/shared/PasswordField";
+import { useForm } from "../hooks/useForm";
+import { loginSchema } from "../validation/schemas";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const { values, errors, handleChange, validate } = useForm(loginSchema, {
+    email: "",
+    password: "",
+  });
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+    if (!validate()) return;
     setLoading(true);
 
     try {
-      const data = await api.post<AuthResponse>("/auth/login", { email, password });
+      const data = await api.post<AuthResponse>("/auth/login", {
+        email: values.email,
+        password: values.password,
+      });
       login(data.token, data.user);
       navigate("/");
     } catch (err: unknown) {
@@ -34,23 +43,28 @@ export default function LoginPage() {
   }
 
   return (
-    <Modal disableClose={true} title="Login" header={<Logo/>} footer={<Link to="/register">Need an account? Register</Link>}>
+    <div className="container d-flex justify-content-center align-items-center min-vh-100">
+      <div className="card shadow" style={{ maxWidth: "400px", width: "100%" }}>
+        <div className="card-body p-4">
+          <h2 className="text-center mb-4"><Logo /></h2>
+          <h5 className="text-center mb-3">Sign In</h5>
+
           <Form onSubmit={handleSubmit} error={error}>
             <InputField
               label="Email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              value={values.email}
+              onChange={(e) => handleChange("email", e.target.value)}
+              error={errors.email}
               autoComplete="email"
             />
 
-            <InputField
+            <PasswordField
               label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              showToggle={false}
+              value={values.password}
+              onChange={(e) => handleChange("password", e.target.value)}
+              error={errors.password}
               autoComplete="current-password"
             />
 
@@ -58,6 +72,12 @@ export default function LoginPage() {
               Login
             </Button>
           </Form>
-      </Modal>
+
+          <div className="text-center mt-3">
+            <Link to="/register">Need an account? Register</Link>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 import { ReactNode } from "react"
 type FormFieldLayoutProps = BaseProps & {
-  children: React.ReactElement<FormFieldLayoutProps> | React.ReactElement<FormFieldLayoutProps>[]
+  children: React.ReactNode
   id?:string
 }
 

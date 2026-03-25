@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(npm install:*)",
-      "Bash(bun test:*)"
+      "Bash(bun test:*)",
+      "Bash(/usr/bin/find .git/refs -name 'Icon*' -print0)",
+      "Bash(xxd)",
+      "Bash(/usr/bin/find .git/refs -name 'Icon?' -print)",
+      "Bash(/usr/bin/find .git/refs -name 'Icon?' -delete -print)"
     ]
   }
 }
