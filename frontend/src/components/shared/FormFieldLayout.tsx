@@ -1,7 +1,7 @@
 import { ReactNode } from "react"
 type FormFieldLayoutProps = BaseProps & {
   children: React.ReactElement<FormFieldLayoutProps> | React.ReactElement<FormFieldLayoutProps>[]
-  id:string
+  id?:string
 }
 
 export type Option = {
@@ -15,6 +15,7 @@ export type BaseProps = {
   description?: string
   iconLeft?: ReactNode
   iconRight?: ReactNode
+  noMargin?: boolean
   id?:string
 }
 
@@ -26,12 +27,13 @@ export function FormFieldLayout({
   iconLeft,
   iconRight,
   children,
+  noMargin,
   id
 }: FormFieldLayoutProps) {
   return (
-    <div className="mb-3">
-      <label className="form-label" htmlFor={id}>{label}</label>
-      <div className="input-group" role="group">
+    <div className={noMargin ? '' : 'mb-3'}>
+      {id && (<label className="form-label" htmlFor={id}>{label}</label>)}
+      <div role="group">
         {iconLeft && <span className="input-group-text">{iconLeft}</span>}
         {children}
         {iconRight && <span className="input-group-text">{iconRight}</span>}
