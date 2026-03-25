@@ -5,6 +5,10 @@ import { api } from "../services/api";
 import { AuthResponse } from "../types/dto";
 import Button from "../components/shared/Button";
 import Logo from "../components/shared/Logo";
+import Form from "../components/shared/Form";
+import InputField from "../components/shared/InputField";
+import Modal from "../components/shared/Modal";
+import TextareaField from "../components/shared/TextareaField";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -31,49 +35,30 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="card shadow" style={{ maxWidth: "400px", width: "100%" }}>
-        <div className="card-body p-4">
-          <h2 className="text-center mb-4">
-            <Logo />
-          </h2>
-          <h5 className="text-center mb-3">Sign In</h5>
+    <Modal disableClose={false} title="Login" header={<Logo/>} footer={<Link to="/register">Need an account? Register</Link>}>
+          <Form onSubmit={handleSubmit} error={error}>
+            <InputField
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
 
-          {error && <div className="alert alert-danger">{error}</div>}
-
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label className="form-label">Email</label>
-              <input
-                type="email"
-                className="form-control"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">Password</label>
-              <input
-                type="password"
-                className="form-control"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+            <InputField
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+            />
 
             <Button type="submit" className="w-100" loading={loading}>
               Login
             </Button>
-          </form>
-
-          <div className="text-center mt-3">
-            <Link to="/register">Need an account? Register</Link>
-          </div>
-        </div>
-      </div>
-    </div>
+          </Form>
+      </Modal>
   );
 }
