@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 
 interface ModalProps {
   title?: string
@@ -19,10 +19,10 @@ export default function Modal({
 
   // modal closing logic
   const [showModal, setShowModal] = useState(true)
-  if(!showModal) return null
-  const onClose = () => {
-    if(!disableClose) setShowModal(false)
-  }
+
+  const onClose = useCallback(() => {
+    if (!disableClose) setShowModal(false)
+  }, [disableClose])
 
   // clicking ESC closes the modal
   useEffect(() => {
@@ -37,15 +37,19 @@ export default function Modal({
     }
   }, [onClose])
 
+  if(!showModal) return null
+
 
   return (
     <div
+      data-testid="modal-backdrop"
       className="modal-backdrop-custom d-flex justify-content-center align-items-center min-vh-100"
       onClick={onClose}
      >
       <div onClick={(e) => e.stopPropagation()} className="container d-flex justify-content-center">
         {!disableClose && (
           <button
+            data-testid="modal-closebutton"
             className="btn-close position-absolute top-0 end-0 m-3"
             onClick={onClose}
           />
