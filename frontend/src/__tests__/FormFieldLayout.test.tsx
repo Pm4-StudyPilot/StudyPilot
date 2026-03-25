@@ -17,7 +17,7 @@ describe("FormFieldLayout", () => {
     expect(input).toHaveAttribute("id", "user-id")
   })
 
-  it("renders children inside the input-group", () => {
+  it("renders children inside the input group", () => {
     render(
       <FormFieldLayout label="Test" id="x">
         <input id="x" />
