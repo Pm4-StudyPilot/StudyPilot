@@ -10,6 +10,7 @@ const finalId = id ?? useId()
     <FormFieldLayout {...props} id={finalId} error={error}>
       <textarea
         {...props}
+        id={finalId}
         className={`form-control${error ? " is-invalid" : ""}`}
       />
     </FormFieldLayout>
