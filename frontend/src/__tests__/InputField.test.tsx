@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import { describe, it, expect } from "vitest"
-import InputField from "../components/shared/InputField"
+import InputField from "../components/shared/form/InputField"
 
 describe("InputField", () => {
   it("links the label and input using the same id", () => {

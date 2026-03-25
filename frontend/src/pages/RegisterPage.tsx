@@ -3,11 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
 import Button from "../components/shared/Button";
-import Form from "../components/shared/Form";
-import Modal from "../components/shared/Modal";
-import InputField from "../components/shared/InputField";
-import PasswordField from "../components/shared/PasswordField";
-import ProgressBar from "../components/shared/ProgressBar";
+import Form from "../components/shared/form/Form";
+import Modal from "../components/shared/layout/Modal";
+import InputField from "../components/shared/form/InputField";
+import PasswordField from "../components/shared/form/PasswordField";
+import ProgressBar from "../components/shared/feedback/ProgressBar";
 import Logo from "../components/shared/Logo";
 import { useForm } from "../hooks/useForm"
 import { registerSchema } from "../validation/schemas"

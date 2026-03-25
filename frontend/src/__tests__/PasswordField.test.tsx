@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import { describe, it, expect } from "vitest"
 import userEvent from "@testing-library/user-event"
-import PasswordField from "../components/shared/PasswordField"
+import PasswordField from "../components/shared/form/PasswordField"
 
 describe("PasswordField", () => {
   it("links the label and input using the same id", () => {

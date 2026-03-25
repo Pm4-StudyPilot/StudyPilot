@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import { describe, it, expect } from "vitest"
-import { FormFieldLayout } from "../components/shared/FormFieldLayout"
+import { FormFieldLayout } from "../components/shared/form/FormFieldLayout"
 
 describe("FormFieldLayout", () => {
   it("renders the label and links it to the provided id", () => {

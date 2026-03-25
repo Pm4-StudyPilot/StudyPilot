@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import { describe, it, expect, vi } from "vitest"
 import userEvent from "@testing-library/user-event"
-import SelectField from "../components/shared/SelectField"
+import SelectField from "../components/shared/form/SelectField"
 
 vi.mock("./FormFieldLayout", () => ({
   FormFieldLayout: ({ id, label, children }: any) => (

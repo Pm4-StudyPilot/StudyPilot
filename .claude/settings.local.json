@@ -6,7 +6,9 @@
       "Bash(/usr/bin/find .git/refs -name 'Icon*' -print0)",
       "Bash(xxd)",
       "Bash(/usr/bin/find .git/refs -name 'Icon?' -print)",
-      "Bash(/usr/bin/find .git/refs -name 'Icon?' -delete -print)"
+      "Bash(/usr/bin/find .git/refs -name 'Icon?' -delete -print)",
+      "Bash(cd:*)",
+      "Bash(git mv:*)"
     ]
   }
 }

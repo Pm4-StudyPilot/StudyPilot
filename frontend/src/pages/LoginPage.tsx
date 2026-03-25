@@ -5,9 +5,9 @@ import { api } from "../services/api";
 import { AuthResponse } from "../types/dto";
 import Button from "../components/shared/Button";
 import Logo from "../components/shared/Logo";
-import Form from "../components/shared/Form";
-import InputField from "../components/shared/InputField";
-import PasswordField from "../components/shared/PasswordField";
+import Form from "../components/shared/form/Form";
+import InputField from "../components/shared/form/InputField";
+import PasswordField from "../components/shared/form/PasswordField";
 import { useForm } from "../hooks/useForm";
 import { loginSchema } from "../validation/schemas";
 
