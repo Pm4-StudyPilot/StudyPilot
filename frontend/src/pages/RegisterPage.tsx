@@ -62,7 +62,6 @@ export default function RegisterPage() {
 
         <PasswordField
           label="Password"
-          noMargin
           value={values.password}
           onChange={(e) => handleChange("password", e.target.value)}
           error={errors.password}

@@ -1,15 +1,24 @@
 import { TextareaHTMLAttributes, useId } from "react"
-import { FormFieldLayout, BaseProps } from "./FormFieldLayout"
+import { FormFieldLayout } from "./FormFieldLayout"
 
-type TextareaFieldProps = BaseProps &
-  TextareaHTMLAttributes<HTMLTextAreaElement>
+type TextareaFieldProps = {
+  label: string
+  error?: string
+} & TextareaHTMLAttributes<HTMLTextAreaElement>
 
-export default function TextareaField({ error, id, ...props }: TextareaFieldProps) {
-const finalId = id ?? useId()
+export default function TextareaField({
+  error,
+  id,
+  label,
+  ...textareaProps
+}: TextareaFieldProps) {
+  const generatedId = useId()
+  const finalId = id ?? generatedId
+
   return (
-    <FormFieldLayout {...props} id={finalId} error={error}>
+    <FormFieldLayout label={label} error={error} id={finalId}>
       <textarea
-        {...props}
+        {...textareaProps}
         id={finalId}
         className={`form-control${error ? " is-invalid" : ""}`}
       />

@@ -1,21 +1,24 @@
 import { InputHTMLAttributes, useId } from "react"
-import { FormFieldLayout, BaseProps } from "./FormFieldLayout"
+import { FormFieldLayout } from "./FormFieldLayout"
 
-type InputFieldProps = BaseProps & InputHTMLAttributes<HTMLInputElement>
+type InputFieldProps = {
+  label: string
+  error?: string
+} & InputHTMLAttributes<HTMLInputElement>
 
 export default function InputField({
   error,
   id,
   label,
-  ...props
+  ...inputProps
 }: InputFieldProps) {
   const generatedId = useId()
   const finalId = id ?? generatedId
 
   return (
-    <FormFieldLayout label={label} error={error} id={finalId} {...props}>
+    <FormFieldLayout label={label} error={error} id={finalId}>
       <input
-        {...props}
+        {...inputProps}
         id={finalId}
         className={`form-control${error ? " is-invalid" : ""}`}
       />

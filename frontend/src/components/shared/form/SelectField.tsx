@@ -1,17 +1,27 @@
-import { FormFieldLayout, Option, BaseProps } from "./FormFieldLayout"
-import { SelectHTMLAttributes,useId} from "react"
+import { SelectHTMLAttributes, useId } from "react"
+import { FormFieldLayout } from "./FormFieldLayout"
+import { Option } from "./types"
 
-type SelectFieldProps = BaseProps &
-  SelectHTMLAttributes<HTMLSelectElement> & {
-    options: Option[]
-  }
+type SelectFieldProps = {
+  label: string
+  error?: string
+  options: Option[]
+} & SelectHTMLAttributes<HTMLSelectElement>
 
-export default function SelectField({ options, error, id, ...props }: SelectFieldProps) {
-  const finalId = id ?? useId()
+export default function SelectField({
+  options,
+  error,
+  id,
+  label,
+  ...selectProps
+}: SelectFieldProps) {
+  const generatedId = useId()
+  const finalId = id ?? generatedId
+
   return (
-    <FormFieldLayout {...props} id={finalId} error={error}>
+    <FormFieldLayout label={label} error={error} id={finalId}>
       <select
-        {...props}
+        {...selectProps}
         id={finalId}
         className={`form-control${error ? " is-invalid" : ""}`}
       >

@@ -1,24 +1,15 @@
 import { ReactNode } from "react"
-type FormFieldLayoutProps = BaseProps & {
-  children: React.ReactNode
-  id?:string
-}
 
-export type Option = {
-  label: string
-  value: string 
-}
-
-export type BaseProps = {
+type FormFieldLayoutProps = {
   label: string
   error?: string
   description?: string
   iconLeft?: ReactNode
   iconRight?: ReactNode
   noMargin?: boolean
-  id?:string
+  id?: string
+  children: ReactNode
 }
-
 
 export function FormFieldLayout({
   label,
