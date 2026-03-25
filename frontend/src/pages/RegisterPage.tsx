@@ -6,6 +6,31 @@ import { AuthResponse } from "../types/dto";
 import Button from "../components/shared/Button";
 import Logo from "../components/shared/Logo";
 
+/**
+ * RegisterPage
+ * 
+ * Displays the user registration form and handles account creation.
+ * 
+ * Features:
+ * - Input fields for e-mail, username and password
+ * - Form submission to backend API (/auth/register)
+ * - Automated login after successful registration
+ * - Error handling and loading state
+ * - Navigation to login page
+ * 
+ * Workflow:
+ * 1. User enters e-mail, username and password
+ * 2. Form is submitted
+ * 3. API request is sent to backend
+ * 4. On success:
+ *    - User is logged in
+ *    - Redirect to home page
+ * 5. On error:
+ *    - Error message is displayed
+ * 
+ * @returns 
+ */
+
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -15,16 +40,41 @@ export default function RegisterPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  /**
+   * Handles form submission for user registration.
+   * 
+   * @param e Form submission event
+   * 
+   * Workflow:
+   * - Prevent default form behavior
+   * - Reset error state
+   * - Set loading state
+   * - Send POST request to /auth/register
+   * - On success:
+   *    - Store token and user via AuthContext
+   *    - Redirect to home page
+   * - On failure:
+   *    - Display error message
+   */
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      const data = await api.post<AuthResponse>("/auth/register", { email, username, password });
+      const data = await api.post<AuthResponse>("/auth/register", { 
+        email, 
+        username, 
+        password 
+      });
+
+      // Store authentication state
       login(data.token, data.user);
+
+      // Redirect to home page
       navigate("/");
     } catch (err: unknown) {
+      // Handle error message
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
@@ -44,7 +94,7 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label className="form-label">Email</label>
+              <label className="form-label">E-Mail</label>
               <input
                 type="email"
                 className="form-control"
