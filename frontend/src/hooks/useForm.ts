@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { ZodType } from "zod"
 
 export function useForm<T>(schema: ZodType<T>, initial: T) {
@@ -23,14 +23,14 @@ export function useForm<T>(schema: ZodType<T>, initial: T) {
     return true
   }
 
+  useEffect(() => {
+    if (submitted.current) {
+      runValidation(values)
+    }
+  }, [values])
+
   function handleChange<K extends keyof T>(key: K, value: T[K]) {
-    setValues((prev) => {
-      const next = { ...prev, [key]: value }
-      if (submitted.current) {
-        runValidation(next)
-      }
-      return next
-    })
+    setValues((prev) => ({ ...prev, [key]: value }))
   }
 
   function validate() {
