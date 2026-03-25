@@ -1,4 +1,4 @@
-import {  InputHTMLAttributes, useState, useId, useCallback } from "react"
+import {  InputHTMLAttributes, useState, useId } from "react"
 import { FormFieldLayout, BaseProps } from "./FormFieldLayout"
 
 type InputFieldProps = BaseProps &
@@ -26,30 +26,24 @@ export default function InputField({
 
   return (
     <FormFieldLayout label={label} {...props} id={isCheck ? undefined : finalId} error={error}>
-        <div className={isCheck ? 'form-check' : ''}>
+      <div role="group" className={isCheck ? 'form-check' : 'input-group'}> 
             <input
-            id={finalId}
-            type={isPassword ? (showPassword ? "text" : "password") : type}
-            className={`form-${type}${error ? " is-invalid" : ""}${isCheck ? ' form-check-input' : ' form-control'}`}
-            autoComplete={
-                props.autoComplete ??
-                (isPassword ? "current-password" : undefined)
-            }
-            {...props}
+              id={finalId}
+              type={isPassword ? (showPassword ? "text" : "password") : type}
+              className={`form-${type}${error ? " is-invalid" : ""}${isCheck ? ' form-check-input' : ' form-control'}`}
+              autoComplete={
+                  props.autoComplete ??
+                  (isPassword ? "current-password" : undefined)
+              }
+              {...props}
             />
-
             {isCheck && (
               <label onClick={(e: any) => e.target.previousElementSibling.click()} className="form-label" htmlFor={finalId}>{label}</label>
             )}
-
             {isPassword && passwordToggle && (
-            <button
-                type="button"
-                className="input-group-text"
-                onClick={() => setShowPassword((v) => !v)}
-            >
-                {showPassword ? "hide" : "show"}
-            </button>
+              <button className="input-group-text" onClick={() => setShowPassword((v) => !v)}>
+                  {showPassword ? "hide" : "show"}
+              </button>
             )}
       </div>
     </FormFieldLayout>
