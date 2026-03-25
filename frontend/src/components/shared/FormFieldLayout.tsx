@@ -31,7 +31,7 @@ export function FormFieldLayout({
   return (
     <div className="mb-3">
       <label className="form-label" htmlFor={id}>{label}</label>
-      <div className="input-group">
+      <div className="input-group" role="group">
         {iconLeft && <span className="input-group-text">{iconLeft}</span>}
         {children}
         {iconRight && <span className="input-group-text">{iconRight}</span>}
