@@ -1,4 +1,4 @@
-import { FormHTMLAttributes } from "react";
+import { FormHTMLAttributes } from "react"
 
 interface FormProps extends FormHTMLAttributes<HTMLFormElement> {
   loading?: boolean
@@ -11,5 +11,5 @@ export default function Form({ children, loading, error, ...props }: FormProps) 
       {error && <div className="alert alert-danger">{error}</div>}
       {children}
     </form>
-  );
+  )
 }
