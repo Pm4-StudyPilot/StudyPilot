@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react"
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, vi } from "vitest"
 import { userEvent } from "@testing-library/user-event"
 
 import Modal from "../components/shared/layout/Modal"
@@ -80,6 +80,66 @@ describe("FormLayout", () => {
 
     // Modal should disappear
     expect(screen.queryByText("Content")).toBeInTheDocument()
+  })
+
+  it("calls onClose when ESC key is pressed", async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+
+    render(
+      <Modal onClose={onClose}>
+        <div>Content</div>
+      </Modal>
+    )
+
+    await user.keyboard("{Escape}")
+
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it("calls onClose when close button is clicked", async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+
+    render(
+      <Modal onClose={onClose}>
+        <div>Content</div>
+      </Modal>
+    )
+
+    await user.click(screen.getByTestId("modal-closebutton"))
+
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it("calls onClose when backdrop is clicked", async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+
+    render(
+      <Modal onClose={onClose}>
+        <div>Content</div>
+      </Modal>
+    )
+
+    await user.click(screen.getByTestId("modal-backdrop"))
+
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it("does not call onClose when disableClose is true", async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+
+    render(
+      <Modal disableClose={true} onClose={onClose}>
+        <div>Content</div>
+      </Modal>
+    )
+
+    await user.keyboard("{Escape}")
+
+    expect(onClose).not.toHaveBeenCalled()
   })
 
   it("has no close button when disableClose is true", async () => {

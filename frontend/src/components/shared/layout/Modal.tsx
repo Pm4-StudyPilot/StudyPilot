@@ -15,26 +15,29 @@ export default function Modal({
   header,
   footer,
   disableClose = false,
+  onClose,
 }: ModalProps) {
   // modal closing logic
   const [showModal, setShowModal] = useState(true);
 
-  const onClose = useCallback(() => {
-    if (!disableClose) setShowModal(false);
-  }, [disableClose]);
+  const handleClose = useCallback(() => {
+    if (disableClose) return;
+    setShowModal(false);
+    onClose?.();
+  }, [disableClose, onClose]);
 
   // clicking ESC closes the modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose?.();
+        handleClose?.();
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose]);
+  }, [handleClose]);
 
   if (!showModal) return null;
 
@@ -42,7 +45,7 @@ export default function Modal({
     <div
       data-testid="modal-backdrop"
       className="modal modal-backdrop-custom d-flex justify-content-center align-items-center min-vh-100"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -52,7 +55,7 @@ export default function Modal({
           <button
             data-testid="modal-closebutton"
             className="btn-close position-absolute top-0 end-0 m-3"
-            onClick={onClose}
+            onClick={handleClose}
           />
         )}
         <div className="card shadow">
