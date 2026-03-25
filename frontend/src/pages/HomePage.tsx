@@ -1,5 +1,5 @@
 import { useAuth } from "../context/AuthContext";
-import Navbar from "../components/shared/Navbar";
+import Navbar from "../components/shared/layout/Navbar";
 
 export default function HomePage() {
   const { user } = useAuth();

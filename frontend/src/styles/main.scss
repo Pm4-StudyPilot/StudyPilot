@@ -1,2 +1,14 @@
 @import "bootstrap/scss/bootstrap";
 @import "@fortawesome/fontawesome-free/css/all.min.css";
+
+.modal {
+    position: fixed;
+    width: 100%;
+    top: 0;
+    height: 100%;
+    z-index: 1;
+    > div > .card {   
+        max-width: 400px;
+        width: 100%
+    }
+}
