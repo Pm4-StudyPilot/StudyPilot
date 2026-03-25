@@ -8,7 +8,6 @@ import Logo from "../components/shared/Logo";
 import Form from "../components/shared/Form";
 import InputField from "../components/shared/InputField";
 import Modal from "../components/shared/Modal";
-import TextareaField from "../components/shared/TextareaField";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -35,7 +34,7 @@ export default function LoginPage() {
   }
 
   return (
-    <Modal disableClose={false} title="Login" header={<Logo/>} footer={<Link to="/register">Need an account? Register</Link>}>
+    <Modal disableClose={true} title="Login" header={<Logo/>} footer={<Link to="/register">Need an account? Register</Link>}>
           <Form onSubmit={handleSubmit} error={error}>
             <InputField
               label="Email"
