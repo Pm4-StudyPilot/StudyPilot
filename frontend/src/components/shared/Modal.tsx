@@ -1,12 +1,12 @@
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback } from "react";
 
 interface ModalProps {
-  title?: string
-  children: React.ReactNode
-  header?: React.ReactNode
-  footer?: React.ReactNode
-  disableClose?: boolean
-  onClose?: () => void
+  title?: string;
+  children: React.ReactNode;
+  header?: React.ReactNode;
+  footer?: React.ReactNode;
+  disableClose?: boolean;
+  onClose?: () => void;
 }
 
 export default function Modal({
@@ -16,37 +16,38 @@ export default function Modal({
   footer,
   disableClose = false,
 }: ModalProps) {
-
   // modal closing logic
-  const [showModal, setShowModal] = useState(true)
+  const [showModal, setShowModal] = useState(true);
 
   const onClose = useCallback(() => {
-    if (!disableClose) setShowModal(false)
-  }, [disableClose])
+    if (!disableClose) setShowModal(false);
+  }, [disableClose]);
 
   // clicking ESC closes the modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose?.()
+        onClose?.();
       }
-    }
-    document.addEventListener("keydown", handleKeyDown)
+    };
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [onClose])
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
 
-  if(!showModal) return null
-
+  if (!showModal) return null;
 
   return (
     <div
       data-testid="modal-backdrop"
-      className="Modal modal-backdrop-custom d-flex justify-content-center align-items-center min-vh-100"
+      className="modal modal-backdrop-custom d-flex justify-content-center align-items-center min-vh-100"
       onClick={onClose}
-     >
-      <div onClick={(e) => e.stopPropagation()} className="container d-flex justify-content-center">
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="container d-flex justify-content-center"
+      >
         {!disableClose && (
           <button
             data-testid="modal-closebutton"
@@ -54,12 +55,10 @@ export default function Modal({
             onClick={onClose}
           />
         )}
-        <div
-          className="card shadow"
-        >
+        <div className="card shadow">
           <div className="card-body p-4">
-            {header && (<h2 className="text-center mb-2">{header}</h2>)}
-            {title && (<h5 className="text-center mb-3">{title}</h5>)}
+            {header && <h2 className="text-center mb-2">{header}</h2>}
+            {title && <h5 className="text-center mb-3">{title}</h5>}
 
             {children}
 
@@ -68,5 +67,6 @@ export default function Modal({
         </div>
       </div>
     </div>
-  )
+  );
 }
+

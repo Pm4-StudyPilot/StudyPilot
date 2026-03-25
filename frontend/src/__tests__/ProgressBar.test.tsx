@@ -33,7 +33,16 @@ describe("ProgressBar", () => {
 
     const bar = screen.getByRole("progressbar")
 
-    expect(bar).toHaveStyle({ width: "75%" })
+    expect(bar).toHaveStyle({ width: "100%" })
+    expect(bar.className).toContain("bg-success")
+  })
+
+  it("reaches 100% width at max score of 4", () => {
+    render(<ProgressBar value={4} />)
+
+    const bar = screen.getByRole("progressbar")
+
+    expect(bar).toHaveStyle({ width: "100%" })
     expect(bar.className).toContain("bg-success")
   })
 
