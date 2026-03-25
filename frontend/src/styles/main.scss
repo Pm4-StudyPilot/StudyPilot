@@ -1,2 +1,21 @@
 @import "bootstrap/scss/bootstrap";
 @import "@fortawesome/fontawesome-free/css/all.min.css";
+
+.Modal {
+    position: fixed;
+    width: 100%;
+    top: 0;
+    height: 100%;
+    z-index: 1;
+    > div > .card {   
+        max-width: 400px;
+        width: 100%
+    }
+}
+
+.ProgressBar {
+    > .progress > .progress-bar {
+        margin-top: -0.5rem;
+        height: 0.5rem
+    }
+}

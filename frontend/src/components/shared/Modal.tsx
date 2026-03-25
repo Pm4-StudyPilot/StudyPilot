@@ -43,9 +43,8 @@ export default function Modal({
   return (
     <div
       data-testid="modal-backdrop"
-      className="modal-backdrop-custom d-flex justify-content-center align-items-center min-vh-100"
+      className="Modal modal-backdrop-custom d-flex justify-content-center align-items-center min-vh-100"
       onClick={onClose}
-      style={{ position: "fixed", width: "100%", top: 0, height: "100%", zIndex: 1 }}
      >
       <div onClick={(e) => e.stopPropagation()} className="container d-flex justify-content-center">
         {!disableClose && (
@@ -57,7 +56,6 @@ export default function Modal({
         )}
         <div
           className="card shadow"
-          style={{ maxWidth: "400px", width: "100%" }}
         >
           <div className="card-body p-4">
             {header && (<h2 className="text-center mb-2">{header}</h2>)}
