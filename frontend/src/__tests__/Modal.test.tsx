@@ -16,70 +16,39 @@ describe("FormLayout", () => {
     expect(screen.getByText("Child content")).toBeInTheDocument()
   })
 
-  it("closes when ESC key is pressed", async () => {
-    const user = userEvent.setup()
-
+  it("renders nothing when open is false", () => {
     render(
-      <Modal>
+      <Modal open={false}>
+        <div>Content</div>
+      </Modal>
+    )
+
+    expect(screen.queryByText("Content")).toBeNull()
+  })
+
+  it("renders content when open is true", () => {
+    render(
+      <Modal open={true}>
         <div>Content</div>
       </Modal>
     )
 
     expect(screen.getByText("Content")).toBeInTheDocument()
+  })
+
+  it("does not register ESC listener when closed", async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+
+    render(
+      <Modal open={false} onClose={onClose}>
+        <div>Content</div>
+      </Modal>
+    )
 
     await user.keyboard("{Escape}")
 
-    expect(screen.queryByText("Content")).toBeNull()
-  })
-
-  it("closes when close button is clicked", async () => {
-    const user = userEvent.setup()
-
-    render(
-      <Modal>
-        <div>Content</div>
-      </Modal>
-    )
-
-    const closeButton = screen.getByRole("button")
-    await user.click(closeButton)
-
-    expect(screen.queryByText("Content")).toBeNull()
-  })
-
-  it("renders null when closed", async () => {
-    const user = userEvent.setup()
-
-    render(
-      <Modal>
-        <div>Content</div>
-      </Modal>
-    )
-
-    // Click backdrop to close
-    const backdrop = screen.getByTestId("modal-backdrop")
-    await user.click(backdrop)
-
-    expect(screen.queryByText("Content")).toBeNull()
-  })
-
-  it("cannot be closed with ESC when disableClose is true", async () => {
-    const user = userEvent.setup()
-
-    render(
-      <Modal disableClose={true}>
-        <div>Content</div>
-      </Modal>
-    )
-
-    // Ensure modal is visible
-    expect(screen.getByText("Content")).toBeInTheDocument()
-
-    // Press ESC
-    await user.keyboard("{Escape}")
-
-    // Modal should disappear
-    expect(screen.queryByText("Content")).toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
   })
 
   it("calls onClose when ESC key is pressed", async () => {

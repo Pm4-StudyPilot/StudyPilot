@@ -1,10 +1,11 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 
 interface ModalProps {
   title?: string;
   children: React.ReactNode;
   header?: React.ReactNode;
   footer?: React.ReactNode;
+  open?: boolean;
   disableClose?: boolean;
   onClose?: () => void;
 }
@@ -14,32 +15,30 @@ export default function Modal({
   children,
   header,
   footer,
+  open = true,
   disableClose = false,
   onClose,
 }: ModalProps) {
-  // modal closing logic
-  const [showModal, setShowModal] = useState(true);
-
   const handleClose = useCallback(() => {
     if (disableClose) return;
-    setShowModal(false);
     onClose?.();
   }, [disableClose, onClose]);
 
   // clicking ESC closes the modal
   useEffect(() => {
+    if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        handleClose?.();
+        handleClose();
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [handleClose]);
+  }, [open, handleClose]);
 
-  if (!showModal) return null;
+  if (!open) return null;
 
   return (
     <div
