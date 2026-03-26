@@ -16,14 +16,11 @@ function createMockCourse(id: string, name: string, ownerId: string) {
 describe("CourseService", () => {
   it("should create a course with name and ownerId", async () => {
     const created = createMockCourse("c1", "Biology 101", "u1");
+    const create = mock(async () => created);
 
     const db = {
       course: {
-        create: mock(async () => created),
-        findMany: mock(async () => []),
-        findFirst: mock(async () => null),
-        update: mock(async () => created),
-        deleteMany: mock(async () => ({ count: 0 })),
+        create,
       },
     };
 
@@ -31,7 +28,7 @@ describe("CourseService", () => {
     const result = await service.create("Biology 101", "u1");
 
     expect(result).toEqual(created);
-    expect(db.course.create).toHaveBeenCalledWith({
+    expect(create).toHaveBeenCalledWith({
       data: {
         name: "Biology 101",
         ownerId: "u1",
@@ -44,14 +41,11 @@ describe("CourseService", () => {
       createMockCourse("c2", "Math", "u1"),
       createMockCourse("c1", "Biology", "u1"),
     ];
+    const findMany = mock(async () => courses);
 
     const db = {
       course: {
-        create: mock(async () => courses[0]),
-        findMany: mock(async () => courses),
-        findFirst: mock(async () => null),
-        update: mock(async () => courses[0]),
-        deleteMany: mock(async () => ({ count: 0 })),
+        findMany,
       },
     };
 
@@ -59,7 +53,7 @@ describe("CourseService", () => {
     const result = await service.listByOwner("u1");
 
     expect(result).toEqual(courses);
-    expect(db.course.findMany).toHaveBeenCalledWith({
+    expect(findMany).toHaveBeenCalledWith({
       where: { ownerId: "u1" },
       orderBy: { createdAt: "desc" },
     });
@@ -67,14 +61,11 @@ describe("CourseService", () => {
 
   it("should return course only when it belongs to owner", async () => {
     const course = createMockCourse("c1", "Biology", "u1");
+    const findFirst = mock(async () => course);
 
     const db = {
       course: {
-        create: mock(async () => course),
-        findMany: mock(async () => []),
-        findFirst: mock(async () => course),
-        update: mock(async () => course),
-        deleteMany: mock(async () => ({ count: 0 })),
+        findFirst,
       },
     };
 
@@ -82,7 +73,7 @@ describe("CourseService", () => {
     const result = await service.findByIdForOwner("c1", "u1");
 
     expect(result).toEqual(course);
-    expect(db.course.findFirst).toHaveBeenCalledWith({
+    expect(findFirst).toHaveBeenCalledWith({
       where: {
         id: "c1",
         ownerId: "u1",
@@ -91,13 +82,11 @@ describe("CourseService", () => {
   });
 
   it("should not update a course that is not owned by user", async () => {
+    const findFirst = mock(async () => null);
+
     const db = {
       course: {
-        create: mock(async () => createMockCourse("c1", "Biology", "u1")),
-        findMany: mock(async () => []),
-        findFirst: mock(async () => null),
-        update: mock(async () => createMockCourse("c1", "Biology 102", "u1")),
-        deleteMany: mock(async () => ({ count: 0 })),
+        findFirst,
       },
     };
 
@@ -105,26 +94,24 @@ describe("CourseService", () => {
     const result = await service.updateForOwner("c1", "u2", "Biology 102");
 
     expect(result).toBeNull();
-    expect(db.course.findFirst).toHaveBeenCalledWith({
+    expect(findFirst).toHaveBeenCalledWith({
       where: {
         id: "c1",
         ownerId: "u2",
       },
     });
-    expect(db.course.update).not.toHaveBeenCalled();
   });
 
   it("should update a course when it is owned by user", async () => {
     const existing = createMockCourse("c1", "Biology", "u1");
     const updated = createMockCourse("c1", "Biology 102", "u1");
+    const findFirst = mock(async () => existing);
+    const update = mock(async () => updated);
 
     const db = {
       course: {
-        create: mock(async () => existing),
-        findMany: mock(async () => []),
-        findFirst: mock(async () => existing),
-        update: mock(async () => updated),
-        deleteMany: mock(async () => ({ count: 0 })),
+        findFirst,
+        update,
       },
     };
 
@@ -132,20 +119,18 @@ describe("CourseService", () => {
     const result = await service.updateForOwner("c1", "u1", "Biology 102");
 
     expect(result).toEqual(updated);
-    expect(db.course.update).toHaveBeenCalledWith({
+    expect(update).toHaveBeenCalledWith({
       where: { id: "c1" },
       data: { name: "Biology 102" },
     });
   });
 
   it("should return true when delete removes an owned course", async () => {
+    const deleteMany = mock(async () => ({ count: 1 }));
+
     const db = {
       course: {
-        create: mock(async () => createMockCourse("c1", "Biology", "u1")),
-        findMany: mock(async () => []),
-        findFirst: mock(async () => null),
-        update: mock(async () => createMockCourse("c1", "Biology 102", "u1")),
-        deleteMany: mock(async () => ({ count: 1 })),
+        deleteMany,
       },
     };
 
@@ -153,7 +138,7 @@ describe("CourseService", () => {
     const result = await service.deleteForOwner("c1", "u1");
 
     expect(result).toBe(true);
-    expect(db.course.deleteMany).toHaveBeenCalledWith({
+    expect(deleteMany).toHaveBeenCalledWith({
       where: {
         id: "c1",
         ownerId: "u1",
@@ -162,13 +147,11 @@ describe("CourseService", () => {
   });
 
   it("should return false when delete removes nothing", async () => {
+    const deleteMany = mock(async () => ({ count: 0 }));
+
     const db = {
       course: {
-        create: mock(async () => createMockCourse("c1", "Biology", "u1")),
-        findMany: mock(async () => []),
-        findFirst: mock(async () => null),
-        update: mock(async () => createMockCourse("c1", "Biology 102", "u1")),
-        deleteMany: mock(async () => ({ count: 0 })),
+        deleteMany,
       },
     };
 
@@ -176,5 +159,11 @@ describe("CourseService", () => {
     const result = await service.deleteForOwner("c1", "u1");
 
     expect(result).toBe(false);
+    expect(deleteMany).toHaveBeenCalledWith({
+      where: {
+        id: "c1",
+        ownerId: "u1",
+      },
+    });
   });
 });
