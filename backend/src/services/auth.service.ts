@@ -9,7 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "change-me-in-production";
  * 
  * Contains all business logic related to authentication.
  * 
- * Responsibilites:
+ * Responsibilities:
  * - User registration (hash password + store user)
  * - User authentication (validate credentials)
  * - JWT token generation

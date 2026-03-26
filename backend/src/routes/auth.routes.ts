@@ -9,11 +9,12 @@ const authController = new AuthController();
  * 
  * Defines all authentication-related API endpoints.
  * 
- * Base path: /auth
+ * Base path within auth router: /auth
+ * Full API path: /api/auth
  * 
  * Endpoints:
- * - POST /auth/register -> Register a new user
- * - POST /auth/login -> Authenticate an existing user
+ * - POST api/auth/register -> Register a new user
+ * - POST api/auth/login -> Authenticate an existing user
  */
 
 /**
