@@ -2,8 +2,6 @@ import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
 import { RegisterRequest, LoginRequest } from "../types";
 
-const authService = new AuthService();
-
 /**
  * Controller responsible for handling authentication-related requests.
  * 
@@ -16,6 +14,7 @@ const authService = new AuthService();
  */
 
 export class AuthController {
+    constructor(private authService: AuthService = new AuthService()) {}
   /**
    * Handles user registration.
    * 
@@ -50,7 +49,7 @@ export class AuthController {
       }
 
       // Call service layer to register user
-      const result = await authService.register(email, username, password);
+      const result = await this.authService.register(email, username, password);
 
       // Return success response with created user and token
       res.status(201).json(result);
@@ -112,12 +111,12 @@ export class AuthController {
       }
 
       // Call service layer to authenticate user
-      const result = await authService.login(email, password);
+      const result = await this.authService.login(email, password);
 
       // Return authenticated user and token
       res.json(result);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(401).json({ message: "Invalid credentials" });
     }
   }
