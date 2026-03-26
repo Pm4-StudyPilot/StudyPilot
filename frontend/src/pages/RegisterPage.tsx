@@ -1,10 +1,18 @@
-import { useState, FormEvent } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
-import { AuthResponse } from "../types/dto";
 import Button from "../components/shared/Button";
+import Form from "../components/shared/form/Form";
+import Modal from "../components/shared/layout/Modal";
+import InputField from "../components/shared/form/InputField";
+import PasswordField from "../components/shared/form/PasswordField";
+import ProgressBar from "../components/shared/feedback/ProgressBar";
 import Logo from "../components/shared/Logo";
+import { useForm } from "../hooks/useForm"
+import { registerSchema } from "../validation/schemas"
+import { getPasswordStrength } from "../utils/passwordStrength";
+import { AuthResponse } from "../types/dto";
 
 /**
  * RegisterPage
@@ -32,13 +40,15 @@ import Logo from "../components/shared/Logo";
  */
 
 export default function RegisterPage() {
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const { values, errors, handleChange, validate } = useForm(registerSchema, {
+    email: "",
+    username: "",
+    password: "",
+    confirmPassword: "",
+  });
 
   /**
    * Handles form submission for user registration.
@@ -58,84 +68,61 @@ export default function RegisterPage() {
    */
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setError("");
-    setLoading(true);
+    if (!validate()) return;
 
-    try {
-      const data = await api.post<AuthResponse>("/auth/register", { 
-        email, 
-        username, 
-        password 
-      });
+    const data = await api.post<AuthResponse>("/auth/register", {
+      email: values.email,
+      username: values.username,
+      password: values.password,
+    });
 
-      // Store authentication state
-      login(data.token, data.user);
-
-      // Redirect to home page
-      navigate("/");
-    } catch (err: unknown) {
-      // Handle error message
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
+    login(data.token, data.user);
+    navigate("/");
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="card shadow" style={{ maxWidth: "400px", width: "100%" }}>
-        <div className="card-body p-4">
-          <h2 className="text-center mb-4">
-            <Logo />
-          </h2>
-          <h5 className="text-center mb-3">Create Account</h5>
+    <Modal disableClose={true} title="Create Account" header={<Logo/>} footer={<Link to="/login">Already have an account? Sign in</Link>}>
+      <Form onSubmit={handleSubmit}>
+        <InputField
+          label="Email"
+          type="email"
+          value={values.email}
+          onChange={(e) => handleChange("email", e.target.value)}
+          error={errors.email}
+          autoComplete="email"
+        />
 
-          {error && <div className="alert alert-danger">{error}</div>}
+        <InputField
+          label="Username"
+          type="text"
+          value={values.username}
+          onChange={(e) => handleChange("username", e.target.value)}
+          error={errors.username}
+          autoComplete="username"
+        />
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label className="form-label">E-Mail</label>
-              <input
-                type="email"
-                className="form-control"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+        <PasswordField
+          label="Password"
+          value={values.password}
+          onChange={(e) => handleChange("password", e.target.value)}
+          error={errors.password}
+          autoComplete="new-password"
+        />
 
-            <div className="mb-3">
-              <label className="form-label">Username</label>
-              <input
-                type="text"
-                className="form-control"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
-            </div>
+        <ProgressBar value={getPasswordStrength(values.password)}/>
 
-            <div className="mb-3">
-              <label className="form-label">Password</label>
-              <input
-                type="password"
-                className="form-control"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+        <PasswordField
+          label="Confirm Password"
+          value={values.confirmPassword}
+          onChange={(e) => handleChange("confirmPassword", e.target.value)}
+          error={errors.confirmPassword}
+          autoComplete="new-password"
+        />
 
-            <Button type="submit" className="w-100" loading={loading}>
-              Register
-            </Button>
-          </form>
-
-          <div className="text-center mt-3">
-            <Link to="/login">Already have an account? Sign in</Link>
-          </div>
-        </div>
-      </div>
-    </div>
+        <Button type="submit" className="w-100">
+          Register
+        </Button>
+      </Form>
+    </Modal>
   );
 }
