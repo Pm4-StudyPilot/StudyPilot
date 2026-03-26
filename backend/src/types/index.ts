@@ -28,6 +28,14 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface CreateCourseRequest {
+  name: string;
+}
+
+export interface UpdateCourseRequest {
+  name: string;
+}
+
 // --- Response DTOs ---
 
 export interface UserDto {
@@ -40,4 +48,12 @@ export interface UserDto {
 export interface AuthResponse {
   user: UserDto;
   token: string;
+}
+
+export interface CourseDto {
+  id: string;
+  name: string;
+  ownerId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
