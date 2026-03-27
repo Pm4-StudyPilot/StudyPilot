@@ -11,7 +11,7 @@ import ProgressBar from "../components/shared/feedback/ProgressBar";
 import Logo from "../components/shared/Logo";
 import { useForm } from "../hooks/useForm";
 import { registerSchema } from "../validation/schemas";
-import { getPasswordStrength } from "../utils/passwordStrength";
+import { getPasswordChecks, getPasswordStrength } from "../utils/passwordStrength";
 import { AuthResponse } from "../types/dto";
 
 /**
@@ -22,6 +22,8 @@ import { AuthResponse } from "../types/dto";
  * Features:
  * - Shared form fields for email, username, password and confirm password
  * - Client-side validation using Zod schema and custom useForm hook
+ * - Live password requirement feedback
+ * - Live confirm-password match feedback
  * - Password strength indicator
  * - Form submission to backend API
  * - Automatic login after successful registration
@@ -32,11 +34,12 @@ import { AuthResponse } from "../types/dto";
  * Workflow:
  * 1. User enters email, username, password and confirm password
  * 2. Client-side validation checks the form input
- * 3. If valid, a registration request is sent to the backend
- * 4. On success:
+ * 3. Password requirements and password match are displayed live
+ * 4. If valid, a registration request is sent to the backend
+ * 5. On success:
  *    - User is logged in
  *    - Redirect to home page
- * 5. On failure:
+ * 6. On failure:
  *    - Server error message is displayed
  *
  * @returns Registration page component
@@ -54,6 +57,10 @@ export default function RegisterPage() {
     confirmPassword: "",
   });
 
+  const passwordChecks = getPasswordChecks(values.password);
+  const passwordsMatch =
+    values.confirmPassword.length > 0 && values.password === values.confirmPassword;
+  
   /**
    * Handles form submission for user registration.
    *
@@ -71,7 +78,7 @@ export default function RegisterPage() {
    *    - Display server error message
    * - Always reset loading state
    */
-async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     if (!validate()) return;
@@ -101,7 +108,7 @@ async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
       header={<Logo/>} 
       footer={<Link to="/login">Already have an account? Sign in</Link>}
     >
-    {serverError && <div className="alert alert-danger">{serverError}</div>}
+      {serverError && <div className="alert alert-danger">{serverError}</div>}
       
       <Form onSubmit={handleSubmit}>
         <InputField
@@ -132,6 +139,24 @@ async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
 
         <ProgressBar value={getPasswordStrength(values.password)} />
 
+        <div className="mt-2 mb-3 small">
+          <div className={passwordChecks.minLength ? "text-success" : "text-danger"}>
+            {passwordChecks.minLength ? "✔" : "✖"} At least 12 characters
+          </div>
+          <div className={passwordChecks.uppercase ? "text-success" : "text-danger"}>
+            {passwordChecks.uppercase ? "✔" : "✖"} At least one uppercase letter
+          </div>
+          <div className={passwordChecks.lowercase ? "text-success" : "text-danger"}>
+            {passwordChecks.lowercase ? "✔" : "✖"} At least one lowercase letter
+          </div>
+          <div className={passwordChecks.number ? "text-success" : "text-danger"}>
+            {passwordChecks.number ? "✔" : "✖"} At least one number
+          </div>
+          <div className={passwordChecks.specialChar ? "text-success" : "text-danger"}>
+            {passwordChecks.specialChar ? "✔" : "✖"} At least one special character
+          </div>
+        </div>
+
         <PasswordField
           label="Confirm Password"
           value={values.confirmPassword}
@@ -139,6 +164,12 @@ async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
           error={errors.confirmPassword}
           autoComplete="new-password"
         />
+
+        {values.confirmPassword && (
+          <div className={`mb-3 small ${passwordsMatch ? "text-success" : "text-danger"}`}>
+            {passwordsMatch ? "✔" : "✖"} Passwords match
+          </div>
+        )}
 
         <Button type="submit" className="w-100" loading={loading}>
           Register
