@@ -24,13 +24,22 @@ export class AuthController {
    * - password: string
    * 
    * Workflow:
-   * 1. Validate required fields
-   * 2. Call AuthService to create a new user
-   * 3. Return the created user and JWT token
+   * 1. Validate required fields (non-empty values)
+   * 2. Validate email format
+   * 3. Validate password security requirements
+   * 4. Call AuthService to create a new user
+   * 5. Return the created user and JWT token
+   * 
+   * Password requirements:
+   * - Minimum length of 12 characters
+   * - At least one uppercase letter
+   * - At least one lowercase letter
+   * - At least one number
+   * - At least one special character
    * 
    * Error handling: 
-   * - 400: Missing required fields
-   * - 409: Email or username already exists (unique constraint violation)
+   * - 400: Missing required fields or invalid input
+   * - 409: Email or username already exists
    * - 500: General registration failure
    * 
    * @param req  Express request object containing registration data
@@ -43,8 +52,28 @@ export class AuthController {
       const { email, username, password } = req.body as RegisterRequest;
 
       // Validate required fields
-      if (!email || !username || !password) {
+      if (!email?.trim() || !username?.trim() || !password?.trim()) {
         res.status(400).json({ message: "Email, username, and password are required" });
+        return;
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!emailRegex.test(email)) {
+        res.status(400).json({ message: "Invalid email format" });
+        return;
+      }
+
+      // Validate password requirements
+      const hasMinLength = password.length >= 12;
+      const hasUppercase = /[A-Z]/.test(password);
+      const hasLowercase = /[a-z]/.test(password);
+      const hasNumber = /[0-9]/.test(password);
+      const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
+
+      if (!hasMinLength || !hasUppercase || !hasLowercase || !hasNumber || !hasSpecialChar) {
+        res.status(400).json({ message: "Password does not meet security requirements" });
         return;
       }
 
@@ -120,4 +149,39 @@ export class AuthController {
       res.status(401).json({ message: "Invalid credentials" });
     }
   }
+
+  /**
+   * Checks whether an email address and/or username is already taken.
+   *
+   * Expected request body:
+   * - email?: string
+   * - username?: string
+   *
+   * Workflow:
+   * 1. Read optional email and username values from the request body
+   * 2. Call AuthService to check whether the values already exist
+   * 3. Return availability result as JSON
+   *
+   * Response:
+   * - emailExists?: boolean
+   * - usernameExists?: boolean
+   *
+   * Error handling:
+   * - 500: General availability check failure
+   *
+   * @param req Express request object containing email and/or username
+   * @param res Express response object used to send the result
+   *
+   * @returns Sends a JSON response containing availability information
+   */
+  async checkAvailability(req: Request, res: Response): Promise<void> {
+  try {
+    const { email, username } = req.body as { email?: string; username?: string };
+
+    const result = await this.authService.checkAvailability(email, username);
+    res.json(result);
+  } catch (error: unknown) {
+    res.status(500).json({ message: "Availability check failed" });
+  }
+}
 }
