@@ -1,4 +1,4 @@
-import { FormEvent } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
@@ -9,14 +9,43 @@ import InputField from "../components/shared/form/InputField";
 import PasswordField from "../components/shared/form/PasswordField";
 import ProgressBar from "../components/shared/feedback/ProgressBar";
 import Logo from "../components/shared/Logo";
-import { useForm } from "../hooks/useForm"
-import { registerSchema } from "../validation/schemas"
+import { useForm } from "../hooks/useForm";
+import { registerSchema } from "../validation/schemas";
 import { getPasswordStrength } from "../utils/passwordStrength";
 import { AuthResponse } from "../types/dto";
 
+/**
+ * RegisterPage
+ *
+ * Displays the user registration form and handles account creation.
+ *
+ * Features:
+ * - Shared form fields for email, username, password and confirm password
+ * - Client-side validation using Zod schema and custom useForm hook
+ * - Password strength indicator
+ * - Form submission to backend API
+ * - Automatic login after successful registration
+ * - Redirect to home page after success
+ * - Server-side error display
+ * - Loading state during request
+ *
+ * Workflow:
+ * 1. User enters email, username, password and confirm password
+ * 2. Client-side validation checks the form input
+ * 3. If valid, a registration request is sent to the backend
+ * 4. On success:
+ *    - User is logged in
+ *    - Redirect to home page
+ * 5. On failure:
+ *    - Server error message is displayed
+ *
+ * @returns Registration page component
+ */
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [serverError, setServerError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const { values, errors, handleChange, validate } = useForm(registerSchema, {
     email: "",
@@ -25,22 +54,55 @@ export default function RegisterPage() {
     confirmPassword: "",
   });
 
-  async function handleSubmit(e: FormEvent) {
+  /**
+   * Handles form submission for user registration.
+   *
+   * @param e Form submission event
+   *
+   * Workflow:
+   * - Prevent default form submission
+   * - Run client-side validation
+   * - Reset previous server error
+   * - Send registration request to backend
+   * - On success:
+   *    - Store token and user via AuthContext
+   *    - Redirect to home page
+   * - On failure:
+   *    - Display server error message
+   * - Always reset loading state
+   */
+async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
     if (!validate()) return;
+    setServerError("");
+    setLoading(true);
 
-    const data = await api.post<AuthResponse>("/auth/register", {
-      email: values.email,
-      username: values.username,
-      password: values.password,
-    });
+    try {
+      const data = await api.post<AuthResponse>("/auth/register", {
+        email: values.email,
+        username: values.username,
+        password: values.password,
+      });
 
-    login(data.token, data.user);
-    navigate("/");
+      login(data.token, data.user);
+      navigate("/");
+    } catch (err: unknown) {
+      setServerError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <Modal disableClose={true} title="Create Account" header={<Logo/>} footer={<Link to="/login">Already have an account? Sign in</Link>}>
+    <Modal 
+      disableClose={true} 
+      title="Create Account" 
+      header={<Logo/>} 
+      footer={<Link to="/login">Already have an account? Sign in</Link>}
+    >
+    {serverError && <div className="alert alert-danger">{serverError}</div>}
+      
       <Form onSubmit={handleSubmit}>
         <InputField
           label="Email"
@@ -68,7 +130,7 @@ export default function RegisterPage() {
           autoComplete="new-password"
         />
 
-        <ProgressBar value={getPasswordStrength(values.password)}/>
+        <ProgressBar value={getPasswordStrength(values.password)} />
 
         <PasswordField
           label="Confirm Password"
@@ -78,7 +140,7 @@ export default function RegisterPage() {
           autoComplete="new-password"
         />
 
-        <Button type="submit" className="w-100">
+        <Button type="submit" className="w-100" loading={loading}>
           Register
         </Button>
       </Form>
