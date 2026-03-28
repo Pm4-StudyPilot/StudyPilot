@@ -21,43 +21,7 @@ function createMockResponse() {
 }
 
 describe("AuthController.register", () => {
-  /**
-   * Test case: Missing required fields
-   *
-   * Scenario:
-   * Only email is provided, while username and password are missing.
-   *
-   * Expected behavior:
-   * - Request is rejected
-   * - Status code: 400
-   * - Response contains validation error message
-   */
-  it("should return 400 if required fields are missing", async () => {
-    const mockAuthService = {
-      register: mock(),
-      login: mock(),
-    };
-
-    const controller = new AuthController(mockAuthService as any);
-
-    const req = {
-      body: {
-        email: "test@students.zhaw.ch",
-      },
-    } as Request;
-
-    const res = createMockResponse();
-
-    await controller.register(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      message: "Email, username, and password are required",
-    });
-    expect(mockAuthService.register).not.toHaveBeenCalled();
-  });
-
-  /**
+    /**
    * Test case: Successful registration
    *
    * Scenario:
@@ -82,6 +46,7 @@ describe("AuthController.register", () => {
     const mockAuthService = {
       register: mock(async () => serviceResult),
       login: mock(),
+      checkAvailability: mock(),
     };
 
     const controller = new AuthController(mockAuthService as any);
@@ -108,6 +73,43 @@ describe("AuthController.register", () => {
   });
 
   /**
+   * Test case: Missing required fields
+   *
+   * Scenario:
+   * Only email is provided, while username and password are missing.
+   *
+   * Expected behavior:
+   * - Request is rejected
+   * - Status code: 400
+   * - Response contains validation error message
+   */
+  it("should return 400 if required fields are missing", async () => {
+    const mockAuthService = {
+      register: mock(),
+      login: mock(),
+      checkAvailability: mock(),
+    };
+
+    const controller = new AuthController(mockAuthService as any);
+
+    const req = {
+      body: {
+        email: "test@students.zhaw.ch",
+      },
+    } as Request;
+
+    const res = createMockResponse();
+
+    await controller.register(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Email, username, and password are required",
+    });
+    expect(mockAuthService.register).not.toHaveBeenCalled();
+  });
+
+  /**
    * Test case: Duplicate email
    *
    * Scenario:
@@ -127,6 +129,7 @@ describe("AuthController.register", () => {
         };
       }),
       login: mock(),
+      checkAvailability: mock(),
     };
 
     const controller = new AuthController(mockAuthService as any);
@@ -188,6 +191,209 @@ describe("AuthController.register", () => {
     expect(res.status).toHaveBeenCalledWith(409);
     expect(res.json).toHaveBeenCalledWith({
       message: "Username already exists",
+    });
+  });
+
+  /**
+   * Test case: Invalid email format
+   *
+   * Scenario:
+   * A registration request is sent with an invalid e-mail format,
+   * while username and password are otherwise provided.
+   *
+   * Expected behavior:
+   * - Request is rejected before AuthService.register() is called
+   * - Status code: 400
+   * - Response contains invalid e-mail format message
+   */
+  it("should return 400 if email format is invalid", async () => {
+  const mockAuthService = {
+    register: mock(),
+    login: mock(),
+    checkAvailability: mock(),
+  };
+
+  const controller = new AuthController(mockAuthService as any);
+
+  const req = {
+    body: {
+      email: "invalid-email",
+      username: "testuser",
+      password: "Password123!@#",
+    },
+  } as Request;
+
+  const res = createMockResponse();
+
+  await controller.register(req, res);
+
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect(res.json).toHaveBeenCalledWith({
+    message: "Invalid email format",
+  });
+  expect(mockAuthService.register).not.toHaveBeenCalled();
+});
+
+  /**
+   * Test case: Invalid password format
+   *
+   * Scenario:
+   * A registration request is sent with a password that does not meet
+   * the defined security requirements.
+   *
+   * Expected behavior:
+   * - Request is rejected before AuthService.register() is called
+   * - Status code: 400
+   * - Response contains password security error message
+   */
+it("should return 400 if password does not meet security requirements", async () => {
+  const mockAuthService = {
+    register: mock(),
+    login: mock(),
+    checkAvailability: mock(),
+  };
+
+  const controller = new AuthController(mockAuthService as any);
+
+  const req = {
+    body: {
+      email: "test@students.zhaw.ch",
+      username: "testuser",
+      password: "short",
+    },
+  } as Request;
+
+  const res = createMockResponse();
+
+  await controller.register(req, res);
+
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect(res.json).toHaveBeenCalledWith({
+    message: "Password does not meet security requirements",
+  });
+  expect(mockAuthService.register).not.toHaveBeenCalled();
+});
+
+  /**
+   * Test case: Whitespace-only required fields
+   *
+   * Scenario:
+   * Email, username, and password are provided as whitespace-only strings.
+   *
+   * Expected behavior:
+   * - Request is rejected because trimmed values are empty
+   * - Status code: 400
+   * - Response contains required fields validation message
+   */
+  it("should return 400 if required fields contain only whitespace", async () => {
+    const mockAuthService = {
+      register: mock(),
+      login: mock(),
+      checkAvailability: mock(),
+    };
+
+    const controller = new AuthController(mockAuthService as any);
+
+    const req = {
+      body: {
+        email: "   ",
+        username: "   ",
+        password: "   ",
+      },
+    } as Request;
+
+    const res = createMockResponse();
+
+    await controller.register(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Email, username, and password are required",
+    });
+    expect(mockAuthService.register).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Test case: Generic duplicate fallback
+   *
+   * Scenario:
+   * AuthService throws a Prisma unique constraint error, but the message
+   * does not explicitly mention e-mail or username.
+   *
+   * Expected behavior:
+   * - Request is rejected
+   * - Status code: 409
+   * - Response contains generic duplicate entry message
+   */
+  it("should return 409 with generic duplicate message for unknown P2002 target", async () => {
+    const mockAuthService = {
+      register: mock(async () => {
+        throw {
+          code: "P2002",
+          message: "Unique constraint failed on unknown field",
+        };
+      }),
+      login: mock(),
+      checkAvailability: mock(),
+    };
+
+    const controller = new AuthController(mockAuthService as any);
+
+    const req = {
+      body: {
+        email: "test@students.zhaw.ch",
+        username: "testuser",
+        password: "Password123!@#",
+      },
+    } as Request;
+
+    const res = createMockResponse();
+
+    await controller.register(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Duplicate entry",
+    });
+  });
+
+  /**
+   * Test case: Unexpected registration error
+   *
+   * Scenario:
+   * AuthService.register() throws an unexpected non-Prisma error.
+   *
+   * Expected behavior:
+   * - Request is rejected
+   * - Status code: 500
+   * - Response contains general registration failure message
+   */
+  it("should return 500 for unexpected registration errors", async () => {
+    const mockAuthService = {
+      register: mock(async () => {
+        throw new Error("Unexpected failure");
+      }),
+      login: mock(),
+      checkAvailability: mock(),
+    };
+
+    const controller = new AuthController(mockAuthService as any);
+
+    const req = {
+      body: {
+        email: "test@students.zhaw.ch",
+        username: "testuser",
+        password: "Password123!@#",
+      },
+    } as Request;
+
+    const res = createMockResponse();
+
+    await controller.register(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Registration failed",
     });
   });
 });
