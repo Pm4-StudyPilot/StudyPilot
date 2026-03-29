@@ -8,6 +8,7 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   function handleLogout() {
+    sessionStorage.setItem("logoutMessage", "Successfully logged out");
     logout();
     navigate("/login");
   }

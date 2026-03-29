@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
@@ -23,6 +23,7 @@ import { loginSchema } from "../validation/schemas";
  * - Store authentication data via AuthContext
  * - Redirect user after successful login
  * - Display loading state and error messages
+ * - Display loading state, error messages, and logout feedback
  * 
  * Workflow:
  * 1. User enters email/username and password
@@ -36,6 +37,16 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+ const [logoutMessage, setLogoutMessage] = useState("");
+
+useEffect(() => {
+  const message = sessionStorage.getItem("logoutMessage");
+  if (message) {
+    setLogoutMessage(message);
+    sessionStorage.removeItem("logoutMessage");
+  }
+}, []);
 
   // Initialize form with validation schema
   const { values, errors, handleChange, validate } = useForm(loginSchema, {
@@ -81,6 +92,12 @@ export default function LoginPage() {
         <div className="card-body p-4">
           <h2 className="text-center mb-4"><Logo /></h2>
           <h5 className="text-center mb-3">Sign In</h5>
+
+          {logoutMessage && (
+            <div className="alert alert-success" role="alert">
+              {logoutMessage}
+            </div>
+          )}
 
           <Form onSubmit={handleSubmit} error={error}>
             {/* Identifier (Email or Username) */}
