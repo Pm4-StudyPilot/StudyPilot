@@ -172,6 +172,7 @@ describe("AuthController.register", () => {
         };
       }),
       login: mock(),
+      checkAvailability: mock(),
     };
 
     const controller = new AuthController(mockAuthService as any);

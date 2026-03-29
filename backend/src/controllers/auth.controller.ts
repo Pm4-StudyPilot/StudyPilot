@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
 import { RegisterRequest, LoginRequest } from "../types";
+import validator from "validator";
 
 /**
  * Controller responsible for handling authentication-related requests.
@@ -58,10 +59,8 @@ export class AuthController {
       }
 
       // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-      if (!emailRegex.test(email)) {
-        res.status(400).json({ message: "Invalid email format" });
+      if (!validator.isEmail(email)) {
+        res.status(400).json({ message: "Invalid email format"});
         return;
       }
 
