@@ -3,8 +3,13 @@ import jwt from "jsonwebtoken";
 import { JwtPayload, AuthResponse } from "../types";
 import { prisma } from "../config/database";
 
-// Fallback is only used in development. In production, a secure secret must be provided.
-const JWT_SECRET = process.env.JWT_SECRET || "change-me-in-production";
+// Ensure JWT secret is provided via environment variables
+// The application will not start without it to avoid insecure defaults
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error("Missing required environment variable: JWT_SECRET");
+}
 
 /**
  * AuthService
