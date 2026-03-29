@@ -42,8 +42,8 @@ const mockVerify = mock((token: string, secret: string) => {
   return { userId: 1, email: "test@students.zhaw.ch", role: "student" };
 });
 
-const mockFindFirst = mock(async (): Promise<MockUserRecord> => null as any);
-const mockFindUnique = mock(async (): Promise<MockAvailabilityRecord> => null as any);
+const mockFindFirst = mock(async (): Promise<MockUserRecord | null> => null);
+const mockFindUnique = mock(async (): Promise<MockAvailabilityRecord | null> => null);
 
 /**
  * Mock bcrypt module.
@@ -179,7 +179,7 @@ describe("AuthService", () => {
         username: "testuser",
         password: "hashed-password",
         role: "student",
-      } as any);
+      });
 
       const service = new AuthService();
 
@@ -225,7 +225,7 @@ describe("AuthService", () => {
         username: "testuser",
         password: "hashed-password",
         role: "student",
-      } as any);
+      });
 
       const service = new AuthService();
 
@@ -254,7 +254,7 @@ describe("AuthService", () => {
      * - Error "Invalid credentials" is thrown
      */
     it("should throw if user is not found", async () => {
-      mockFindFirst.mockResolvedValueOnce(null as any);
+      mockFindFirst.mockResolvedValueOnce(null);
 
       const service = new AuthService();
 
@@ -280,7 +280,7 @@ describe("AuthService", () => {
         username: "testuser",
         password: "hashed-password",
         role: "student",
-      } as any);
+      });
 
       mockCompare.mockResolvedValueOnce(false);
 
@@ -308,8 +308,8 @@ describe("AuthService", () => {
      */
     it("should return emailExists and usernameExists", async () => {
       mockFindUnique
-        .mockResolvedValueOnce({ id: "1" } as any) // email exists
-        .mockResolvedValueOnce(null as any); // username does not exist
+        .mockResolvedValueOnce({ id: "1" }) // email exists
+        .mockResolvedValueOnce(null); // username does not exist
 
       const service = new AuthService();
 
@@ -341,7 +341,7 @@ describe("AuthService", () => {
      * - Result contains only emailExists
      */
     it("should check only email if username is not provided", async () => {
-      mockFindUnique.mockResolvedValueOnce(null as any);
+      mockFindUnique.mockResolvedValueOnce(null);
 
       const service = new AuthService();
 
