@@ -3,6 +3,18 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 // Ensure JWT secret exists before importing AuthService
 process.env.JWT_SECRET = "test-secret";
 
+type MockUserRecord = {
+  id: string;
+  email: string;
+  username: string;
+  password: string;
+  role: string;
+};
+
+type MockAvailabilityRecord = {
+  id: string;
+};
+
 /**
  * Mock functions for external dependencies.
  *
@@ -15,13 +27,13 @@ const mockHash = mock(async () => "hashed-password");
 const mockCompare = mock(async () => true);
 const mockSign = mock(() => "fake-jwt-token");
 
-const mockCreate = mock(async () => ({
+const mockCreate = mock(async (): Promise<MockUserRecord> => ({
   id: "1",
   email: "test@students.zhaw.ch",
   username: "testuser",
   password: "hashed-password",
   role: "student",
-} as any));
+}));
 
 const mockVerify = mock((token: string, secret: string) => {
   if (secret !== "test-secret") {
@@ -30,8 +42,8 @@ const mockVerify = mock((token: string, secret: string) => {
   return { userId: 1, email: "test@students.zhaw.ch", role: "student" };
 });
 
-const mockFindFirst = mock(async () => null as any);
-const mockFindUnique = mock(async () => null as any);
+const mockFindFirst = mock(async (): Promise<MockUserRecord> => null as any);
+const mockFindUnique = mock(async (): Promise<MockAvailabilityRecord> => null as any);
 
 /**
  * Mock bcrypt module.
