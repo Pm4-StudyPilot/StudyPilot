@@ -1,6 +1,6 @@
-import { Request, Response } from "express";
-import { UserService } from "../services/user.service";
-import { AuthenticatedUser } from "../types";
+import { Request, Response } from 'express';
+import { UserService } from '../services/user.service';
+import { AuthenticatedUser } from '../types';
 
 const userService = new UserService();
 
@@ -11,13 +11,13 @@ export class UserController {
       const user = await userService.findById(authUser.id);
 
       if (!user) {
-        res.status(404).json({ message: "User not found" });
+        res.status(404).json({ message: 'User not found' });
         return;
       }
 
       res.json(user);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch user" });
+    } catch {
+      res.status(500).json({ message: 'Failed to fetch user' });
     }
   }
 }

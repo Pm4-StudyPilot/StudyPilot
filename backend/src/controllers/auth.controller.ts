@@ -1,6 +1,6 @@
-import { Request, Response } from "express";
-import { AuthService } from "../services/auth.service";
-import { RegisterRequest, LoginRequest } from "../types";
+import { Request, Response } from 'express';
+import { AuthService } from '../services/auth.service';
+import { RegisterRequest, LoginRequest } from '../types';
 
 /**
  * Controller responsible for handling authentication-related requests.
@@ -44,7 +44,7 @@ export class AuthController {
 
       // Validate required fields
       if (!email || !username || !password) {
-        res.status(400).json({ message: "Email, username, and password are required" });
+        res.status(400).json({ message: 'Email, username, and password are required' });
         return;
       }
 
@@ -54,28 +54,33 @@ export class AuthController {
       // Return success response with created user and token
       res.status(201).json(result);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       // Handle unique constraint violation (duplicate email or username)
-      if (error.code === "P2002") {
-        const message = String(error.message).toLowerCase();
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2002'
+      ) {
+        const message = 'message' in error ? String(error.message).toLowerCase() : '';
 
-        if(message.includes("email")){
-          res.status(409).json({ message: "Email already exists" });
+        if (message.includes('email')) {
+          res.status(409).json({ message: 'Email already exists' });
           return;
         }
 
-        if(message.includes("username")){
-          res.status(409).json({ message: "Username already exists" });
+        if (message.includes('username')) {
+          res.status(409).json({ message: 'Username already exists' });
           return;
         }
 
-        res.status(409).json({ message: "Duplicate entry" });
+        res.status(409).json({ message: 'Duplicate entry' });
         return;
       }
 
       // Handle unexpected errors
-      res.status(500).json({ message: "Registration failed" });
+      res.status(500).json({ message: 'Registration failed' });
     }
   }
 
@@ -106,7 +111,7 @@ export class AuthController {
 
       // Validate required fields
       if (!email || !password) {
-        res.status(400).json({ message: "Email and password are required" });
+        res.status(400).json({ message: 'Email and password are required' });
         return;
       }
 
@@ -116,8 +121,8 @@ export class AuthController {
       // Return authenticated user and token
       res.json(result);
 
-    } catch (error: unknown) {
-      res.status(401).json({ message: "Invalid credentials" });
+    } catch {
+      res.status(401).json({ message: 'Invalid credentials' });
     }
   }
 }
