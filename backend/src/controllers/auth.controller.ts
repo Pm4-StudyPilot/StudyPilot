@@ -28,8 +28,9 @@ export class AuthController {
    * 1. Validate required fields (non-empty values)
    * 2. Validate email format
    * 3. Validate password security requirements
-   * 4. Call AuthService to create a new user
-   * 5. Return the created user and JWT token
+   * 4. Normalize email (trim + lowercase)
+   * 5. Call AuthService to create a new user
+   * 6. Return the created user and JWT token
    * 
    * Password requirements:
    * - Minimum length of 12 characters
@@ -58,8 +59,11 @@ export class AuthController {
         return;
       }
 
+      // Normalize email
+      const normalizedEmail = email.trim().toLowerCase();
+
       // Validate email format
-      if (!validator.isEmail(email)) {
+      if (!validator.isEmail(normalizedEmail)) {
         res.status(400).json({ message: "Invalid email format"});
         return;
       }
@@ -77,7 +81,7 @@ export class AuthController {
       }
 
       // Call service layer to register user
-      const result = await this.authService.register(email, username, password);
+      const result = await this.authService.register(normalizedEmail, username.trim(), password);
 
       // Return success response with created user and token
       res.status(201).json(result);
@@ -116,17 +120,19 @@ export class AuthController {
    * Handles user login.
    * 
    * Expected request body:
-   * - email: string
+   * - identifier: string -> email or username
    * - password: string
    * 
    * Workflow:
    * 1. Validate required fields
-   * 2. Call AuthService to verify credentials
-   * 3. Return authenticated user and JWT token
+   * 2. Normalize identifier (trim)
+   * 3. Call AuthService to verify credentials
+   * 4. Return authenticated user and JWT token
    * 
    * Error handling:
    * - 400: Missing required fields
-   * - 401: Invalid credentials (wrong email or password)
+   * - 401: Invalid credentials (wrong email/username or password)
+   * - 500: General registration failure
    * 
    * @param req Express request object containing login credentials
    * @param res Express response object used to send the result
@@ -135,22 +141,30 @@ export class AuthController {
    */
   async login(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password } = req.body as LoginRequest;
+      const { identifier, password } = req.body as LoginRequest;
 
       // Validate required fields
-      if (!email || !password) {
-        res.status(400).json({ message: 'Email and password are required' });
+      if (!identifier?.trim() || !password?.trim()) {
+        res.status(400).json({ message: 'Email or username and password are required' });
         return;
       }
 
+      // Normalize input
+      const normalizedIdentifier = identifier.trim();
+
       // Call service layer to authenticate user
-      const result = await this.authService.login(email, password);
+      const result = await this.authService.login(normalizedIdentifier, password);
 
       // Return authenticated user and token
       res.json(result);
 
-    } catch {
-      res.status(401).json({ message: 'Invalid credentials' });
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === "Invalid credentials") {
+        res.status(401).json({ message: "Invalid credentials" });
+        return;
+      }
+
+      res.status(500).json({ message: 'Login failed' });
     }
   }
 
