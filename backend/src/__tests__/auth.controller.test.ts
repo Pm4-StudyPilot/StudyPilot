@@ -21,6 +21,9 @@ function createMockResponse() {
   };
 }
 
+/**
+ * Test cases for Register
+ */
 describe("AuthController.register", () => {
     /**
    * Test case: Successful registration
@@ -56,7 +59,7 @@ describe("AuthController.register", () => {
       body: {
         email: 'test@students.zhaw.ch',
         username: 'testuser',
-        password: 'Password123!',
+        password: 'Strong@Password123!',
       },
     } as Request;
 
@@ -67,10 +70,55 @@ describe("AuthController.register", () => {
     expect(mockAuthService.register).toHaveBeenCalledWith(
       'test@students.zhaw.ch',
       'testuser',
-      'Password123!'
+      'Strong@Password123!'
     );
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith(serviceResult);
+  });
+
+  /**
+   * Test case: Email normalization (trim + lowercase)
+   *
+   * Scenario:
+   * Email contains leading/trailing spaces and uppercase letters.
+   *
+   * Expected behavior:
+   * - Email is normalized before being passed to AuthService
+   */
+  it("should normalize email before calling AuthService.register", async () => {
+    const mockAuthService = {
+      register: mock(async () => ({
+        user: {
+          id: "1",
+          email: "test@students.zhaw.ch",
+          username: "testuser",
+          role: "student",
+        },
+        token: "fake-jwt-token",
+      })),
+      login: mock(),
+      checkAvailability: mock(),
+    };
+
+    const controller = new AuthController(mockAuthService as unknown as AuthService);
+
+    const req = {
+      body: {
+        email: "  TEST@students.zhaw.ch  ",
+        username: "testuser",
+        password: "Strong@Password123!",
+      },
+    } as Request;
+
+    const res = createMockResponse();
+
+    await controller.register(req, res);
+
+    expect(mockAuthService.register).toHaveBeenCalledWith(
+      "test@students.zhaw.ch", // normalized
+      "testuser",
+      "Strong@Password123!"
+    );
   });
 
   /**
@@ -139,7 +187,7 @@ describe("AuthController.register", () => {
       body: {
         email: 'duplicate@students.zhaw.ch',
         username: 'testuser',
-        password: 'Password123!',
+        password: 'Strong@Password123!',
       },
     } as Request;
 
@@ -182,7 +230,7 @@ describe("AuthController.register", () => {
       body: {
         email: 'test@students.zhaw.ch',
         username: 'duplicateUser',
-        password: 'Password123!',
+        password: 'Strong@Password123!',
       },
     } as Request;
 
@@ -221,7 +269,7 @@ describe("AuthController.register", () => {
       body: {
         email: "invalid-email",
         username: "testuser",
-        password: "Password123!@#",
+        password: "Strong@Password123!",
       },
     } as Request;
 
@@ -345,7 +393,7 @@ describe("AuthController.register", () => {
       body: {
         email: "test@students.zhaw.ch",
         username: "testuser",
-        password: "Password123!@#",
+        password: "Strong@Password123!",
       },
     } as Request;
 
@@ -385,7 +433,7 @@ describe("AuthController.register", () => {
       body: {
         email: "test@students.zhaw.ch",
         username: "testuser",
-        password: "Password123!@#",
+        password: "Strong@Password123!",
       },
     } as Request;
 
@@ -399,3 +447,207 @@ describe("AuthController.register", () => {
     });
   });
 });
+
+/**
+ * Test cases for Login 
+ */  
+describe("AuthController.login", () => {
+  /**
+   * Test case: Successful login
+   *
+   * Scenario:
+   * A valid identifier (email or username) and password are provided.
+   *
+   * Expected behavior:
+   * - AuthService.login() is called with the provided identifier and password
+   * - Response contains authenticated user and token
+   */
+  it("should return user and token on successful login", async () => {
+    const serviceResult = {
+      user: {
+        id: "1",
+        email: "test@students.zhaw.ch",
+        username: "testuser",
+        role: "student",
+      },
+      token: "fake-jwt-token",
+    };
+
+    const mockAuthService = {
+      register: mock(),
+      login: mock(async () => serviceResult),
+      checkAvailability: mock(),
+    };
+
+    const controller = new AuthController(mockAuthService as unknown as AuthService);
+
+    const req = {
+      body: {
+        identifier: "testuser",
+        password: "Strong@Password123!",
+      },
+    } as Request;
+
+    const res = createMockResponse();
+
+    await controller.login(req, res);
+
+    expect(mockAuthService.login).toHaveBeenCalledWith("testuser", "Strong@Password123!");
+    expect(res.json).toHaveBeenCalledWith(serviceResult);
+  });
+
+  /**
+   * Test case: Missing required fields
+   *
+   * Scenario:
+   * Identifier and/or password are missing or empty.
+   *
+   * Expected behavior:
+   * - Request is rejected
+   * - Status code: 400
+   * - AuthService.login() is not called
+   */
+  it("should return 400 if identifier or password is missing", async () => {
+    const mockAuthService = {
+      register: mock(),
+      login: mock(),
+      checkAvailability: mock(),
+    };
+
+    const controller = new AuthController(mockAuthService as unknown as AuthService);
+
+    const req = {
+      body: {
+        identifier: "",
+        password: "",
+      },
+    } as Request;
+
+    const res = createMockResponse();
+
+    await controller.login(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Email or username and password are required",
+    });
+    expect(mockAuthService.login).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Test case: Whitespace-only identifier
+   *
+   * Scenario:
+   * Identifier contains only whitespace characters.
+   *
+   * Expected behavior:
+   * - Input is trimmed and considered invalid
+   * - Status code: 400
+   * - AuthService.login() is not called
+   */
+  it("should return 400 if identifier contains only whitespace", async () => {
+    const mockAuthService = {
+      register: mock(),
+      login: mock(),
+      checkAvailability: mock(),
+    };
+
+    const controller = new AuthController(mockAuthService as unknown as AuthService);
+
+    const req = {
+      body: {
+        identifier: "   ",
+        password: "Strong@Password123!",
+      },
+    } as Request;
+
+    const res = createMockResponse();
+
+    await controller.login(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Email or username and password are required",
+    });
+    expect(mockAuthService.login).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Test case: Invalid credentials
+   *
+   * Scenario:
+   * AuthService.login() throws an "Invalid credentials" error.
+   *
+   * Expected behavior:
+   * - Request is rejected
+   * - Status code: 401
+   * - Response contains authentication error message
+   */
+  it("should return 401 for invalid credentials", async () => {
+    const mockAuthService = {
+      register: mock(),
+      login: mock(async () => {
+        throw new Error("Invalid credentials");
+      }),
+      checkAvailability: mock(),
+    };
+
+    const controller = new AuthController(mockAuthService as unknown as AuthService);
+
+    const req = {
+      body: {
+        identifier: "testuser",
+        password: "wrong-password",
+      },
+    } as Request;
+
+    const res = createMockResponse();
+
+    await controller.login(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Invalid credentials",
+    });
+  });
+
+  /**
+   * Test case: Unexpected login error
+   *
+   * Scenario:
+   * AuthService.login() throws an unexpected error.
+   *
+   * Expected behavior:
+   * - Request is rejected
+   * - Status code: 500
+   * - Response contains generic login failure message
+   */
+  it("should return 500 for unexpected login errors", async () => {
+    const mockAuthService = {
+      register: mock(),
+      login: mock(async () => {
+        throw new Error("Unexpected failure");
+      }),
+      checkAvailability: mock(),
+    };
+
+    const controller = new AuthController(mockAuthService as unknown as AuthService);
+
+    const req = {
+      body: {
+        identifier: "testuser",
+        password: "Strong@Password123!",
+      },
+    } as Request;
+
+    const res = createMockResponse();
+
+    await controller.login(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Login failed",
+    });
+  });
+});  
+

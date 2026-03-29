@@ -1,180 +1,346 @@
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import { JwtPayload, AuthResponse } from "../types";
-import { prisma } from "../config/database";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
 
-// Ensure JWT secret is provided via environment variables
-// The application will not start without it to avoid insecure defaults
-function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-
-  if (!secret) {
-    throw new Error("Missing required environment variable: JWT_SECRET");
-  }
-
-  return secret;
-}
-
-const JWT_SECRET = getJwtSecret();
+// Ensure JWT secret exists before importing AuthService
+process.env.JWT_SECRET = "test-secret";
 
 /**
- * AuthService
- * 
- * Contains all business logic related to authentication.
- * 
- * Responsibilities:
- * - User registration (hash password + store user)
- * - User authentication (validate credentials)
- * - JWT token generation
- * 
- * This service is used by the AuthController and interacts with the database via Prisma
+ * Mock functions for external dependencies.
+ *
+ * These mocks replace:
+ * - bcrypt password hashing/comparison
+ * - JWT token signing/verification
+ * - Prisma database calls
  */
-export class AuthService {
-  /**
-   * Registers a new user.
-   * 
-   * Workflow:
-   * 1. Hash the user's password using bcrypt
-   * 2. Store the user in the database
-   * 3. Generate a JWT token
-   * 4. Return user data and token
-   * 
-   * @param email User's email address
-   * @param username User's username
-   * @param password Plain-text password (will be hashed)
-   * 
-   * @returns Returns an object containing the created user and JWT token
-   * 
-   * @throws Prisma error (e.g. P2002) if email or username already exists
-   */
-  async register(email: string, username: string, password: string): Promise<AuthResponse> {
-    const hashedPassword = await bcrypt.hash(password, 10);
+const mockHash = mock(async () => "hashed-password");
+const mockCompare = mock(async () => true);
+const mockSign = mock(() => "fake-jwt-token");
 
-    // Create user in database
-    const user = await prisma.user.create({
-      data: {
-        email,
-        username,
-        password: hashedPassword,
-      },
+const mockCreate = mock(async () => ({
+  id: "1",
+  email: "test@students.zhaw.ch",
+  username: "testuser",
+  password: "hashed-password",
+  role: "student",
+} as any));
+
+const mockVerify = mock((token: string, secret: string) => {
+  if (secret !== "test-secret") {
+    throw new Error("invalid signature");
+  }
+  return { userId: 1, email: "test@students.zhaw.ch", role: "student" };
+});
+
+const mockFindFirst = mock(async () => null as any);
+const mockFindUnique = mock(async () => null as any);
+
+/**
+ * Mock bcrypt module.
+ */
+mock.module("bcrypt", () => ({
+  default: {
+    hash: mockHash,
+    compare: mockCompare,
+  },
+}));
+
+/**
+ * Mock jsonwebtoken module.
+ */
+mock.module("jsonwebtoken", () => ({
+  default: {
+    sign: mockSign,
+    verify: mockVerify,
+  },
+}));
+
+/**
+ * Mock Prisma database module.
+ */
+mock.module("../config/database", () => ({
+  prisma: {
+    user: {
+      create: mockCreate,
+      findFirst: mockFindFirst,
+      findUnique: mockFindUnique,
+    },
+  },
+}));
+
+// Import service after mocks are defined
+const { AuthService } = await import("../services/auth.service");
+
+/**
+ * Unit tests for AuthService.
+ *
+ * Covered scenarios:
+ * - successful registration
+ * - successful login with email
+ * - successful login with username
+ * - login failure for unknown user
+ * - login failure for wrong password
+ * - availability checks
+ */
+describe("AuthService", () => {
+  /**
+   * Reset all mocks before each test to avoid leaking state
+   * between test cases.
+   */
+  beforeEach(() => {
+    mockHash.mockClear();
+    mockCompare.mockClear();
+    mockSign.mockClear();
+    mockVerify.mockClear();
+    mockCreate.mockClear();
+    mockFindFirst.mockClear();
+    mockFindUnique.mockClear();
+
+    // reset default behavior where useful
+    mockCompare.mockResolvedValue(true);
+  });
+
+  /**
+   * Test cases for register()
+   */
+  describe("register", () => {
+    /**
+     * Test case: Successful registration
+     *
+     * Scenario:
+     * A new user registers with valid email, username, and password.
+     *
+     * Expected behavior:
+     * - Password is hashed with bcrypt
+     * - User is created in the database
+     * - JWT token is generated
+     * - Safe user data and token are returned
+     */
+    it("should hash password, create user, and return token", async () => {
+      const service = new AuthService();
+
+      const result = await service.register(
+        "test@students.zhaw.ch",
+        "testuser",
+        "Strong@Password123!"
+      );
+
+      expect(mockHash).toHaveBeenCalledWith("Strong@Password123!", 10);
+      expect(mockCreate).toHaveBeenCalledWith({
+        data: {
+          email: "test@students.zhaw.ch",
+          username: "testuser",
+          password: "hashed-password",
+        },
+      });
+      expect(mockSign).toHaveBeenCalled();
+      expect(result).toEqual({
+        user: {
+          id: "1",
+          email: "test@students.zhaw.ch",
+          username: "testuser",
+          role: "student",
+        },
+        token: "fake-jwt-token",
+      });
+    });
+  });
+
+  /**
+   * Test cases for login()
+   */
+  describe("login", () => {
+    /**
+     * Test case: Successful login with email
+     *
+     * Scenario:
+     * A valid email and password are provided.
+     *
+     * Expected behavior:
+     * - User is searched by identifier (email or username)
+     * - Password is verified
+     * - JWT token is generated
+     * - Safe user data and token are returned
+     */
+    it("should authenticate user by email", async () => {
+      mockFindFirst.mockResolvedValueOnce({
+        id: "1",
+        email: "test@students.zhaw.ch",
+        username: "testuser",
+        password: "hashed-password",
+        role: "student",
+      } as any);
+
+      const service = new AuthService();
+
+      const result = await service.login("  TEST@students.zhaw.ch  ", "Strong@Password123!");
+
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { email: "test@students.zhaw.ch" },
+            { username: "TEST@students.zhaw.ch" },
+          ],
+        },
+      });
+      expect(mockCompare).toHaveBeenCalledWith("Strong@Password123!", "hashed-password");
+      expect(mockSign).toHaveBeenCalled();
+      expect(result).toEqual({
+        user: {
+          id: "1",
+          email: "test@students.zhaw.ch",
+          username: "testuser",
+          role: "student",
+        },
+        token: "fake-jwt-token",
+      });
     });
 
-    // Generate JWT token
-    const token = this.generateToken(user);
+    /**
+     * Test case: Successful login with username
+     *
+     * Scenario:
+     * A valid username and password are provided.
+     *
+     * Expected behavior:
+     * - User is searched by identifier (email or username)
+     * - Password is verified
+     * - JWT token is generated
+     * - Safe user data and token are returned
+     */
+    it("should authenticate user by username", async () => {
+      mockFindFirst.mockResolvedValueOnce({
+        id: "1",
+        email: "test@students.zhaw.ch",
+        username: "testuser",
+        password: "hashed-password",
+        role: "student",
+      } as any);
 
-    // Return safe user data (without password) and token
-    return { 
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        username: user.username, 
-        role: user.role 
-      }, 
-      token 
-    };
-  }
+      const service = new AuthService();
 
-  /**
-   * Authenticates a user.
-   * 
-   * Workflow:
-   * 1. Find user by email
-   * 2. Compare provided password with stored hash
-   * 3. Generate a JWT token if valid
-   * 4. Return user data and token
-   * 
-   * @param email User's email address
-   * @param password Plain-text password
-   * 
-   * @returns Returns an object containing the authenticated user and a JWT token
-   * 
-   * @throws Error if credentials are invalid
-   */
-  async login(email: string, password: string): Promise<AuthResponse> {
-    // Find user by email
-    const user = await prisma.user.findUnique({ where: { email } });
+      const result = await service.login("testuser", "Strong@Password123!");
 
-    if (!user) {
-      throw new Error("Invalid credentials");
-    }
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { email: "testuser" },
+            { username: "testuser" },
+          ],
+        },
+      });
+      expect(mockCompare).toHaveBeenCalledWith("Strong@Password123!", "hashed-password");
+      expect(result.user.username).toBe("testuser");
+    });
 
-    // Compare password with hashed password
-    const isValid = await bcrypt.compare(password, user.password);
+    /**
+     * Test case: Unknown user
+     *
+     * Scenario:
+     * No user matches the provided identifier.
+     *
+     * Expected behavior:
+     * - Login is rejected
+     * - Error "Invalid credentials" is thrown
+     */
+    it("should throw if user is not found", async () => {
+      mockFindFirst.mockResolvedValueOnce(null as any);
 
-    if (!isValid) {
-      throw new Error("Invalid credentials");
-    }
+      const service = new AuthService();
 
-    // Generate JWT token
-    const token = this.generateToken(user);
+      await expect(
+        service.login("unknown-user", "Strong@Password123!")
+      ).rejects.toThrow("Invalid credentials");
+    });
 
-    // Return safe user data and token
-    return { 
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        username: user.username, 
-        role: user.role 
-      }, 
-      token 
-    };
-  }
+    /**
+     * Test case: Wrong password
+     *
+     * Scenario:
+     * A user exists, but bcrypt password comparison fails.
+     *
+     * Expected behavior:
+     * - Login is rejected
+     * - Error "Invalid credentials" is thrown
+     */
+    it("should throw if password is invalid", async () => {
+      mockFindFirst.mockResolvedValueOnce({
+        id: "1",
+        email: "test@students.zhaw.ch",
+        username: "testuser",
+        password: "hashed-password",
+        role: "student",
+      } as any);
 
-  /**
-   * Checks whether an email and/or username is already taken.
-   *
-   * Workflow:
-   * 1. Check if an email value is provided and query the database
-   * 2. Check if a username value is provided and query the database
-   * 3. Return availability result
-   *
-   * Response:
-   * - emailExists?: boolean (true if email already exists)
-   * - usernameExists?: boolean (true if username already exists)
-   *
-   * @param email Optional email address to check
-   * @param username Optional username to check
-   *
-   * @returns Object containing availability information
-   */
-  async checkAvailability(email?: string, username?: string): Promise<{
-    emailExists?: boolean;
-    usernameExists?: boolean;
-  }> {
-    const result: { emailExists?: boolean; usernameExists?: boolean } = {};
+      mockCompare.mockResolvedValueOnce(false);
 
-    if (email) {
-      const existingEmail = await prisma.user.findUnique({ where: { email } });
-      result.emailExists = !!existingEmail;
-    }
+      const service = new AuthService();
 
-    if (username) {
-      const existingUsername = await prisma.user.findUnique({ where: { username } });
-      result.usernameExists = !!existingUsername;
-    }
-
-    return result;
-  }
+      await expect(
+        service.login("testuser", "WrongPassword123!")
+      ).rejects.toThrow("Invalid credentials");
+    });
+  });
 
   /**
-   * Generates a JWT token for a user.
-   * 
-   * The token contains:
-   * - userId
-   * - email
-   * - role
-   * 
-   * @param user Object containing user id, email and role
-   * 
-   * @returns Signed JWT token valid for 7 days
+   * Test cases for checkAvailability()
    */
-  private generateToken(user: { id: string; email: string; role: string }): string {
-    const payload: JwtPayload = {
-      userId: user.id,
-      email: user.email,
-      role: user.role as JwtPayload["role"],
-    };
-    
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
-  }
-}
+  describe("checkAvailability", () => {
+    /**
+     * Test case: Email and username availability
+     *
+     * Scenario:
+     * Both email and username are checked.
+     *
+     * Expected behavior:
+     * - Database is queried for both values
+     * - Availability result is returned correctly
+     */
+    it("should return emailExists and usernameExists", async () => {
+      mockFindUnique
+        .mockResolvedValueOnce({ id: "1" } as any) // email exists
+        .mockResolvedValueOnce(null as any); // username does not exist
+
+      const service = new AuthService();
+
+      const result = await service.checkAvailability(
+        "test@students.zhaw.ch",
+        "newuser"
+      );
+
+      expect(mockFindUnique).toHaveBeenNthCalledWith(1, {
+        where: { email: "test@students.zhaw.ch" },
+      });
+      expect(mockFindUnique).toHaveBeenNthCalledWith(2, {
+        where: { username: "newuser" },
+      });
+      expect(result).toEqual({
+        emailExists: true,
+        usernameExists: false,
+      });
+    });
+
+    /**
+     * Test case: Only email provided
+     *
+     * Scenario:
+     * Only an email is checked for availability.
+     *
+     * Expected behavior:
+     * - Only email query is executed
+     * - Result contains only emailExists
+     */
+    it("should check only email if username is not provided", async () => {
+      mockFindUnique.mockResolvedValueOnce(null as any);
+
+      const service = new AuthService();
+
+      const result = await service.checkAvailability("free@students.zhaw.ch");
+
+      expect(mockFindUnique).toHaveBeenCalledWith({
+        where: { email: "free@students.zhaw.ch" },
+      });
+      expect(result).toEqual({
+        emailExists: false,
+      });
+    });
+  });
+});
