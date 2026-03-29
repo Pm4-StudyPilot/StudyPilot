@@ -91,7 +91,7 @@ describe("AuthController.register", () => {
       checkAvailability: mock(),
     };
 
-    const controller = new AuthController(mockAuthService as any);
+    const controller = new AuthController(mockAuthService as unknown as AuthService);
 
     const req = {
       body: {
@@ -209,32 +209,32 @@ describe("AuthController.register", () => {
    * - Response contains invalid e-mail format message
    */
   it("should return 400 if email format is invalid", async () => {
-  const mockAuthService = {
-    register: mock(),
-    login: mock(),
-    checkAvailability: mock(),
-  };
+    const mockAuthService = {
+      register: mock(),
+      login: mock(),
+      checkAvailability: mock(),
+    };
 
-  const controller = new AuthController(mockAuthService as any);
+    const controller = new AuthController(mockAuthService as unknown as AuthService);
 
-  const req = {
-    body: {
-      email: "invalid-email",
-      username: "testuser",
-      password: "Password123!@#",
-    },
-  } as Request;
+    const req = {
+      body: {
+        email: "invalid-email",
+        username: "testuser",
+        password: "Password123!@#",
+      },
+    } as Request;
 
-  const res = createMockResponse();
+    const res = createMockResponse();
 
-  await controller.register(req, res);
+    await controller.register(req, res);
 
-  expect(res.status).toHaveBeenCalledWith(400);
-  expect(res.json).toHaveBeenCalledWith({
-    message: "Invalid email format",
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Invalid email format",
+    });
+    expect(mockAuthService.register).not.toHaveBeenCalled();
   });
-  expect(mockAuthService.register).not.toHaveBeenCalled();
-});
 
   /**
    * Test case: Invalid password format
@@ -248,33 +248,33 @@ describe("AuthController.register", () => {
    * - Status code: 400
    * - Response contains password security error message
    */
-it("should return 400 if password does not meet security requirements", async () => {
-  const mockAuthService = {
-    register: mock(),
-    login: mock(),
-    checkAvailability: mock(),
-  };
+  it("should return 400 if password does not meet security requirements", async () => {
+    const mockAuthService = {
+      register: mock(),
+      login: mock(),
+      checkAvailability: mock(),
+    };
 
-  const controller = new AuthController(mockAuthService as any);
+    const controller = new AuthController(mockAuthService as unknown as AuthService);
 
-  const req = {
-    body: {
-      email: "test@students.zhaw.ch",
-      username: "testuser",
-      password: "short",
-    },
-  } as Request;
+    const req = {
+      body: {
+        email: "test@students.zhaw.ch",
+        username: "testuser",
+        password: "short",
+      },
+    } as Request;
 
-  const res = createMockResponse();
+    const res = createMockResponse();
 
-  await controller.register(req, res);
+    await controller.register(req, res);
 
-  expect(res.status).toHaveBeenCalledWith(400);
-  expect(res.json).toHaveBeenCalledWith({
-    message: "Password does not meet security requirements",
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Password does not meet security requirements",
+    });
+    expect(mockAuthService.register).not.toHaveBeenCalled();
   });
-  expect(mockAuthService.register).not.toHaveBeenCalled();
-});
 
   /**
    * Test case: Whitespace-only required fields
@@ -294,7 +294,7 @@ it("should return 400 if password does not meet security requirements", async ()
       checkAvailability: mock(),
     };
 
-    const controller = new AuthController(mockAuthService as any);
+    const controller = new AuthController(mockAuthService as unknown as AuthService);
 
     const req = {
       body: {
@@ -339,7 +339,7 @@ it("should return 400 if password does not meet security requirements", async ()
       checkAvailability: mock(),
     };
 
-    const controller = new AuthController(mockAuthService as any);
+    const controller = new AuthController(mockAuthService as unknown as AuthService);
 
     const req = {
       body: {
@@ -379,7 +379,7 @@ it("should return 400 if password does not meet security requirements", async ()
       checkAvailability: mock(),
     };
 
-    const controller = new AuthController(mockAuthService as any);
+    const controller = new AuthController(mockAuthService as unknown as AuthService);
 
     const req = {
       body: {

@@ -184,8 +184,8 @@ export class AuthController {
 
     const result = await this.authService.checkAvailability(email, username);
     res.json(result);
-  } catch (error: unknown) {
+  } catch {
     res.status(500).json({ message: "Availability check failed" });
   }
-}
+  }
 }
