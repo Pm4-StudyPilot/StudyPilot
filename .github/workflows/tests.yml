@@ -19,6 +19,33 @@ env:
   VITE_API_URL: http://localhost:3000
 
 jobs:
+  # ─── Lint & Type Check ──────────────────────────────────────────
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: backend
+        run: bunx prisma generate --config prisma/prisma.config.ts
+
+      - name: Run lint and type checks
+        run: npm run lint
+
   # ─── Backend Unit & Integration Tests ───────────────────────────
   backend-tests:
     name: Backend Tests

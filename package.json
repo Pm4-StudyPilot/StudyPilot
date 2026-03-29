@@ -10,10 +10,21 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "turbo run test",
-    "test:e2e": "turbo run test:e2e"
+    "test:e2e": "turbo run test:e2e",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "frontend/**/*.{ts,tsx}": "eslint --config frontend/eslint.config.js --max-warnings=0",
+    "backend/**/*.ts": "eslint --config backend/eslint.config.mjs --max-warnings=0",
+    "**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml,scss,css}": "prettier --write"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1",
     "turbo": "^2.4.0"
   }
 }
