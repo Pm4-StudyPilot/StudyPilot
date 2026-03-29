@@ -3,8 +3,8 @@ import jwt from "jsonwebtoken";
 import { JwtPayload, AuthResponse } from "../types";
 import { prisma } from "../config/database";
 
-// Ensure JWT secret is provided via environment variables.
-// The application will not start without it to avoid insecure defaults.
+// Ensure JWT secret is provided via environment variables
+// The application will not start without it to avoid insecure defaults
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
 
