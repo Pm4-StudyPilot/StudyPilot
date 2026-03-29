@@ -3,13 +3,19 @@ import jwt from "jsonwebtoken";
 import { JwtPayload, AuthResponse } from "../types";
 import { prisma } from "../config/database";
 
-// Ensure JWT secret is provided via environment variables
-// The application will not start without it to avoid insecure defaults
-const JWT_SECRET = process.env.JWT_SECRET;
+// Ensure JWT secret is provided via environment variables.
+// The application will not start without it to avoid insecure defaults.
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
 
-if (!JWT_SECRET) {
-  throw new Error("Missing required environment variable: JWT_SECRET");
+  if (!secret) {
+    throw new Error("Missing required environment variable: JWT_SECRET");
+  }
+
+  return secret;
 }
+
+const JWT_SECRET = getJwtSecret();
 
 /**
  * AuthService
