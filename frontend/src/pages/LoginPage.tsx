@@ -1,26 +1,38 @@
-import { useState, FormEvent } from "react";
+import { FormEvent, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
 import { AuthResponse } from "../types/dto";
 import Button from "../components/shared/Button";
 import Logo from "../components/shared/Logo";
+import Form from "../components/shared/form/Form";
+import InputField from "../components/shared/form/InputField";
+import PasswordField from "../components/shared/form/PasswordField";
+import { useForm } from "../hooks/useForm";
+import { loginSchema } from "../validation/schemas";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const { values, errors, handleChange, validate } = useForm(loginSchema, {
+    email: "",
+    password: "",
+  });
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+    if (!validate()) return;
     setLoading(true);
 
     try {
-      const data = await api.post<AuthResponse>("/auth/login", { email, password });
+      const data = await api.post<AuthResponse>("/auth/login", {
+        email: values.email,
+        password: values.password,
+      });
       login(data.token, data.user);
       navigate("/");
     } catch (err: unknown) {
@@ -34,40 +46,32 @@ export default function LoginPage() {
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
       <div className="card shadow" style={{ maxWidth: "400px", width: "100%" }}>
         <div className="card-body p-4">
-          <h2 className="text-center mb-4">
-            <Logo />
-          </h2>
+          <h2 className="text-center mb-4"><Logo /></h2>
           <h5 className="text-center mb-3">Sign In</h5>
 
-          {error && <div className="alert alert-danger">{error}</div>}
+          <Form onSubmit={handleSubmit} error={error}>
+            <InputField
+              label="Email"
+              type="email"
+              value={values.email}
+              onChange={(e) => handleChange("email", e.target.value)}
+              error={errors.email}
+              autoComplete="email"
+            />
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label className="form-label">Email</label>
-              <input
-                type="email"
-                className="form-control"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">Password</label>
-              <input
-                type="password"
-                className="form-control"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+            <PasswordField
+              label="Password"
+              showToggle={false}
+              value={values.password}
+              onChange={(e) => handleChange("password", e.target.value)}
+              error={errors.password}
+              autoComplete="current-password"
+            />
 
             <Button type="submit" className="w-100" loading={loading}>
               Login
             </Button>
-          </form>
+          </Form>
 
           <div className="text-center mt-3">
             <Link to="/register">Need an account? Register</Link>
