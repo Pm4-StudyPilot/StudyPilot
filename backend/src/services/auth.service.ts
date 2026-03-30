@@ -78,21 +78,31 @@ export class AuthService {
    * Authenticates a user.
    * 
    * Workflow:
-   * 1. Find user by email
+   * 1. Find user by identifier (email or username)
    * 2. Compare provided password with stored hash
    * 3. Generate a JWT token if valid
    * 4. Return user data and token
    * 
-   * @param email User's email address
+   * @param identifier User's email address or username
    * @param password Plain-text password
    * 
    * @returns Returns an object containing the authenticated user and a JWT token
    * 
    * @throws Error if credentials are invalid
    */
-  async login(email: string, password: string): Promise<AuthResponse> {
-    // Find user by email
-    const user = await prisma.user.findUnique({ where: { email } });
+  async login(identifier: string, password: string): Promise<AuthResponse> {
+    // Normalize input
+    const normalizedIdentifier = identifier.trim();
+
+    // Find user by email or username
+    const user = await prisma.user.findFirst({ 
+      where: { 
+        OR: [
+          { email: normalizedIdentifier.toLowerCase() },
+          { username: normalizedIdentifier }
+        ] 
+    }
+  });
 
     if (!user) {
       throw new Error("Invalid credentials");
