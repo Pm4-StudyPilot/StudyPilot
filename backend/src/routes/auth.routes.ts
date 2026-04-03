@@ -26,7 +26,7 @@ const authController = new AuthController();
  *
  * @returns { user: object, token: string}
  */
-authRouter.post('/register', (req, res) => authController.register(req, res));
+authRouter.post('/register', authLimiter, (req, res) => authController.register(req, res));
 
 /**
  * @route POST /api/auth/login
@@ -35,7 +35,7 @@ authRouter.post('/register', (req, res) => authController.register(req, res));
  *
  * @returns { user: object, token: string}
  */
-authRouter.post('/login', (req, res) => authController.login(req, res));
+authRouter.post('/login', authLimiter, (req, res) => authController.login(req, res));
 
 /**
  * @route POST /api/auth/check-availability
