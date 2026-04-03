@@ -1,18 +1,15 @@
-const API_BASE = "/api";
+const API_BASE = '/api';
 
-async function request<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const token = localStorage.getItem("token");
+async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const token = localStorage.getItem('token');
 
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
     ...((options.headers as Record<string, string>) || {}),
   };
 
   if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
   const response = await fetch(`${API_BASE}${endpoint}`, {
@@ -33,7 +30,13 @@ export const api = {
 
   post: <T>(endpoint: string, data: unknown) =>
     request<T>(endpoint, {
-      method: "POST",
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  patch: <T>(endpoint: string, data: unknown) =>
+    request<T>(endpoint, {
+      method: 'PATCH',
       body: JSON.stringify(data),
     }),
 };
