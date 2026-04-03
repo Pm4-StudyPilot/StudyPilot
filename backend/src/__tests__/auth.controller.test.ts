@@ -1,5 +1,14 @@
 import { describe, it, expect, mock } from 'bun:test';
 import type { Request, Response } from 'express';
+
+// Mock EmailService so tests don't crash when RESEND_API_KEY is missing
+// Bun applies this mock before imports are evaluated
+mock.module('../services/email.service', () => ({
+  EmailService: class {
+    sendPasswordResetEmail = mock(async () => undefined);
+  },
+}));
+
 import { AuthController } from '../controllers/auth.controller';
 import type { AuthService } from '../services/auth.service';
 
