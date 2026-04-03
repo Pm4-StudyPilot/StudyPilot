@@ -62,3 +62,23 @@ export interface CourseDto {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// --- Object Storage ---
+
+export interface ObjectMetadata {
+  contentType?: string;
+  size?: number;
+  lastModified?: Date;
+  [key: string]: string | number | Date | undefined;
+}
+
+export interface ObjectEntry {
+  key: string;
+  size?: number;
+  lastModified?: Date;
+}
+
+export interface UploadOptions {
+  contentType?: string;
+  metadata?: Record<string, string>;
+}
