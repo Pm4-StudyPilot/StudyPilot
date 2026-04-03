@@ -4,9 +4,11 @@ import { api } from '../services/api';
 import Button from '../components/shared/Button';
 import Form from '../components/shared/form/Form';
 import PasswordField from '../components/shared/form/PasswordField';
+import ProgressBar from '../components/shared/feedback/ProgressBar';
 import Navbar from '../components/shared/layout/Navbar';
 import { useForm } from '../hooks/useForm';
 import { changePasswordSchema } from '../validation/schemas';
+import { getPasswordChecks, getPasswordStrength } from '../utils/passwordStrength';
 
 /**
  * ChangePasswordPage
@@ -36,6 +38,10 @@ export default function ChangePasswordPage() {
     newPassword: '',
     confirmNewPassword: '',
   });
+
+  const passwordChecks = getPasswordChecks(values.newPassword);
+  const passwordsMatch =
+    values.confirmNewPassword.length > 0 && values.newPassword === values.confirmNewPassword;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -89,6 +95,26 @@ export default function ChangePasswordPage() {
                 autoComplete="new-password"
               />
 
+              <ProgressBar value={getPasswordStrength(values.newPassword)} />
+
+              <div className="mt-2 mb-3 small">
+                <div className={passwordChecks.minLength ? 'text-success' : 'text-danger'}>
+                  {passwordChecks.minLength ? '✔' : '✖'} At least 12 characters
+                </div>
+                <div className={passwordChecks.uppercase ? 'text-success' : 'text-danger'}>
+                  {passwordChecks.uppercase ? '✔' : '✖'} At least one uppercase letter
+                </div>
+                <div className={passwordChecks.lowercase ? 'text-success' : 'text-danger'}>
+                  {passwordChecks.lowercase ? '✔' : '✖'} At least one lowercase letter
+                </div>
+                <div className={passwordChecks.number ? 'text-success' : 'text-danger'}>
+                  {passwordChecks.number ? '✔' : '✖'} At least one number
+                </div>
+                <div className={passwordChecks.specialChar ? 'text-success' : 'text-danger'}>
+                  {passwordChecks.specialChar ? '✔' : '✖'} At least one special character
+                </div>
+              </div>
+
               <PasswordField
                 label="Confirm New Password"
                 value={values.confirmNewPassword}
@@ -96,6 +122,12 @@ export default function ChangePasswordPage() {
                 error={errors.confirmNewPassword}
                 autoComplete="new-password"
               />
+
+              {values.confirmNewPassword && (
+                <div className={`mb-3 small ${passwordsMatch ? 'text-success' : 'text-danger'}`}>
+                  {passwordsMatch ? '✔' : '✖'} Passwords match
+                </div>
+              )}
 
               <div className="d-flex gap-2 mt-3">
                 <Button type="submit" loading={loading}>
