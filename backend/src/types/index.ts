@@ -1,4 +1,4 @@
-import { Role } from "../generated/prisma/client";
+import { Role } from '../generated/prisma/client';
 
 // --- Internal types ---
 
@@ -34,6 +34,11 @@ export interface CreateCourseRequest {
 
 export interface UpdateCourseRequest {
   name: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }
 
 // --- Response DTOs ---
