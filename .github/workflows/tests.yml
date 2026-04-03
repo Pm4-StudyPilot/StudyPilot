@@ -17,6 +17,7 @@ env:
   MINIO_BUCKET: test-bucket
   MINIO_USE_SSL: false
   VITE_API_URL: http://localhost:3000
+  RESEND_API_KEY: test-resend-key
 
 jobs:
   # ─── Lint & Type Check ──────────────────────────────────────────
