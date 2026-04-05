@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { UserService } from '../services/user.service';
 import { AuthenticatedUser, ChangePasswordRequest } from '../types';
+import { logger } from '../lib/logger';
 
 export class UserController {
   constructor(private userService: UserService = new UserService()) {}
@@ -16,7 +17,8 @@ export class UserController {
       }
 
       res.json(user);
-    } catch {
+    } catch (error: unknown) {
+      logger.error({ error }, '[UserController#me]');
       res.status(500).json({ message: 'Failed to fetch user' });
     }
   }
@@ -46,6 +48,7 @@ export class UserController {
 
       res.json({ message: 'Password changed successfully' });
     } catch (error: unknown) {
+      logger.error({ error }, '[UserController#changePassword]');
       if (error instanceof Error && error.message === 'Current password is incorrect') {
         res.status(401).json({ message: 'Current password is incorrect' });
         return;

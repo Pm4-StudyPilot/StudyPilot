@@ -7,6 +7,7 @@ import {
   ResetPasswordRequest,
 } from '../types';
 import validator from 'validator';
+import { logger } from '../lib/logger';
 
 /**
  * Controller responsible for handling authentication-related requests.
@@ -92,6 +93,8 @@ export class AuthController {
       // Return success response with created user and token
       res.status(201).json(result);
     } catch (error: unknown) {
+      logger.error({ error }, '[AuthController#register]');
+
       // Handle unique constraint violation (duplicate email or username)
       if (
         typeof error === 'object' &&
@@ -162,6 +165,7 @@ export class AuthController {
       // Return authenticated user and token
       res.json(result);
     } catch (error: unknown) {
+      logger.error({ error }, '[AuthController#login]');
       if (error instanceof Error && error.message === 'Invalid credentials') {
         res.status(401).json({ message: 'Invalid credentials' });
         return;
@@ -201,7 +205,8 @@ export class AuthController {
 
       const result = await this.authService.checkAvailability(email, username);
       res.json(result);
-    } catch {
+    } catch (error: unknown) {
+      logger.error({ error }, '[AuthController#checkAvailability]');
       res.status(500).json({ message: 'Availability check failed' });
     }
   }
