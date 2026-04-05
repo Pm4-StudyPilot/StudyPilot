@@ -8,14 +8,13 @@
 - [Bun](https://bun.sh/)
 - [Docker](https://www.docker.com/)
 
-### 1. Set up environment variables
+### 1. Run setup
 
 ```bash
-chmod +x setup-env.sh
-./setup-env.sh
+npm run setup
 ```
 
-This copies `.env.example` files to `.env` in the root and `backend/` directories. Review and adjust values as needed.
+This copies `.env.example` → `.env`, installs dependencies, and sets up husky hooks.
 
 ### 2. Start infrastructure
 
@@ -25,19 +24,13 @@ docker compose up -d
 
 This starts Postgres and MinIO.
 
-### 3. Install dependencies
-
-```bash
-npm install
-```
-
-### 4. Run database migration
+### 3. Run database migration
 
 ```bash
 cd backend && bun prisma migrate dev --name init && cd ..
 ```
 
-### 5. Start development servers
+### 4. Start development servers
 
 ```bash
 npm run dev

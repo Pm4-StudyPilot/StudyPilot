@@ -1,0 +1,16 @@
+name: CodeQL Config
+
+paths:
+  - frontend
+  - backend
+
+paths-ignore:
+  - frontend/node_modules
+  - backend/node_modules
+  - '**/*.test.ts'
+  - '**/*.test.tsx'
+  - '**/*.spec.ts'
+  - '**/*.spec.tsx'
+  - '**/__tests__/**'
+  - '**/dist/**'
+  - '**/coverage/**'
