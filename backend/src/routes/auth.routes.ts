@@ -44,7 +44,9 @@ authRouter.post('/login', authLimiter, (req, res) => authController.login(req, r
  *
  * @returns { emailExists?: boolean, usernameExists?: boolean }
  */
-authRouter.post('/check-availability', (req, res) => authController.checkAvailability(req, res));
+authRouter.post('/check-availability', authLimiter, (req, res) =>
+  authController.checkAvailability(req, res)
+);
 
 /**
  * @route POST /api/auth/request-password-reset
