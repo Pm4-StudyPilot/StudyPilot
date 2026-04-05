@@ -94,3 +94,34 @@ export const changePasswordSchema = z
     message: 'Passwords do not match',
     path: ['confirmNewPassword'],
   });
+
+/**
+ * Request Password Reset Schema
+ *
+ * Validates the email field on the "Forgot Password" form.
+ */
+export const requestPasswordResetSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+/**
+ * Reset Password Schema
+ *
+ * Validates the new password and confirmation on the "Reset Password" form.
+ * Password rules mirror the registration schema.
+ */
+export const resetPasswordSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(12, 'Password must be at least 12 characters')
+      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+      .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+      .regex(/[0-9]/, 'Password must contain at least one number')
+      .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+    confirmNewPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmNewPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmNewPassword'],
+  });

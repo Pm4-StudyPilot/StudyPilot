@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller';
+import { authLimiter, sensitiveLimiter } from '../middleware/rateLimiter';
 
 const authRouter = Router();
 const authController = new AuthController();
@@ -29,7 +30,7 @@ const authController = new AuthController();
  *       409:
  *         description: Email or username already exists.
  */
-authRouter.post('/register', (req, res) => authController.register(req, res));
+authRouter.post('/register', authLimiter, (req, res) => authController.register(req, res));
 
 /**
  * @openapi
@@ -56,7 +57,7 @@ authRouter.post('/register', (req, res) => authController.register(req, res));
  *       401:
  *         description: Invalid credentials.
  */
-authRouter.post('/login', (req, res) => authController.login(req, res));
+authRouter.post('/login', authLimiter, (req, res) => authController.login(req, res));
 
 /**
  * @openapi
@@ -79,6 +80,30 @@ authRouter.post('/login', (req, res) => authController.login(req, res));
  *             schema:
  *               $ref: '#/components/schemas/CheckAvailabilityResponse'
  */
-authRouter.post('/check-availability', (req, res) => authController.checkAvailability(req, res));
+authRouter.post('/check-availability', authLimiter, (req, res) =>
+  authController.checkAvailability(req, res)
+);
+
+/**
+ * @route POST /api/auth/reset-password
+ * @description Resets the user's password using a valid reset token
+ * @body { token: string, newPassword: string }
+ *
+ * @returns { message: string }
+ */
+authRouter.post('/reset-password', sensitiveLimiter, (req, res) =>
+  authController.resetPassword(req, res)
+);
+
+/**
+ * @route POST /api/auth/request-password-reset
+ * @description Sends a password reset email to the given address
+ * @body { email: string }
+ *
+ * @returns { message: string }
+ */
+authRouter.post('/request-password-reset', authLimiter, (req, res) =>
+  authController.requestPasswordReset(req, res)
+);
 
 export { authRouter };
