@@ -14,7 +14,8 @@
     "format:check": "prettier --check .",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
-    "prepare": "husky"
+    "prepare": "husky",
+    "setup": "node scripts/setup.js"
   },
   "lint-staged": {
     "frontend/**/*.{ts,tsx}": "eslint --config frontend/eslint.config.js --max-warnings=0",

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "bun --watch src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target node",
+    "build": "bun build src/index.ts --outdir dist --target node --external @mapbox/node-pre-gyp",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . && tsc --noEmit",
     "format": "prettier --write .",
