@@ -10,7 +10,7 @@ function getResendApiKey(): string {
 }
 
 const RESEND_API_KEY = getResendApiKey();
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'StudyPilot <noreply@studypilot.app>';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'StudyPilot <onboarding@resend.dev>';
 const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
 
 /**
