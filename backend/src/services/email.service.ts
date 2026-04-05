@@ -1,14 +1,11 @@
 import { Resend } from 'resend';
+import { logger } from '../lib/logger';
 
-// Ensure Resend API key is provided via environment variables.
-// The application will not start without it to avoid silent email failures.
 function getResendApiKey(): string {
   const key = process.env.RESEND_API_KEY;
-
   if (!key) {
     throw new Error('Missing required environment variable: RESEND_API_KEY');
   }
-
   return key;
 }
 
@@ -27,11 +24,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
  * This service is used by the AuthService.
  */
 export class EmailService {
-  private resend: Resend;
-
-  constructor() {
-    this.resend = new Resend(RESEND_API_KEY);
-  }
+  private resend = new Resend(RESEND_API_KEY);
 
   /**
    * Sends a password reset email to the user.
@@ -71,10 +64,10 @@ export class EmailService {
     });
 
     if (error) {
-      console.error('[EmailService] Failed to send password reset email:', error);
+      logger.error({ error }, '[EmailService] Failed to send password reset email');
       throw new Error(`Email delivery failed: ${error.message}`);
     }
 
-    console.log(`[EmailService] Password reset email sent. id=${data?.id} to=${to}`);
+    logger.info({ id: data?.id }, '[EmailService] Password reset email sent');
   }
 }

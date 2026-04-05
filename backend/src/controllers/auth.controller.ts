@@ -249,7 +249,8 @@ export class AuthController {
 
       // Always return a generic message to prevent email enumeration
       res.json({ message: 'If this email is registered, you will receive a password reset link.' });
-    } catch {
+    } catch (error: unknown) {
+      logger.error({ error }, '[AuthController#requestPasswordReset]');
       res.status(500).json({ message: 'Failed to process password reset request' });
     }
   }
@@ -297,6 +298,7 @@ export class AuthController {
 
       res.json({ message: 'Password has been reset successfully. You can now log in.' });
     } catch (error: unknown) {
+      logger.error({ error }, '[AuthController#resetPassword]');
       if (error instanceof Error && error.message === 'Invalid or expired password reset token') {
         res.status(400).json({ message: 'Invalid or expired password reset token' });
         return;
