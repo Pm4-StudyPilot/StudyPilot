@@ -29,6 +29,12 @@ function installDeps() {
   run('npm install');
 }
 
+function runMigrations() {
+  console.log('\nRunning database migrations...');
+  run('npm run db:migrate');
+  run('npm run db:generate');
+}
+
 function setupHusky() {
   console.log('\nSetting up husky hooks...');
   run('npm run prepare');
@@ -39,6 +45,7 @@ function main() {
 
   copyEnvExample();
   installDeps();
+  runMigrations();
   setupHusky();
 
   console.log('\n=== Setup complete! ===');
