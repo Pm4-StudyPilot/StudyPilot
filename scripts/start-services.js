@@ -5,7 +5,9 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 
 function main() {
-  const turbo = spawn('./node_modules/.bin/turbo', ['run', 'dev', '--ui', 'tui'], {
+  const turboEntrypoint = require.resolve('turbo/bin/turbo');
+
+  const turbo = spawn(process.execPath, [turboEntrypoint, 'run', 'dev', '--ui', 'tui'], {
     cwd: root,
     stdio: 'inherit',
   });
