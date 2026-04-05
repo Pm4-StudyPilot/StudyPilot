@@ -4,7 +4,9 @@ import morgan from 'morgan';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import passport from 'passport';
+import swaggerUi from 'swagger-ui-express';
 import { configurePassport } from './config/passport';
+import { swaggerSpec } from './config/swagger';
 import { router } from './routes';
 import { setupSocketHandlers } from './socket';
 import { logger } from './lib/logger';
@@ -25,6 +27,7 @@ app.use(passport.initialize());
 
 configurePassport();
 
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', router);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

@@ -1,48 +1,84 @@
-import { Router } from "express";
-import { AuthController } from "../controllers/auth.controller";
+import { Router } from 'express';
+import { AuthController } from '../controllers/auth.controller';
 
 const authRouter = Router();
 const authController = new AuthController();
 
 /**
- * Auth Routes
- * 
- * Defines all authentication-related API endpoints.
- * 
- * Base path within auth router: /auth
- * Full API path: /api/auth
- * 
- * Endpoints:
- * - POST /api/auth/register -> Register a new user
- * - POST /api/auth/login -> Authenticate an existing user
- * - POST /api/auth/check-availability -> Check email and username availability
+ * @openapi
+ * /auth/register:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Register a new user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RegisterRequest'
+ *     responses:
+ *       201:
+ *         description: User created successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       400:
+ *         description: Invalid input.
+ *       409:
+ *         description: Email or username already exists.
  */
+authRouter.post('/register', (req, res) => authController.register(req, res));
 
 /**
- * @route POST /api/auth/register
- * @description Registers a new user account
- * @body { email: string, username: string, password: string}
- * 
- * @returns { user: object, token: string} 
+ * @openapi
+ * /auth/login:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Login with email or username
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginRequest'
+ *     responses:
+ *       200:
+ *         description: Login successful.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       400:
+ *         description: Missing credentials.
+ *       401:
+ *         description: Invalid credentials.
  */
-authRouter.post("/register", (req, res) => authController.register(req, res));
+authRouter.post('/login', (req, res) => authController.login(req, res));
 
 /**
- * @route POST /api/auth/login
- * @description Authenticates a user and returns a JWT token
- * @body { email: string, password: string}
- * 
- * @returns { user: object, token: string} 
+ * @openapi
+ * /auth/check-availability:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Check whether email or username is already taken
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CheckAvailabilityRequest'
+ *     responses:
+ *       200:
+ *         description: Availability result.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CheckAvailabilityResponse'
  */
-authRouter.post("/login", (req, res) => authController.login(req, res));
-
-/**
- * @route POST /api/auth/check-availability
- * @description Checks whether e-mail and/or username are already taken
- * @body { email?: string, username?: string }
- *
- * @returns { emailExists?: boolean, usernameExists?: boolean }
- */
-authRouter.post("/check-availability", (req, res) => authController.checkAvailability(req, res));
+authRouter.post('/check-availability', (req, res) => authController.checkAvailability(req, res));
 
 export { authRouter };
