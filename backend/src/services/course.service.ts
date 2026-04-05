@@ -1,10 +1,9 @@
-import { prisma } from "../config/database";
-import { CourseDto } from "../types";
-
-type CoursePersistence = Pick<typeof prisma, "course">;
+import { prisma } from '../config/database';
+import { CourseDto } from '../types';
+import type { PrismaClient } from '../generated/prisma/client';
 
 export class CourseService {
-  constructor(private readonly db: CoursePersistence = prisma) {}
+  constructor(private readonly db: PrismaClient = prisma) {}
 
   async create(name: string, ownerId: string): Promise<CourseDto> {
     return this.db.course.create({
@@ -18,7 +17,7 @@ export class CourseService {
   async listByOwner(ownerId: string): Promise<CourseDto[]> {
     return this.db.course.findMany({
       where: { ownerId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
   }
 

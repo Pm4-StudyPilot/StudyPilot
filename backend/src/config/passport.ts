@@ -1,11 +1,11 @@
-import passport from "passport";
-import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
-import { prisma } from "./database";
+import passport from 'passport';
+import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
+import { prisma } from './database';
 
 export function configurePassport() {
   const opts = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: process.env.JWT_SECRET || "change-me-in-production",
+    secretOrKey: process.env.JWT_SECRET || 'change-me-in-production',
   };
 
   passport.use(
@@ -23,6 +23,7 @@ export function configurePassport() {
           });
         }
         return done(null, false);
+        // eslint-disable-next-line linting-rules/require-console-error-in-catch -- error is passed to done() callback
       } catch (error) {
         return done(error, false);
       }
