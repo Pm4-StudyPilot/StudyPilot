@@ -1,18 +1,18 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { api } from "../services/api";
-import Button from "../components/shared/Button";
-import Form from "../components/shared/form/Form";
-import Modal from "../components/shared/layout/Modal";
-import InputField from "../components/shared/form/InputField";
-import PasswordField from "../components/shared/form/PasswordField";
-import ProgressBar from "../components/shared/feedback/ProgressBar";
-import Logo from "../components/shared/Logo";
-import { useForm } from "../hooks/useForm";
-import { registerSchema } from "../validation/schemas";
-import { getPasswordChecks, getPasswordStrength } from "../utils/passwordStrength";
-import { AuthResponse } from "../types/dto";
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
+import { api } from '../services/api';
+import Button from '../components/shared/Button';
+import Form from '../components/shared/form/Form';
+import Modal from '../components/shared/layout/Modal';
+import InputField from '../components/shared/form/InputField';
+import PasswordField from '../components/shared/form/PasswordField';
+import ProgressBar from '../components/shared/feedback/ProgressBar';
+import Logo from '../components/shared/Logo';
+import { useForm } from '../hooks/useForm';
+import { registerSchema } from '../validation/schemas';
+import { getPasswordChecks, getPasswordStrength } from '../utils/passwordStrength';
+import { AuthResponse } from '../types/dto';
 
 /**
  * Response type for availability checks.
@@ -62,7 +62,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [serverError, setServerError] = useState("");
+  const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
@@ -71,10 +71,10 @@ export default function RegisterPage() {
   const [checkingUsername, setCheckingUsername] = useState(false);
 
   const { values, errors, handleChange, validate } = useForm(registerSchema, {
-    email: "",
-    username: "",
-    password: "",
-    confirmPassword: "",
+    email: '',
+    username: '',
+    password: '',
+    confirmPassword: '',
   });
 
   const passwordChecks = getPasswordChecks(values.password);
@@ -90,7 +90,7 @@ export default function RegisterPage() {
     setCheckingEmail(true);
 
     try {
-      const result = await api.post<AvailabilityResponse>("/auth/check-availability", { email });
+      const result = await api.post<AvailabilityResponse>('/auth/check-availability', { email });
       setEmailExists(result.emailExists ?? null);
     } catch {
       setEmailExists(null);
@@ -108,7 +108,7 @@ export default function RegisterPage() {
     setCheckingUsername(true);
 
     try {
-      const result = await api.post<AvailabilityResponse>("/auth/check-availability", { username });
+      const result = await api.post<AvailabilityResponse>('/auth/check-availability', { username });
       setUsernameExists(result.usernameExists ?? null);
     } catch {
       setUsernameExists(null);
@@ -156,8 +156,8 @@ export default function RegisterPage() {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [values.username]);  
-  
+  }, [values.username]);
+
   /**
    * Handles form submission for user registration.
    *
@@ -182,44 +182,44 @@ export default function RegisterPage() {
     if (!validate()) return;
 
     if (emailExists || usernameExists) {
-      setServerError("Please choose a different e-mail or username");
+      setServerError('Please choose a different e-mail or username');
       return;
     }
 
-    setServerError("");
+    setServerError('');
     setLoading(true);
 
     try {
-      const data = await api.post<AuthResponse>("/auth/register", {
+      const data = await api.post<AuthResponse>('/auth/register', {
         email: values.email,
         username: values.username,
         password: values.password,
       });
 
       login(data.token, data.user);
-      navigate("/");
+      navigate('/');
     } catch (err: unknown) {
-      setServerError(err instanceof Error ? err.message : "Something went wrong");
+      setServerError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <Modal 
-      disableClose={true} 
-      title="Create Account" 
-      header={<Logo/>} 
+    <Modal
+      disableClose={true}
+      title="Create Account"
+      header={<Logo />}
       footer={<Link to="/login">Already have an account? Sign in</Link>}
     >
       {serverError && <div className="alert alert-danger">{serverError}</div>}
-      
+
       <Form onSubmit={handleSubmit}>
         <InputField
           label="Email"
           type="email"
           value={values.email}
-          onChange={(e) => handleChange("email", e.target.value)}
+          onChange={(e) => handleChange('email', e.target.value)}
           error={errors.email}
           autoComplete="email"
         />
@@ -236,7 +236,7 @@ export default function RegisterPage() {
           label="Username"
           type="text"
           value={values.username}
-          onChange={(e) => handleChange("username", e.target.value)}
+          onChange={(e) => handleChange('username', e.target.value)}
           error={errors.username}
           autoComplete="username"
         />
@@ -252,7 +252,7 @@ export default function RegisterPage() {
         <PasswordField
           label="Password"
           value={values.password}
-          onChange={(e) => handleChange("password", e.target.value)}
+          onChange={(e) => handleChange('password', e.target.value)}
           error={errors.password}
           autoComplete="new-password"
         />
@@ -260,34 +260,34 @@ export default function RegisterPage() {
         <ProgressBar value={getPasswordStrength(values.password)} />
 
         <div className="mt-2 mb-3 small">
-          <div className={passwordChecks.minLength ? "text-success" : "text-danger"}>
-            {passwordChecks.minLength ? "✔" : "✖"} At least 12 characters
+          <div className={passwordChecks.minLength ? 'text-success' : 'text-danger'}>
+            {passwordChecks.minLength ? '✔' : '✖'} At least 12 characters
           </div>
-          <div className={passwordChecks.uppercase ? "text-success" : "text-danger"}>
-            {passwordChecks.uppercase ? "✔" : "✖"} At least one uppercase letter
+          <div className={passwordChecks.uppercase ? 'text-success' : 'text-danger'}>
+            {passwordChecks.uppercase ? '✔' : '✖'} At least one uppercase letter
           </div>
-          <div className={passwordChecks.lowercase ? "text-success" : "text-danger"}>
-            {passwordChecks.lowercase ? "✔" : "✖"} At least one lowercase letter
+          <div className={passwordChecks.lowercase ? 'text-success' : 'text-danger'}>
+            {passwordChecks.lowercase ? '✔' : '✖'} At least one lowercase letter
           </div>
-          <div className={passwordChecks.number ? "text-success" : "text-danger"}>
-            {passwordChecks.number ? "✔" : "✖"} At least one number
+          <div className={passwordChecks.number ? 'text-success' : 'text-danger'}>
+            {passwordChecks.number ? '✔' : '✖'} At least one number
           </div>
-          <div className={passwordChecks.specialChar ? "text-success" : "text-danger"}>
-            {passwordChecks.specialChar ? "✔" : "✖"} At least one special character
+          <div className={passwordChecks.specialChar ? 'text-success' : 'text-danger'}>
+            {passwordChecks.specialChar ? '✔' : '✖'} At least one special character
           </div>
         </div>
 
         <PasswordField
           label="Confirm Password"
           value={values.confirmPassword}
-          onChange={(e) => handleChange("confirmPassword", e.target.value)}
+          onChange={(e) => handleChange('confirmPassword', e.target.value)}
           error={errors.confirmPassword}
           autoComplete="new-password"
         />
 
         {values.confirmPassword && (
-          <div className={`mb-3 small ${passwordsMatch ? "text-success" : "text-danger"}`}>
-            {passwordsMatch ? "✔" : "✖"} Passwords match
+          <div className={`mb-3 small ${passwordsMatch ? 'text-success' : 'text-danger'}`}>
+            {passwordsMatch ? '✔' : '✖'} Passwords match
           </div>
         )}
 

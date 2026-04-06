@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
-import "@testing-library/jest-dom/vitest";
-import { MemoryRouter } from "react-router-dom";
-import LoginPage from "../pages/LoginPage";
-import { api } from "../services/api";
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import { MemoryRouter } from 'react-router-dom';
+import LoginPage from '../pages/LoginPage';
+import { api } from '../services/api';
 
 /**
  * Mock functions for external dependencies.
@@ -20,7 +20,7 @@ const mockNavigate = vi.fn();
  * Replaces the real useAuth hook with a simplified mock version
  * so that LoginPage can be tested without real authentication state.
  */
-vi.mock("../context/AuthContext", () => ({
+vi.mock('../context/useAuth', () => ({
   useAuth: () => ({
     login: mockLogin,
   }),
@@ -32,10 +32,8 @@ vi.mock("../context/AuthContext", () => ({
  * MemoryRouter is still used as normal router wrapper in tests,
  * but useNavigate is replaced so navigation can be asserted.
  */
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual<typeof import("react-router-dom")>(
-    "react-router-dom"
-  );
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
 
   return {
     ...actual,
@@ -49,7 +47,7 @@ vi.mock("react-router-dom", async () => {
  * Prevents real HTTP requests and allows controlled responses
  * for login requests.
  */
-vi.mock("../services/api", () => ({
+vi.mock('../services/api', () => ({
   api: {
     post: vi.fn(),
   },
@@ -64,7 +62,7 @@ vi.mock("../services/api", () => ({
  * - server-side error display on failed login
  * - client-side validation prevents empty submission
  */
-describe("LoginPage", () => {
+describe('LoginPage', () => {
   /**
    * Reset all mocks before each test to avoid leaking state
    * between test cases.
@@ -73,7 +71,7 @@ describe("LoginPage", () => {
     vi.clearAllMocks();
   });
 
-    afterEach(() => {
+  afterEach(() => {
     cleanup();
   });
 
@@ -88,7 +86,7 @@ describe("LoginPage", () => {
    * - Password field is displayed
    * - Login button is displayed
    */
-  it("renders all login fields", () => {
+  it('renders all login fields', () => {
     render(
       <MemoryRouter>
         <LoginPage />
@@ -97,7 +95,7 @@ describe("LoginPage", () => {
 
     expect(screen.getByLabelText(/email or username/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /login/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
   });
 
   /**
@@ -112,14 +110,14 @@ describe("LoginPage", () => {
    * - AuthContext login() is called with returned auth data
    * - Navigation to "/" is triggered
    */
-  it("submits login successfully", async () => {
+  it('submits login successfully', async () => {
     vi.mocked(api.post).mockResolvedValueOnce({
-      token: "fake-token",
+      token: 'fake-token',
       user: {
-        id: "1",
-        email: "test@students.zhaw.ch",
-        username: "testuser",
-        role: "student",
+        id: '1',
+        email: 'test@students.zhaw.ch',
+        username: 'testuser',
+        role: 'student',
       },
     });
 
@@ -130,29 +128,29 @@ describe("LoginPage", () => {
     );
 
     fireEvent.change(screen.getByLabelText(/email or username/i), {
-      target: { value: "testuser" },
+      target: { value: 'testuser' },
     });
 
     fireEvent.change(screen.getByLabelText(/password/i), {
-      target: { value: "Strong@Password123!" },
+      target: { value: 'Strong@Password123!' },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /login/i }));
+    fireEvent.click(screen.getByRole('button', { name: /login/i }));
 
     await waitFor(() => {
-      expect(api.post).toHaveBeenCalledWith("/auth/login", {
-        identifier: "testuser",
-        password: "Strong@Password123!",
+      expect(api.post).toHaveBeenCalledWith('/auth/login', {
+        identifier: 'testuser',
+        password: 'Strong@Password123!',
       });
 
-      expect(mockLogin).toHaveBeenCalledWith("fake-token", {
-        id: "1",
-        email: "test@students.zhaw.ch",
-        username: "testuser",
-        role: "student",
+      expect(mockLogin).toHaveBeenCalledWith('fake-token', {
+        id: '1',
+        email: 'test@students.zhaw.ch',
+        username: 'testuser',
+        role: 'student',
       });
 
-      expect(mockNavigate).toHaveBeenCalledWith("/");
+      expect(mockNavigate).toHaveBeenCalledWith('/');
     });
   });
 
@@ -168,8 +166,8 @@ describe("LoginPage", () => {
    * - AuthContext login() is not called
    * - Navigation is not triggered
    */
-  it("shows an error message if login fails", async () => {
-    vi.mocked(api.post).mockRejectedValueOnce(new Error("Invalid credentials"));
+  it('shows an error message if login fails', async () => {
+    vi.mocked(api.post).mockRejectedValueOnce(new Error('Invalid credentials'));
 
     render(
       <MemoryRouter>
@@ -178,14 +176,14 @@ describe("LoginPage", () => {
     );
 
     fireEvent.change(screen.getByLabelText(/email or username/i), {
-      target: { value: "testuser" },
+      target: { value: 'testuser' },
     });
 
     fireEvent.change(screen.getByLabelText(/password/i), {
-      target: { value: "WrongPassword123!" },
+      target: { value: 'WrongPassword123!' },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /login/i }));
+    fireEvent.click(screen.getByRole('button', { name: /login/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument();
@@ -206,14 +204,14 @@ describe("LoginPage", () => {
    * - API is not called
    * - Validation messages are displayed
    */
-  it("should not submit if required fields are empty", async () => {
+  it('should not submit if required fields are empty', async () => {
     render(
       <MemoryRouter>
         <LoginPage />
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /login/i }));
+    fireEvent.click(screen.getByRole('button', { name: /login/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/email or username is required/i)).toBeInTheDocument();
