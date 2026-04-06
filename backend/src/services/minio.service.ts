@@ -2,6 +2,7 @@ import { Readable } from 'stream';
 import { Client } from 'minio';
 import { StorageService } from './storage.service';
 import { ObjectMetadata, ObjectEntry, UploadOptions } from '../types';
+import { logger } from '../lib/logger';
 
 /**
  * MinioService
@@ -91,6 +92,8 @@ export class MinioService extends StorageService {
       await this.client.statObject(bucket, key);
       return true;
     } catch {
+      // returning false is the expected outcome when the object does not exist
+      logger.info({ bucket, key }, 'exists check failed — object not found');
       return false;
     }
   }
@@ -178,5 +181,22 @@ export class MinioService extends StorageService {
    */
   async presignedUrl(bucket: string, key: string, expirySeconds: number = 3600): Promise<string> {
     return this.client.presignedGetObject(bucket, key, expirySeconds);
+  }
+
+  /**
+   * Generates a pre-signed PUT URL for uploading an object directly to MinIO.
+   *
+   * @param bucket Target bucket name
+   * @param key Object key
+   * @param expirySeconds URL validity in seconds (default: 3600)
+   *
+   * @returns Pre-signed URL string
+   */
+  async presignedPutUrl(
+    bucket: string,
+    key: string,
+    expirySeconds: number = 3600
+  ): Promise<string> {
+    return this.client.presignedPutObject(bucket, key, expirySeconds);
   }
 }
