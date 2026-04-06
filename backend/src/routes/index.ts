@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authRouter } from './auth.routes';
 import { courseRouter } from './course.routes';
+import { storageRouter } from './storage.routes';
 import { userRouter } from './user.routes';
 
 const router = Router();
@@ -23,6 +24,7 @@ router.get('/health', (_req, res) => {
 
 router.use('/auth', authRouter);
 router.use('/courses', courseRouter);
+router.use('/storage', storageRouter);
 router.use('/users', userRouter);
 
 export { router };
