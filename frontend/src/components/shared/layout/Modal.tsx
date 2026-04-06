@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback } from 'react';
 
 interface ModalProps {
   title?: string;
@@ -16,25 +16,23 @@ export default function Modal({
   header,
   footer,
   open = true,
-  disableClose = false,
   onClose,
 }: ModalProps) {
   const handleClose = useCallback(() => {
-    if (disableClose) return;
     onClose?.();
-  }, [disableClose, onClose]);
+  }, [onClose]);
 
   // clicking ESC closes the modal
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         handleClose();
       }
     };
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [open, handleClose]);
 
@@ -46,11 +44,8 @@ export default function Modal({
       className="modal modal-backdrop-custom d-flex justify-content-center align-items-center min-vh-100"
       onClick={handleClose}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="container d-flex justify-content-center"
-      >
-        {!disableClose && (
+      <div onClick={(e) => e.stopPropagation()} className="container d-flex justify-content-center">
+        {onClose && (
           <button
             data-testid="modal-closebutton"
             className="btn-close position-absolute top-0 end-0 m-3"
@@ -71,4 +66,3 @@ export default function Modal({
     </div>
   );
 }
-
