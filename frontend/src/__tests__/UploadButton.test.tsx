@@ -92,17 +92,15 @@ describe('UploadButton', () => {
     const user = userEvent.setup();
     const onError = vi.fn();
 
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-    });
+    mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
     render(<UploadButton bucket="test" onError={onError} />);
 
     const file = new File(['hello'], 'file.txt', { type: 'text/plain' });
     await user.upload(screen.getByTestId('file-input'), file);
 
-    expect(screen.getByText(/Failed to get upload URL/)).toBeInTheDocument();
-    expect(onError).toHaveBeenCalledWith('Failed to get upload URL');
+    expect(screen.getByText(/Network error/)).toBeInTheDocument();
+    expect(onError).toHaveBeenCalledWith('Network error');
   });
 
   it('shows error message and calls onError when MinIO PUT fails', async () => {

@@ -59,6 +59,7 @@ export default function UploadButton({
 }: UploadButtonProps) {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -66,6 +67,8 @@ export default function UploadButton({
     if (!file) return;
 
     setUploading(true);
+    setError(null);
+    setResult(null);
 
     try {
       const token = localStorage.getItem('token');
@@ -97,6 +100,7 @@ export default function UploadButton({
       onSuccess?.(uploadResult);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+      setError(message);
       onError?.(message);
     } finally {
       setUploading(false);
@@ -132,6 +136,11 @@ export default function UploadButton({
       {result && (
         <p className="text-success mt-2 mb-0" style={{ fontSize: '0.85rem' }}>
           Uploaded: {result.key}
+        </p>
+      )}
+      {error && (
+        <p className="text-danger mt-2 mb-0" style={{ fontSize: '0.85rem' }}>
+          {error}
         </p>
       )}
     </div>
