@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { CourseService } from '../services/course.service';
 import { AuthenticatedUser, CreateCourseRequest, UpdateCourseRequest } from '../types';
+import { logger } from '../lib/logger';
 
 const courseService = new CourseService();
 
@@ -10,7 +11,8 @@ export class CourseController {
       const authUser = req.user as AuthenticatedUser;
       const courses = await courseService.listByOwner(authUser.id);
       res.json(courses);
-    } catch {
+    } catch (error: unknown) {
+      logger.error({ error }, '[CourseController#list]');
       res.status(500).json({ message: 'Failed to fetch courses' });
     }
   }
@@ -33,7 +35,8 @@ export class CourseController {
       }
 
       res.json(course);
-    } catch {
+    } catch (error: unknown) {
+      logger.error({ error }, '[CourseController#getById]');
       res.status(500).json({ message: 'Failed to fetch course' });
     }
   }
@@ -50,7 +53,8 @@ export class CourseController {
 
       const course = await courseService.create(name.trim(), authUser.id);
       res.status(201).json(course);
-    } catch {
+    } catch (error: unknown) {
+      logger.error({ error }, '[CourseController#create]');
       res.status(500).json({ message: 'Failed to create course' });
     }
   }
@@ -79,7 +83,8 @@ export class CourseController {
       }
 
       res.json(updatedCourse);
-    } catch {
+    } catch (error: unknown) {
+      logger.error({ error }, '[CourseController#update]');
       res.status(500).json({ message: 'Failed to update course' });
     }
   }
@@ -102,7 +107,8 @@ export class CourseController {
       }
 
       res.status(204).send();
-    } catch {
+    } catch (error: unknown) {
+      logger.error({ error }, '[CourseController#remove]');
       res.status(500).json({ message: 'Failed to delete course' });
     }
   }

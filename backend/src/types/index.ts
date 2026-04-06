@@ -41,6 +41,15 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+export interface RequestPasswordResetRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
 // --- Response DTOs ---
 
 export interface UserDto {
