@@ -12,7 +12,8 @@
     "test": "bun test --coverage --bail",
     "db:migrate": "bunx prisma migrate dev --config prisma/prisma.config.ts",
     "db:generate": "bunx prisma generate --config prisma/prisma.config.ts",
-    "db:push": "bunx prisma db push --config prisma/prisma.config.ts"
+    "db:push": "bunx prisma db push --config prisma/prisma.config.ts",
+    "db:seed": "bun run prisma/seed.ts"
   },
   "dependencies": {
     "@casl/ability": "^6.7.2",
@@ -36,6 +37,9 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "validator": "^13.15.26"
+  },
+  "prisma": {
+    "seed": "bun run prisma/seed.ts"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
