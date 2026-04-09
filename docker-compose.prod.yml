@@ -1,8 +1,6 @@
 services:
   app:
     image: ghcr.io/${DEPLOY_IMAGE_NAME:-aneshodza/studypilot}:${IMAGE_TAG:-latest}
-    ports:
-      - '80:80'
     depends_on:
       postgres:
         condition: service_healthy
@@ -10,13 +8,25 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-studypilot}:${POSTGRES_PASSWORD:-studypilot}@postgres:5432/${POSTGRES_DB:-studypilot}
       JWT_SECRET: ${JWT_SECRET}
       PORT: 3000
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      FRONTEND_URL: https://studypilot.aneshodza.ch
       MINIO_ENDPOINT: minio
       MINIO_PORT: 9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
       MINIO_BUCKET: ${MINIO_BUCKET:-studypilot}
       MINIO_USE_SSL: 'false'
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - app
     restart: unless-stopped
 
   postgres:
@@ -68,3 +78,4 @@ services:
 volumes:
   postgres_data:
   minio_data:
+  caddy_data:

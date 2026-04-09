@@ -1,0 +1,3 @@
+studypilot.aneshodza.ch {
+    reverse_proxy app:80
+}
