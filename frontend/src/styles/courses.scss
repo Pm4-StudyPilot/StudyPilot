@@ -56,6 +56,17 @@
   }
 }
 
+// DeleteCourseModal
+.delete-course-modal {
+  &__message {
+    color: #adb5bd;
+  }
+
+  &__error {
+    font-size: 0.875rem;
+  }
+}
+
 // CourseDetailPage
 .course-detail {
   &__back-link {
