@@ -14,12 +14,14 @@ import CreateCourseModal from './CreateCourseModal';
  * - Render a CourseCard for each course
  * - Show loading, error, and empty states
  * - Open the CreateCourseModal and prepend the new course to the list on success
+ * - Update the course in the list when it is edited
  *
  * Workflow:
  * 1. GET /courses is called on mount
  * 2. Courses are rendered as a list of CourseCard components
  * 3. The "+" button opens the CreateCourseModal
  * 4. On successful creation the new course is prepended without refetching
+ * 5. On successful edit the matching course is replaced in the list without refetching
  */
 export default function CourseList() {
   const [courses, setCourses] = useState<CourseDto[]>([]);
@@ -45,6 +47,15 @@ export default function CourseList() {
   function handleCreated(course: CourseDto) {
     setCourses((prev) => [course, ...prev]);
     setModalOpen(false);
+  }
+
+  /**
+   * Handles an updated course.
+   *
+   * Replaces the matching course in the list with the updated version.
+   */
+  function handleUpdated(updated: CourseDto) {
+    setCourses((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
   }
 
   return (
@@ -82,7 +93,9 @@ export default function CourseList() {
 
         {!loading &&
           !error &&
-          courses.map((course) => <CourseCard key={course.id} course={course} />)}
+          courses.map((course) => (
+            <CourseCard key={course.id} course={course} onUpdated={handleUpdated} />
+          ))}
       </div>
 
       {modalOpen && (
