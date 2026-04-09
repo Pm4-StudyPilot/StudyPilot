@@ -105,6 +105,21 @@ export const requestPasswordResetSchema = z.object({
 });
 
 /**
+ * Create Course Schema
+ *
+ * Defines validation rules for creating a new course.
+ *
+ * Fields:
+ * - name: the course name (required, non-empty)
+ *
+ * This schema is used for:
+ * - Frontend form validation in the CreateCourseModal
+ */
+export const createCourseSchema = z.object({
+  name: z.string().min(1, 'Course name is required'),
+});
+
+/**
  * Reset Password Schema
  *
  * Validates the new password and confirmation on the "Reset Password" form.
