@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CourseDto } from '../../types/dto';
 import EditCourseModal from './EditCourseModal';
+import DeleteCourseModal from './DeleteCourseModal';
 
 type CourseCardProps = {
   course: CourseDto;
   onUpdated: (course: CourseDto) => void;
+  onDeleted: (id: string) => void;
 };
 
 /**
@@ -18,16 +20,19 @@ type CourseCardProps = {
  * - Show the formatted creation date
  * - Toggle expanded state to reveal course content
  * - Open the EditCourseModal and notify the parent when the course is updated
+ * - Open the DeleteCourseModal and notify the parent when the course is deleted
  *
  * Workflow:
  * 1. Course data is received via props
  * 2. Clicking the header row toggles the expanded state
  * 3. Clicking the course name navigates to /courses/:id without toggling
  * 4. Clicking the edit button opens the EditCourseModal
+ * 5. Clicking the delete button opens the DeleteCourseModal
  */
-export default function CourseCard({ course, onUpdated }: CourseCardProps) {
+export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const formattedDate = new Date(course.createdAt).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -67,6 +72,13 @@ export default function CourseCard({ course, onUpdated }: CourseCardProps) {
             >
               <i className="fa-solid fa-pen-to-square" />
             </button>
+            <button
+              className="btn btn-sm btn-link text-danger p-0"
+              onClick={() => setDeleteOpen(true)}
+              aria-label="Delete course"
+            >
+              <i className="fa-solid fa-trash" />
+            </button>
             {/* Toggle button to expand/collapse course content */}
             <button
               className="btn btn-sm btn-link text-secondary p-0"
@@ -93,6 +105,14 @@ export default function CourseCard({ course, onUpdated }: CourseCardProps) {
           course={course}
           onClose={() => setEditOpen(false)}
           onUpdated={handleUpdated}
+        />
+      )}
+
+      {deleteOpen && (
+        <DeleteCourseModal
+          course={course}
+          onClose={() => setDeleteOpen(false)}
+          onDeleted={onDeleted}
         />
       )}
     </>
