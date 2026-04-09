@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { UserService } from '../services/user.service';
 import { AuthenticatedUser, ChangePasswordRequest, UpdateProfileRequest } from '../types';
 import { logger } from '../lib/logger';
+import validator from 'validator';
 
 export class UserController {
   constructor(private userService: UserService = new UserService()) {}
@@ -70,7 +71,7 @@ export class UserController {
         return;
       }
 
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      if (!validator.isEmail(normalizedEmail)) {
         res.status(400).json({ message: 'Invalid email address' });
         return;
       }
