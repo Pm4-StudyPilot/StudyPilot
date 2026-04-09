@@ -8,15 +8,7 @@
 - [Bun](https://bun.sh/)
 - [Docker](https://www.docker.com/)
 
-### 1. Run setup
-
-```bash
-npm run setup
-```
-
-This copies `.env.example` → `.env`, installs dependencies, and sets up husky hooks.
-
-### 2. Start infrastructure
+### 1. Start infrastructure
 
 ```bash
 docker compose up -d
@@ -24,11 +16,13 @@ docker compose up -d
 
 This starts Postgres and MinIO.
 
-### 3. Run database migration
+### 2. Run setup
 
 ```bash
-cd backend && bun prisma migrate dev --name init && cd ..
+npm run setup
 ```
+
+This copies `.env.example` → `.env`, installs dependencies, and sets up husky hooks.
 
 ### 4. Start development servers
 
@@ -38,8 +32,9 @@ npm run dev
 
 This starts both services in parallel:
 
-| Service  | URL                   |
-| -------- | --------------------- |
-| Frontend | http://localhost:5173 |
-| Backend  | http://localhost:3000 |
-| MinIO    | http://localhost:9001 |
+| Service  | URL                            |
+| -------- | ------------------------------ |
+| Frontend | http://localhost:5173          |
+| Backend  | http://localhost:3000          |
+| MinIO    | http://localhost:9001          |
+| Swagger  | http://localhost:3000/api/docs |
