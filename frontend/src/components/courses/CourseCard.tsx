@@ -31,53 +31,36 @@ export default function CourseCard({ course }: CourseCardProps) {
   });
 
   return (
-    <div
-      className="rounded mb-2"
-      style={{ backgroundColor: '#1e2030', border: '1px solid #2e3050' }}
-    >
+    <div className="course-card rounded mb-2">
       {/* Clicking the row toggles the expanded content area */}
       <button
-        className="w-100 d-flex align-items-center justify-content-between p-3 border-0 text-start"
-        style={{ backgroundColor: 'transparent', color: 'inherit' }}
+        className="course-card__toggle w-100 d-flex align-items-center justify-content-between p-3 border-0 text-start"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
       >
         <div className="d-flex align-items-center gap-3">
           {/* Progress ring placeholder — will show completion percentage once progress data exists */}
-          <div
-            className="rounded-circle flex-shrink-0"
-            style={{
-              width: 40,
-              height: 40,
-              border: '3px solid #6c63ff',
-            }}
-          />
+          <div className="course-card__progress-ring rounded-circle flex-shrink-0" />
           <div>
             {/* stopPropagation prevents the link click from also triggering the expand toggle */}
             <Link
               to={`/courses/${course.id}`}
-              className="fw-semibold text-white text-decoration-none"
-              style={{ fontSize: '0.95rem' }}
+              className="course-card__name fw-semibold text-white text-decoration-none"
               onClick={(e) => e.stopPropagation()}
             >
               {course.name}
             </Link>
-            <div className="text-secondary" style={{ fontSize: '0.78rem' }}>
-              Added {formattedDate}
-            </div>
+            <div className="course-card__date text-secondary">Added {formattedDate}</div>
           </div>
         </div>
         <i
-          className={`fa-solid fa-chevron-${expanded ? 'up' : 'down'} text-secondary`}
-          style={{ fontSize: '0.75rem' }}
+          className={`course-card__chevron fa-solid fa-chevron-${expanded ? 'up' : 'down'} text-secondary`}
         />
       </button>
 
       {expanded && (
         <div className="px-3 pb-3">
-          <p className="text-secondary mb-0" style={{ fontSize: '0.85rem' }}>
-            No items yet.
-          </p>
+          <p className="course-card__empty text-secondary mb-0">No items yet.</p>
         </div>
       )}
     </div>
