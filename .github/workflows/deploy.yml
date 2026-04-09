@@ -23,6 +23,7 @@ jobs:
     permissions:
       packages: read
     env:
+      DEPLOY_IMAGE_NAME: ${{ env.IMAGE_NAME }}
       IMAGE_TAG: ${{ inputs.image_tag || 'latest' }}
 
     steps:
