@@ -22,6 +22,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     throw new Error(error.message || `Request failed: ${response.status}`);
   }
 
+  if (response.status === 204 || response.headers.get('content-length') === '0') {
+    return undefined as T;
+  }
+
   return response.json();
 }
 
@@ -38,5 +42,10 @@ export const api = {
     request<T>(endpoint, {
       method: 'PATCH',
       body: JSON.stringify(data),
+    }),
+
+  delete: (endpoint: string) =>
+    request<void>(endpoint, {
+      method: 'DELETE',
     }),
 };
