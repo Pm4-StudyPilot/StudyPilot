@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
+import { MemoryRouter } from 'react-router-dom';
 import CourseCard from '../components/courses/CourseCard';
 import { CourseDto } from '../types/dto';
 
@@ -37,7 +38,11 @@ describe('CourseCard', () => {
    * - The course name is visible
    */
   it('renders the course name', () => {
-    render(<CourseCard course={mockCourse} />);
+    render(
+      <MemoryRouter>
+        <CourseCard course={mockCourse} />
+      </MemoryRouter>
+    );
 
     expect(screen.getByText('Machine Learning Fundamentals')).toBeInTheDocument();
   });
@@ -52,7 +57,11 @@ describe('CourseCard', () => {
    * - The formatted creation date is visible
    */
   it('renders the formatted creation date', () => {
-    render(<CourseCard course={mockCourse} />);
+    render(
+      <MemoryRouter>
+        <CourseCard course={mockCourse} />
+      </MemoryRouter>
+    );
 
     expect(screen.getByText(/added/i)).toBeInTheDocument();
   });
@@ -67,7 +76,11 @@ describe('CourseCard', () => {
    * - The "No items yet." text is not visible
    */
   it('is collapsed by default', () => {
-    render(<CourseCard course={mockCourse} />);
+    render(
+      <MemoryRouter>
+        <CourseCard course={mockCourse} />
+      </MemoryRouter>
+    );
 
     expect(screen.queryByText(/no items yet/i)).not.toBeInTheDocument();
   });
@@ -82,7 +95,11 @@ describe('CourseCard', () => {
    * - The "No items yet." placeholder becomes visible
    */
   it('expands when clicked', () => {
-    render(<CourseCard course={mockCourse} />);
+    render(
+      <MemoryRouter>
+        <CourseCard course={mockCourse} />
+      </MemoryRouter>
+    );
 
     fireEvent.click(screen.getByRole('button'));
 
@@ -99,7 +116,11 @@ describe('CourseCard', () => {
    * - The "No items yet." placeholder is hidden again
    */
   it('collapses when clicked again', () => {
-    render(<CourseCard course={mockCourse} />);
+    render(
+      <MemoryRouter>
+        <CourseCard course={mockCourse} />
+      </MemoryRouter>
+    );
 
     fireEvent.click(screen.getByRole('button'));
     fireEvent.click(screen.getByRole('button'));
