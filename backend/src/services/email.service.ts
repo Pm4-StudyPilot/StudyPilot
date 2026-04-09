@@ -1,15 +1,7 @@
 import { Resend } from 'resend';
 import { logger } from '../lib/logger';
 
-function getResendApiKey(): string {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) {
-    throw new Error('Missing required environment variable: RESEND_API_KEY');
-  }
-  return key;
-}
-
-const RESEND_API_KEY = getResendApiKey();
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'StudyPilot <onboarding@resend.dev>';
 const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
 
@@ -24,7 +16,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
  * This service is used by the AuthService.
  */
 export class EmailService {
-  private resend = new Resend(RESEND_API_KEY);
+  private resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
   /**
    * Sends a password reset email to the user.
@@ -33,6 +25,11 @@ export class EmailService {
    * @param token Password reset token
    */
   async sendPasswordResetEmail(to: string, token: string): Promise<void> {
+    if (!this.resend) {
+      logger.warn('[EmailService] RESEND_API_KEY not configured, skipping email');
+      return;
+    }
+
     const resetUrl = `${FRONTEND_URL}/reset-password?token=${token}`;
 
     const { data, error } = await this.resend.emails.send({
