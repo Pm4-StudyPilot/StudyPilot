@@ -1,4 +1,3 @@
-import { useAuth } from '../context/useAuth';
 import Navbar from '../components/shared/layout/Navbar';
 import CourseList from '../components/courses/CourseList';
 
