@@ -1,16 +1,11 @@
 services:
-  frontend:
-    image: ghcr.io/${GITHUB_REPOSITORY:-studypilot}/frontend:${TAG:-latest}
+  app:
+    image: ghcr.io/${DEPLOY_IMAGE_NAME:-aneshodza/studypilot}:${IMAGE_TAG:-latest}
     ports:
-      - "80:80"
+      - '80:80'
     depends_on:
-      - backend
-    restart: unless-stopped
-
-  backend:
-    image: ghcr.io/${GITHUB_REPOSITORY:-studypilot}/backend:${TAG:-latest}
-    ports:
-      - "3000:3000"
+      postgres:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-studypilot}:${POSTGRES_PASSWORD:-studypilot}@postgres:5432/${POSTGRES_DB:-studypilot}
       JWT_SECRET: ${JWT_SECRET}
@@ -21,10 +16,7 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
       MINIO_BUCKET: ${MINIO_BUCKET:-studypilot}
-      MINIO_USE_SSL: "false"
-    depends_on:
-      postgres:
-        condition: service_healthy
+      MINIO_USE_SSL: 'false'
     restart: unless-stopped
 
   postgres:
@@ -36,7 +28,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-studypilot}"]
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-studypilot}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,7 +42,28 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     volumes:
       - minio_data:/data
+      - ./minio-cors.json:/minio-cors.json:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:9000/minio/health/live || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
+
+  minio-setup:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ['/bin/sh', '/setup-minio.sh']
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-studypilot}
+    volumes:
+      - ./scripts/setup-minio.sh:/setup-minio.sh:ro
+      - ./minio-cors.json:/minio-cors.json:ro
+    restart: 'no'
 
 volumes:
   postgres_data:
