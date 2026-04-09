@@ -4,6 +4,23 @@ import { CourseDto } from '../../types/dto';
 import CourseCard from './CourseCard';
 import CreateCourseModal from './CreateCourseModal';
 
+/**
+ * CourseList
+ *
+ * Fetches and displays all courses belonging to the authenticated user.
+ *
+ * Responsibilities:
+ * - Fetch the list of courses from the backend on mount
+ * - Render a CourseCard for each course
+ * - Show loading, error, and empty states
+ * - Open the CreateCourseModal and prepend the new course to the list on success
+ *
+ * Workflow:
+ * 1. GET /courses is called on mount
+ * 2. Courses are rendered as a list of CourseCard components
+ * 3. The "+" button opens the CreateCourseModal
+ * 4. On successful creation the new course is prepended without refetching
+ */
 export default function CourseList() {
   const [courses, setCourses] = useState<CourseDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +37,11 @@ export default function CourseList() {
       .finally(() => setLoading(false));
   }, []);
 
+  /**
+   * Handles a newly created course.
+   *
+   * Prepends the course to the existing list and closes the modal.
+   */
   function handleCreated(course: CourseDto) {
     setCourses((prev) => [course, ...prev]);
     setModalOpen(false);
