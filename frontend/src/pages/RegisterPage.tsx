@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { api } from '../services/api';
 import Button from '../components/shared/Button';
 import Form from '../components/shared/form/Form';
@@ -207,6 +207,7 @@ export default function RegisterPage() {
 
   return (
     <Modal
+      disableClose={true}
       title="Create Account"
       header={<Logo />}
       footer={<Link to="/login">Already have an account? Sign in</Link>}

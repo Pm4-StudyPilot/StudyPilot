@@ -10,6 +10,11 @@ export interface AuthResponse {
   token: string;
 }
 
+export interface UpdateProfileDto {
+  username: string;
+  email: string;
+}
+
 export interface CourseDto {
   id: string;
   name: string;

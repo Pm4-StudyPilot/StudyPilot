@@ -50,7 +50,7 @@ export const loginSchema = z.object({
  */
 export const registerSchema = z
   .object({
-    email: z.string().email('Invalid email address'),
+    email: z.email('Invalid email address'),
     username: z.string().min(3, 'Username must be at least 3 characters'),
     password: z
       .string()
@@ -96,12 +96,22 @@ export const changePasswordSchema = z
   });
 
 /**
+ * Update Profile Schema
+ *
+ * Validates the editable account profile fields.
+ */
+export const updateProfileSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Invalid email address'),
+  username: z.string().trim().min(3, 'Username must be at least 3 characters'),
+});
+
+/**
  * Request Password Reset Schema
  *
  * Validates the email field on the "Forgot Password" form.
  */
 export const requestPasswordResetSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.email('Invalid email address'),
 });
 
 /**
