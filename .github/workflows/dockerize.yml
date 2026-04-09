@@ -7,16 +7,16 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/studypilot
 
 jobs:
   build:
     name: Build & Push
     runs-on: ubuntu-latest
+    outputs:
+      version_studypilot: ${{ steps.meta.outputs.version_studypilot }}
     permissions:
       contents: read
       packages: write
-      actions: write
 
     steps:
       - uses: actions/checkout@v4
@@ -24,9 +24,13 @@ jobs:
       - name: Extract metadata
         id: meta
         run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="${OWNER}/studypilot"
           VERSION=${GITHUB_REF#refs/tags/}
           # Strip 'v' prefix and prepend 'studypilot-'
           VERSION_STUDYPILOT=studypilot-${VERSION#v}
+          echo "owner=$OWNER" >> $GITHUB_OUTPUT
+          echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "version_studypilot=$VERSION_STUDYPILOT" >> $GITHUB_OUTPUT
           echo "image_tag=$REGISTRY/$IMAGE_NAME:$VERSION_STUDYPILOT" >> $GITHUB_OUTPUT
@@ -48,31 +52,15 @@ jobs:
           push: true
           tags: |
             ${{ steps.meta.outputs.image_tag }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}:latest
+            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}:${{ steps.meta.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   trigger-deploy:
     name: Trigger Deploy
     needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Extract version
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/}
-          VERSION_STUDYPILOT=studypilot-${VERSION#v}
-          echo "IMAGE_TAG=$VERSION_STUDYPILOT" >> $GITHUB_ENV
-      - name: Trigger deploy workflow
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy.yml',
-              ref: context.ref,
-              inputs: {
-                image_tag: '${{ env.IMAGE_TAG }}'
-              }
-            })
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit
+    with:
+      image_tag: ${{ needs.build.outputs.version_studypilot }}

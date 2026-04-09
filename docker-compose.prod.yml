@@ -44,7 +44,7 @@ services:
       - minio_data:/data
       - ./minio-cors.json:/minio-cors.json:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:9000/minio/health/live || exit 1']
+      test: ['CMD-SHELL', 'bash -c "echo > /dev/tcp/localhost/9000"']
       interval: 10s
       timeout: 5s
       retries: 5
