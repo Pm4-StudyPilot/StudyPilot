@@ -1,14 +1,18 @@
-@import "bootstrap/scss/bootstrap";
-@import "@fortawesome/fontawesome-free/css/all.min.css";
+@import 'bootstrap/scss/bootstrap';
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+
+body {
+  background-color: #0f1020;
+}
 
 .modal {
-    position: fixed;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  height: 100%;
+  z-index: 1;
+  > div > .card {
+    max-width: 400px;
     width: 100%;
-    top: 0;
-    height: 100%;
-    z-index: 1;
-    > div > .card {   
-        max-width: 400px;
-        width: 100%
-    }
+  }
 }
