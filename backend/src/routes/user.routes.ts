@@ -31,6 +31,43 @@ userRouter.get('/me', generalLimiter, authenticate, (req, res) => userController
 
 /**
  * @openapi
+ * /users/me:
+ *   patch:
+ *     tags:
+ *       - Users
+ *     summary: Update the currently authenticated user's profile
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, username]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               username:
+ *                 type: string
+ *                 minLength: 3
+ *     responses:
+ *       200:
+ *         description: Updated authenticated user.
+ *       400:
+ *         description: Invalid input.
+ *       401:
+ *         description: Unauthorized.
+ *       409:
+ *         description: Email or username already in use.
+ */
+userRouter.patch('/me', generalLimiter, authenticate, (req, res) =>
+  userController.updateProfile(req, res)
+);
+
+/**
+ * @openapi
  * /users/me/password:
  *   patch:
  *     tags:

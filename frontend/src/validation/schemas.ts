@@ -96,6 +96,16 @@ export const changePasswordSchema = z
   });
 
 /**
+ * Update Profile Schema
+ *
+ * Validates the editable account profile fields.
+ */
+export const updateProfileSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Invalid email address'),
+  username: z.string().trim().min(3, 'Username must be at least 3 characters'),
+});
+
+/**
  * Request Password Reset Schema
  *
  * Validates the email field on the "Forgot Password" form.

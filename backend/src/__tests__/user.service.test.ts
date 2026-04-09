@@ -8,6 +8,8 @@ type MockUserRecord = {
   role: string;
 };
 
+type MockProfileConflict = Pick<MockUserRecord, 'email' | 'username'>;
+
 /**
  * Mock functions for external dependencies.
  *
@@ -33,6 +35,7 @@ const mockFindUniqueWithPassword = mock(
   })
 );
 
+const mockFindFirst = mock(async (): Promise<MockProfileConflict | null> => null);
 const mockUpdate = mock(async () => ({}));
 
 /**
@@ -57,6 +60,7 @@ mock.module('../config/database', () => ({
   prisma: {
     user: {
       findUnique: mockFindUniqueWithPassword,
+      findFirst: mockFindFirst,
       update: mockUpdate,
     },
   },
@@ -81,9 +85,11 @@ describe('UserService', () => {
     mockCompare.mockClear();
     mockFindById.mockClear();
     mockFindUniqueWithPassword.mockClear();
+    mockFindFirst.mockClear();
     mockUpdate.mockClear();
 
     mockCompare.mockResolvedValue(true);
+    mockFindFirst.mockResolvedValue(null);
   });
 
   describe('findById', () => {
@@ -228,6 +234,73 @@ describe('UserService', () => {
       ).rejects.toThrow('Current password is incorrect');
 
       expect(mockHash).not.toHaveBeenCalled();
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateProfile', () => {
+    it('should update and return the safe user DTO', async () => {
+      mockUpdate.mockResolvedValueOnce({
+        id: 'user-1',
+        email: 'new@students.zhaw.ch',
+        username: 'newuser',
+        role: 'USER',
+      });
+
+      const service = new UserService();
+      const result = await service.updateProfile('user-1', {
+        email: 'new@students.zhaw.ch',
+        username: 'newuser',
+      });
+
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: {
+          OR: [{ email: 'new@students.zhaw.ch' }, { username: 'newuser' }],
+          NOT: { id: 'user-1' },
+        },
+        select: {
+          email: true,
+          username: true,
+        },
+      });
+
+      expect(mockUpdate).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: {
+          email: 'new@students.zhaw.ch',
+          username: 'newuser',
+        },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          role: true,
+        },
+      });
+
+      expect(result).toEqual({
+        id: 'user-1',
+        email: 'new@students.zhaw.ch',
+        username: 'newuser',
+        role: 'USER',
+      });
+    });
+
+    it('should throw when the email is already in use', async () => {
+      mockFindFirst.mockResolvedValueOnce({
+        email: 'taken@students.zhaw.ch',
+        username: 'someoneelse',
+      });
+
+      const service = new UserService();
+
+      await expect(
+        service.updateProfile('user-1', {
+          email: 'taken@students.zhaw.ch',
+          username: 'newuser',
+        })
+      ).rejects.toThrow('Email is already in use');
+
       expect(mockUpdate).not.toHaveBeenCalled();
     });
   });

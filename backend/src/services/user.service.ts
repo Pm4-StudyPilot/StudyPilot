@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { UserDto } from '../types';
+import { UpdateProfileRequest, UserDto } from '../types';
 import { prisma } from '../config/database';
 
 export class UserService {
@@ -40,6 +40,41 @@ export class UserService {
     await prisma.user.update({
       where: { id: userId },
       data: { password: hashed },
+    });
+  }
+
+  async updateProfile(userId: string, updates: UpdateProfileRequest): Promise<UserDto> {
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ email: updates.email }, { username: updates.username }],
+        NOT: { id: userId },
+      },
+      select: {
+        email: true,
+        username: true,
+      },
+    });
+
+    if (existingUser?.email === updates.email) {
+      throw new Error('Email is already in use');
+    }
+
+    if (existingUser?.username === updates.username) {
+      throw new Error('Username is already in use');
+    }
+
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        email: updates.email,
+        username: updates.username,
+      },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        role: true,
+      },
     });
   }
 }

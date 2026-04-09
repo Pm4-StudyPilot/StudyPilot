@@ -41,6 +41,11 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+export interface UpdateProfileRequest {
+  email: string;
+  username: string;
+}
+
 export interface RequestPasswordResetRequest {
   email: string;
 }

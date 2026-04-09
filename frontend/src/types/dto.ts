@@ -11,6 +11,6 @@ export interface AuthResponse {
 }
 
 export interface UpdateProfileDto {
-  username?: string;
-  email?: string;
+  username: string;
+  email: string;
 }
