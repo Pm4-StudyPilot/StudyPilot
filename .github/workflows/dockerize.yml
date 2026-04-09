@@ -7,7 +7,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/studypilot
 
 jobs:
   build:
@@ -24,9 +23,13 @@ jobs:
       - name: Extract metadata
         id: meta
         run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="${OWNER}/studypilot"
           VERSION=${GITHUB_REF#refs/tags/}
           # Strip 'v' prefix and prepend 'studypilot-'
           VERSION_STUDYPILOT=studypilot-${VERSION#v}
+          echo "owner=$OWNER" >> $GITHUB_OUTPUT
+          echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "version_studypilot=$VERSION_STUDYPILOT" >> $GITHUB_OUTPUT
           echo "image_tag=$REGISTRY/$IMAGE_NAME:$VERSION_STUDYPILOT" >> $GITHUB_OUTPUT
@@ -48,8 +51,8 @@ jobs:
           push: true
           tags: |
             ${{ steps.meta.outputs.image_tag }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}:latest
+            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_name }}:${{ steps.meta.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
