@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter } from 'react-router-dom';
@@ -13,6 +13,8 @@ const mockCourse: CourseDto = {
   updatedAt: '2026-03-26T12:00:00.000Z',
 };
 
+const mockOnUpdated = vi.fn();
+
 /**
  * CourseCard component tests.
  *
@@ -20,8 +22,8 @@ const mockCourse: CourseDto = {
  * - course name is rendered
  * - formatted creation date is rendered
  * - content is collapsed by default
- * - clicking the card expands the content
- * - clicking again collapses the content
+ * - clicking the toggle button expands the content
+ * - clicking the toggle button again collapses the content
  */
 describe('CourseCard', () => {
   afterEach(() => {
@@ -40,7 +42,7 @@ describe('CourseCard', () => {
   it('renders the course name', () => {
     render(
       <MemoryRouter>
-        <CourseCard course={mockCourse} />
+        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} />
       </MemoryRouter>
     );
 
@@ -59,7 +61,7 @@ describe('CourseCard', () => {
   it('renders the formatted creation date', () => {
     render(
       <MemoryRouter>
-        <CourseCard course={mockCourse} />
+        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} />
       </MemoryRouter>
     );
 
@@ -78,7 +80,7 @@ describe('CourseCard', () => {
   it('is collapsed by default', () => {
     render(
       <MemoryRouter>
-        <CourseCard course={mockCourse} />
+        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} />
       </MemoryRouter>
     );
 
@@ -89,19 +91,19 @@ describe('CourseCard', () => {
    * Test case: Expand on click
    *
    * Scenario:
-   * The course card button is clicked.
+   * The toggle button is clicked.
    *
    * Expected behavior:
    * - The "No items yet." placeholder becomes visible
    */
-  it('expands when clicked', () => {
+  it('expands when the toggle button is clicked', () => {
     render(
       <MemoryRouter>
-        <CourseCard course={mockCourse} />
+        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} />
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button', { name: /toggle course/i }));
 
     expect(screen.getByText(/no items yet/i)).toBeInTheDocument();
   });
@@ -110,20 +112,20 @@ describe('CourseCard', () => {
    * Test case: Collapse on second click
    *
    * Scenario:
-   * The course card button is clicked twice.
+   * The toggle button is clicked twice.
    *
    * Expected behavior:
    * - The "No items yet." placeholder is hidden again
    */
-  it('collapses when clicked again', () => {
+  it('collapses when the toggle button is clicked again', () => {
     render(
       <MemoryRouter>
-        <CourseCard course={mockCourse} />
+        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} />
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button'));
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button', { name: /toggle course/i }));
+    fireEvent.click(screen.getByRole('button', { name: /toggle course/i }));
 
     expect(screen.queryByText(/no items yet/i)).not.toBeInTheDocument();
   });
