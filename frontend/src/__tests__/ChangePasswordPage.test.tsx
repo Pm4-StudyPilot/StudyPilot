@@ -17,7 +17,7 @@ const mockNavigate = vi.fn();
  *
  * The page uses Navbar which reads from AuthContext.
  */
-vi.mock('../context/AuthContext', () => ({
+vi.mock('../context/useAuth', () => ({
   useAuth: () => ({
     user: { id: 'user-1', username: 'testuser', email: 'test@students.zhaw.ch', role: 'USER' },
     logout: vi.fn(),

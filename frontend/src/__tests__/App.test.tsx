@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import App from '../App';
 
 // Mock the AuthContext to avoid needing real auth state
-vi.mock('../context/AuthContext', () => ({
+vi.mock('../context/useAuth', () => ({
   useAuth: () => ({ token: null, login: vi.fn(), logout: vi.fn() }),
 }));
 

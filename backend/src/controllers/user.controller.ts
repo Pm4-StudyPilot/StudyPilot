@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { UserService } from '../services/user.service';
-import { AuthenticatedUser, ChangePasswordRequest } from '../types';
+import { AuthenticatedUser, ChangePasswordRequest, UpdateProfileRequest } from '../types';
 import { logger } from '../lib/logger';
+import validator from 'validator';
 
 export class UserController {
   constructor(private userService: UserService = new UserService()) {}
@@ -55,6 +56,50 @@ export class UserController {
       }
 
       res.status(500).json({ message: 'Failed to change password' });
+    }
+  }
+
+  async updateProfile(req: Request, res: Response): Promise<void> {
+    try {
+      const authUser = req.user as AuthenticatedUser;
+      const { email, username } = req.body as UpdateProfileRequest;
+      const normalizedEmail = email?.trim().toLowerCase();
+      const normalizedUsername = username?.trim();
+
+      if (!normalizedEmail || !normalizedUsername) {
+        res.status(400).json({ message: 'Email and username are required' });
+        return;
+      }
+
+      if (!validator.isEmail(normalizedEmail)) {
+        res.status(400).json({ message: 'Invalid email address' });
+        return;
+      }
+
+      if (normalizedUsername.length < 3) {
+        res.status(400).json({ message: 'Username must be at least 3 characters' });
+        return;
+      }
+
+      const updatedUser = await this.userService.updateProfile(authUser.id, {
+        email: normalizedEmail,
+        username: normalizedUsername,
+      });
+
+      res.json(updatedUser);
+    } catch (error: unknown) {
+      logger.error({ error }, '[UserController#updateProfile]');
+
+      if (
+        error instanceof Error &&
+        (error.message === 'Email is already in use' ||
+          error.message === 'Username is already in use')
+      ) {
+        res.status(409).json({ message: error.message });
+        return;
+      }
+
+      res.status(500).json({ message: 'Failed to update profile' });
     }
   }
 }

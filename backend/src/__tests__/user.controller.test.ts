@@ -46,6 +46,7 @@ describe('UserController.me', () => {
     const mockUserService = {
       findById: mock(async () => userDto),
       changePassword: mock(),
+      updateProfile: mock(),
     };
 
     const controller = new UserController(mockUserService as unknown as UserService);
@@ -76,6 +77,7 @@ describe('UserController.me', () => {
     const mockUserService = {
       findById: mock(async () => null),
       changePassword: mock(),
+      updateProfile: mock(),
     };
 
     const controller = new UserController(mockUserService as unknown as UserService);
@@ -108,6 +110,7 @@ describe('UserController.me', () => {
         throw new Error('DB down');
       }),
       changePassword: mock(),
+      updateProfile: mock(),
     };
 
     const controller = new UserController(mockUserService as unknown as UserService);
@@ -143,6 +146,7 @@ describe('UserController.changePassword', () => {
     const mockUserService = {
       findById: mock(),
       changePassword: mock(async () => {}),
+      updateProfile: mock(),
     };
 
     const controller = new UserController(mockUserService as unknown as UserService);
@@ -181,6 +185,7 @@ describe('UserController.changePassword', () => {
     const mockUserService = {
       findById: mock(),
       changePassword: mock(),
+      updateProfile: mock(),
     };
 
     const controller = new UserController(mockUserService as unknown as UserService);
@@ -215,6 +220,7 @@ describe('UserController.changePassword', () => {
     const mockUserService = {
       findById: mock(),
       changePassword: mock(),
+      updateProfile: mock(),
     };
 
     const controller = new UserController(mockUserService as unknown as UserService);
@@ -254,6 +260,7 @@ describe('UserController.changePassword', () => {
       changePassword: mock(async () => {
         throw new Error('Current password is incorrect');
       }),
+      updateProfile: mock(),
     };
 
     const controller = new UserController(mockUserService as unknown as UserService);
@@ -290,6 +297,7 @@ describe('UserController.changePassword', () => {
       changePassword: mock(async () => {
         throw new Error('DB connection lost');
       }),
+      updateProfile: mock(),
     };
 
     const controller = new UserController(mockUserService as unknown as UserService);
@@ -324,6 +332,7 @@ describe('UserController.changePassword', () => {
     const mockUserService = {
       findById: mock(),
       changePassword: mock(),
+      updateProfile: mock(),
     };
 
     const controller = new UserController(mockUserService as unknown as UserService);
@@ -342,5 +351,95 @@ describe('UserController.changePassword', () => {
       message: 'Current password and new password are required',
     });
     expect(mockUserService.changePassword).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Test cases for UserController.updateProfile
+ */
+describe('UserController.updateProfile', () => {
+  it('should return the updated user on valid request', async () => {
+    const updatedUser = {
+      id: 'user-1',
+      email: 'new@students.zhaw.ch',
+      username: 'newuser',
+      role: 'USER',
+    };
+
+    const mockUserService = {
+      findById: mock(),
+      changePassword: mock(),
+      updateProfile: mock(async () => updatedUser),
+    };
+
+    const controller = new UserController(mockUserService as unknown as UserService);
+
+    const req = {
+      user: { id: 'user-1', email: 'test@students.zhaw.ch', username: 'testuser', role: 'USER' },
+      body: {
+        email: ' NEW@students.zhaw.ch ',
+        username: ' newuser ',
+      },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.updateProfile(req, res);
+
+    expect(mockUserService.updateProfile).toHaveBeenCalledWith('user-1', {
+      email: 'new@students.zhaw.ch',
+      username: 'newuser',
+    });
+    expect(res.json).toHaveBeenCalledWith(updatedUser);
+  });
+
+  it('should return 400 when email or username is missing', async () => {
+    const mockUserService = {
+      findById: mock(),
+      changePassword: mock(),
+      updateProfile: mock(),
+    };
+
+    const controller = new UserController(mockUserService as unknown as UserService);
+
+    const req = {
+      user: { id: 'user-1', email: 'test@students.zhaw.ch', username: 'testuser', role: 'USER' },
+      body: { email: '', username: '' },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.updateProfile(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Email and username are required' });
+    expect(mockUserService.updateProfile).not.toHaveBeenCalled();
+  });
+
+  it('should return 409 when email or username is already used', async () => {
+    const mockUserService = {
+      findById: mock(),
+      changePassword: mock(),
+      updateProfile: mock(async () => {
+        throw new Error('Email is already in use');
+      }),
+    };
+
+    const controller = new UserController(mockUserService as unknown as UserService);
+
+    const req = {
+      user: { id: 'user-1', email: 'test@students.zhaw.ch', username: 'testuser', role: 'USER' },
+      body: {
+        email: 'taken@students.zhaw.ch',
+        username: 'testuser',
+      },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.updateProfile(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Email is already in use' });
   });
 });

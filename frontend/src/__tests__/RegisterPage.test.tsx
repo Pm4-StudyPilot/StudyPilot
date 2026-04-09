@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
-import RegisterPage from "../pages/RegisterPage";
-import { api } from "../services/api";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import RegisterPage from '../pages/RegisterPage';
+import { api } from '../services/api';
 
 /**
  * Mock functions for external dependencies.
@@ -19,7 +19,7 @@ const mockNavigate = vi.fn();
  * Replaces the real useAuth hook with a simplified mock version
  * so that RegisterPage can be tested without real authentication state.
  */
-vi.mock("../context/AuthContext", () => ({
+vi.mock('../context/useAuth', () => ({
   useAuth: () => ({
     login: mockLogin,
   }),
@@ -31,8 +31,8 @@ vi.mock("../context/AuthContext", () => ({
  * MemoryRouter is still used as normal router wrapper in tests,
  * but useNavigate is replaced so navigation can be asserted.
  */
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
     ...actual,
     useNavigate: () => mockNavigate,
@@ -45,7 +45,7 @@ vi.mock("react-router-dom", async () => {
  * Prevents real HTTP requests and allows controlled responses
  * for availability checks and registration requests.
  */
-vi.mock("../services/api", () => ({
+vi.mock('../services/api', () => ({
   api: {
     post: vi.fn(),
   },
@@ -60,7 +60,7 @@ vi.mock("../services/api", () => ({
  * - successful registration flow
  * - server-side error display on failed registration
  */
-describe("RegisterPage", () => {
+describe('RegisterPage', () => {
   /**
    * Reset all mocks before each test to avoid leaking state
    * between test cases.
@@ -81,7 +81,7 @@ describe("RegisterPage", () => {
    * - Password fields are displayed
    * - Register button is displayed
    */
-  it("renders all registration fields", () => {
+  it('renders all registration fields', () => {
     render(
       <MemoryRouter>
         <RegisterPage />
@@ -91,7 +91,7 @@ describe("RegisterPage", () => {
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/username/i)).toBeInTheDocument();
     expect(screen.getAllByLabelText(/password/i).length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: /register/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /register/i })).toBeInTheDocument();
   });
 
   /**
@@ -104,7 +104,7 @@ describe("RegisterPage", () => {
    * - Password requirement hints are visible
    * - The password rules section is rendered correctly
    */
-  it("shows password requirement feedback while typing", async () => {
+  it('shows password requirement feedback while typing', async () => {
     render(
       <MemoryRouter>
         <RegisterPage />
@@ -114,7 +114,7 @@ describe("RegisterPage", () => {
     const passwordInput = screen.getByLabelText(/^password$/i);
 
     fireEvent.change(passwordInput, {
-      target: { value: "Password123!@" },
+      target: { value: 'Password123!@' },
     });
 
     expect(screen.getByText(/at least 12 characters/i)).toBeInTheDocument();
@@ -136,17 +136,17 @@ describe("RegisterPage", () => {
    * - login() is called with returned auth data
    * - navigation to "/" is triggered
    */
-  it("submits registration successfully", async () => {
+  it('submits registration successfully', async () => {
     vi.mocked(api.post)
       .mockResolvedValueOnce({ emailExists: false })
       .mockResolvedValueOnce({ usernameExists: false })
       .mockResolvedValueOnce({
-        token: "fake-token",
+        token: 'fake-token',
         user: {
-          id: "1",
-          email: "test@students.zhaw.ch",
-          username: "testuser",
-          role: "student",
+          id: '1',
+          email: 'test@students.zhaw.ch',
+          username: 'testuser',
+          role: 'student',
         },
       });
 
@@ -157,26 +157,26 @@ describe("RegisterPage", () => {
     );
 
     fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: "test@students.zhaw.ch" },
+      target: { value: 'test@students.zhaw.ch' },
     });
 
     fireEvent.change(screen.getByLabelText(/username/i), {
-      target: { value: "testuser" },
+      target: { value: 'testuser' },
     });
 
     const passwordFields = screen.getAllByLabelText(/password/i);
     fireEvent.change(passwordFields[0], {
-      target: { value: "Password123!@" },
+      target: { value: 'Password123!@' },
     });
     fireEvent.change(passwordFields[1], {
-      target: { value: "Password123!@" },
+      target: { value: 'Password123!@' },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /register/i }));
+    fireEvent.click(screen.getByRole('button', { name: /register/i }));
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalled();
-      expect(mockNavigate).toHaveBeenCalledWith("/");
+      expect(mockNavigate).toHaveBeenCalledWith('/');
     });
   });
 });
