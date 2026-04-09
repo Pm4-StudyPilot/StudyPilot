@@ -54,8 +54,7 @@ export default function CourseDetailPage() {
       <div className="container mt-4">
         <Link
           to="/"
-          className="text-secondary text-decoration-none d-inline-flex align-items-center gap-2 mb-4"
-          style={{ fontSize: '0.9rem' }}
+          className="course-detail__back-link text-secondary text-decoration-none d-inline-flex align-items-center gap-2 mb-4"
         >
           <i className="fa-solid fa-chevron-left" />
           Back to My Courses
@@ -69,33 +68,17 @@ export default function CourseDetailPage() {
           </div>
         )}
 
-        {error && (
-          <div className="alert alert-danger" style={{ fontSize: '0.875rem' }}>
-            {error}
-          </div>
-        )}
+        {error && <div className="course-detail__error alert alert-danger">{error}</div>}
 
         {!loading && !error && !course && <p className="text-secondary">Course not found.</p>}
 
         {!loading && !error && course && (
-          <div
-            className="rounded p-4"
-            style={{ backgroundColor: '#151726', border: '1px solid #2e3050' }}
-          >
+          <div className="course-panel rounded p-4">
             <h2 className="text-white fw-bold mb-1">{course.name}</h2>
-            <p className="text-secondary mb-4" style={{ fontSize: '0.85rem' }}>
-              Added {formattedDate}
-            </p>
+            <p className="course-detail__date text-secondary mb-4">Added {formattedDate}</p>
 
             {/* Content placeholder — will be replaced with modules and assignments */}
-            <div
-              className="rounded p-3 text-secondary text-center"
-              style={{
-                backgroundColor: '#1e2030',
-                border: '1px solid #2e3050',
-                fontSize: '0.9rem',
-              }}
-            >
+            <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
               No content yet.
             </div>
           </div>
