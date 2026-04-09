@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
+import { MemoryRouter } from 'react-router-dom';
 import CourseList from '../components/courses/CourseList';
 import { api } from '../services/api';
 
@@ -47,7 +48,11 @@ describe('CourseList', () => {
   it('shows a loading spinner while fetching', () => {
     vi.mocked(api.get).mockReturnValue(new Promise(() => {}));
 
-    render(<CourseList />);
+    render(
+      <MemoryRouter>
+        <CourseList />
+      </MemoryRouter>
+    );
 
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
@@ -80,7 +85,11 @@ describe('CourseList', () => {
       },
     ]);
 
-    render(<CourseList />);
+    render(
+      <MemoryRouter>
+        <CourseList />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Machine Learning')).toBeInTheDocument();
@@ -102,7 +111,11 @@ describe('CourseList', () => {
   it('shows the empty state when no courses are returned', async () => {
     vi.mocked(api.get).mockResolvedValueOnce([]);
 
-    render(<CourseList />);
+    render(
+      <MemoryRouter>
+        <CourseList />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/no courses yet/i)).toBeInTheDocument();
@@ -122,7 +135,11 @@ describe('CourseList', () => {
   it('shows an error message when the fetch fails', async () => {
     vi.mocked(api.get).mockRejectedValueOnce(new Error('Failed to load courses'));
 
-    render(<CourseList />);
+    render(
+      <MemoryRouter>
+        <CourseList />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/failed to load courses/i)).toBeInTheDocument();
