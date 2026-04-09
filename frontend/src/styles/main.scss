@@ -11,8 +11,34 @@ body {
   top: 0;
   height: 100%;
   z-index: 1;
+  background-color: rgba(10, 10, 30, 0.75);
+
   > div > .card {
     max-width: 400px;
     width: 100%;
+    background-color: #151726;
+    border: 1px solid #6c63ff;
+    color: #fff;
+
+    .form-control {
+      background-color: #1e2030;
+      border-color: #2e3050;
+      color: #fff;
+
+      &:focus {
+        background-color: #1e2030;
+        border-color: #6c63ff;
+        color: #fff;
+        box-shadow: 0 0 0 0.2rem rgba(108, 99, 255, 0.25);
+      }
+    }
+
+    label {
+      color: #adb5bd;
+    }
+
+    h5 {
+      color: #fff;
+    }
   }
 }
