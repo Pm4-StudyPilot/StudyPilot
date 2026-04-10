@@ -14,6 +14,7 @@ const mockCourse: CourseDto = {
 };
 
 const mockOnUpdated = vi.fn();
+const mockOnDeleted = vi.fn();
 
 /**
  * CourseCard component tests.
@@ -42,7 +43,7 @@ describe('CourseCard', () => {
   it('renders the course name', () => {
     render(
       <MemoryRouter>
-        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} />
+        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} onDeleted={mockOnDeleted} />
       </MemoryRouter>
     );
 
@@ -61,7 +62,7 @@ describe('CourseCard', () => {
   it('renders the formatted creation date', () => {
     render(
       <MemoryRouter>
-        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} />
+        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} onDeleted={mockOnDeleted} />
       </MemoryRouter>
     );
 
@@ -80,7 +81,7 @@ describe('CourseCard', () => {
   it('is collapsed by default', () => {
     render(
       <MemoryRouter>
-        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} />
+        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} onDeleted={mockOnDeleted} />
       </MemoryRouter>
     );
 
@@ -99,7 +100,7 @@ describe('CourseCard', () => {
   it('expands when the toggle button is clicked', () => {
     render(
       <MemoryRouter>
-        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} />
+        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} onDeleted={mockOnDeleted} />
       </MemoryRouter>
     );
 
@@ -120,7 +121,7 @@ describe('CourseCard', () => {
   it('collapses when the toggle button is clicked again', () => {
     render(
       <MemoryRouter>
-        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} />
+        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} onDeleted={mockOnDeleted} />
       </MemoryRouter>
     );
 
