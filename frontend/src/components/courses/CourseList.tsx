@@ -58,6 +58,15 @@ export default function CourseList() {
     setCourses((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
   }
 
+  /**
+   * Handles a deleted course.
+   *
+   * Removes the matching course from the list by id.
+   */
+  function handleDeleted(id: string) {
+    setCourses((prev) => prev.filter((c) => c.id !== id));
+  }
+
   return (
     <>
       <div className="course-panel rounded p-4">
@@ -94,7 +103,12 @@ export default function CourseList() {
         {!loading &&
           !error &&
           courses.map((course) => (
-            <CourseCard key={course.id} course={course} onUpdated={handleUpdated} />
+            <CourseCard
+              key={course.id}
+              course={course}
+              onUpdated={handleUpdated}
+              onDeleted={handleDeleted}
+            />
           ))}
       </div>
 
