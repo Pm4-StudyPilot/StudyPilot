@@ -1,0 +1,78 @@
+// Shared panel used by CourseList and CourseDetailPage
+.course-panel {
+  background-color: #151726;
+  border: 1px solid #2e3050;
+}
+
+// CourseList
+.course-list {
+  &__title {
+    font-size: 1.4rem;
+  }
+
+  &__subtitle {
+    font-size: 0.85rem;
+  }
+
+  &__error {
+    font-size: 0.875rem;
+  }
+
+  &__empty {
+    font-size: 0.9rem;
+  }
+}
+
+// CourseCard
+.course-card {
+  background-color: #1e2030;
+  border: 1px solid #2e3050;
+
+  &__toggle {
+    background-color: transparent;
+    color: inherit;
+  }
+
+  &__progress-ring {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #6c63ff;
+  }
+
+  &__name {
+    font-size: 0.95rem;
+  }
+
+  &__date {
+    font-size: 0.78rem;
+  }
+
+  &__chevron {
+    font-size: 0.75rem;
+  }
+
+  &__empty {
+    font-size: 0.85rem;
+  }
+}
+
+// CourseDetailPage
+.course-detail {
+  &__back-link {
+    font-size: 0.9rem;
+  }
+
+  &__date {
+    font-size: 0.85rem;
+  }
+
+  &__error {
+    font-size: 0.875rem;
+  }
+
+  &__placeholder {
+    background-color: #1e2030;
+    border: 1px solid #2e3050;
+    font-size: 0.9rem;
+  }
+}
