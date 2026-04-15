@@ -130,6 +130,29 @@ export const createCourseSchema = z.object({
 });
 
 /**
+ * Edit Task Schema
+ *
+ * Defines validation rules for editing an existing task.
+ *
+ * Fields:
+ * - title: the task title (required, non-empty)
+ * - description: optional free-text notes
+ * - dueDate: optional ISO date string
+ * - priority: required priority level (LOW, MEDIUM, HIGH)
+ * - status: required status (OPEN, IN_PROGRESS, DONE)
+ *
+ * This schema is used for:
+ * - Frontend form validation in the EditTaskModal
+ */
+export const editTaskSchema = z.object({
+  title: z.string().min(1, 'Task title is required'),
+  description: z.string().optional(),
+  dueDate: z.string().optional(),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH']),
+  status: z.enum(['OPEN', 'IN_PROGRESS', 'DONE']),
+});
+
+/**
  * Create Task Schema
  *
  * Defines validation rules for creating a new task.
