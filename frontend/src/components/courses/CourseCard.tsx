@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CourseDto } from '../../types/dto';
+import { CourseDto, TaskDto } from '../../types/dto';
+import { api } from '../../services/api';
 import EditCourseModal from './EditCourseModal';
 import DeleteCourseModal from './DeleteCourseModal';
 
@@ -8,6 +9,18 @@ type CourseCardProps = {
   course: CourseDto;
   onUpdated: (course: CourseDto) => void;
   onDeleted: (id: string) => void;
+};
+
+const STATUS_BADGE: Record<TaskDto['status'], string> = {
+  OPEN: 'bg-secondary',
+  IN_PROGRESS: 'bg-primary',
+  DONE: 'bg-success',
+};
+
+const STATUS_LABEL: Record<TaskDto['status'], string> = {
+  OPEN: 'Open',
+  IN_PROGRESS: 'In Progress',
+  DONE: 'Done',
 };
 
 /**
@@ -33,6 +46,22 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
   const [expanded, setExpanded] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [tasks, setTasks] = useState<TaskDto[] | null>(null);
+  const [tasksLoading, setTasksLoading] = useState(false);
+
+  function handleToggle() {
+    setExpanded((prev) => {
+      if (!prev && tasks === null) {
+        setTasksLoading(true);
+        api
+          .get<TaskDto[]>(`/courses/${course.id}/tasks`)
+          .then(setTasks)
+          .catch(() => setTasks([]))
+          .finally(() => setTasksLoading(false));
+      }
+      return !prev;
+    });
+  }
 
   const formattedDate = new Date(course.createdAt).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -82,7 +111,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
             {/* Toggle button to expand/collapse course content */}
             <button
               className="btn btn-sm btn-link text-secondary p-0"
-              onClick={() => setExpanded((v) => !v)}
+              onClick={handleToggle}
               aria-label="Toggle course"
               aria-expanded={expanded}
             >
@@ -95,7 +124,58 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
 
         {expanded && (
           <div className="px-3 pb-3">
-            <p className="course-card__empty text-secondary mb-0">No items yet.</p>
+            {tasksLoading && (
+              <div className="d-flex justify-content-center py-2">
+                <div className="spinner-border spinner-border-sm text-secondary" role="status">
+                  <span className="visually-hidden">Loading tasks...</span>
+                </div>
+              </div>
+            )}
+
+            {!tasksLoading && tasks !== null && tasks.length === 0 && (
+              <p className="course-card__empty text-secondary mb-0">No tasks yet.</p>
+            )}
+
+            {!tasksLoading && tasks !== null && tasks.length > 0 && (
+              <>
+                <ul className="list-unstyled mb-2">
+                  {tasks.map((task) => (
+                    <li
+                      key={task.id}
+                      className="d-flex align-items-center justify-content-between py-1"
+                      style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                    >
+                      <span className="text-white" style={{ fontSize: '0.9rem' }}>
+                        {task.title}
+                      </span>
+                      <div className="d-flex align-items-center gap-2">
+                        {task.dueDate && (
+                          <span className="text-secondary" style={{ fontSize: '0.78rem' }}>
+                            {new Date(task.dueDate).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </span>
+                        )}
+                        <span
+                          className={`badge ${STATUS_BADGE[task.status]}`}
+                          style={{ fontSize: '0.68rem' }}
+                        >
+                          {STATUS_LABEL[task.status]}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to={`/courses/${course.id}`}
+                  className="text-secondary text-decoration-none"
+                  style={{ fontSize: '0.82rem' }}
+                >
+                  View all tasks →
+                </Link>
+              </>
+            )}
           </div>
         )}
       </div>

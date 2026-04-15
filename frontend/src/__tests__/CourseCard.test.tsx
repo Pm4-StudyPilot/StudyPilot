@@ -1,9 +1,16 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter } from 'react-router-dom';
 import CourseCard from '../components/courses/CourseCard';
 import { CourseDto } from '../types/dto';
+import { api } from '../services/api';
+
+vi.mock('../services/api', () => ({
+  api: {
+    get: vi.fn(),
+  },
+}));
 
 const mockCourse: CourseDto = {
   id: 'c1',
@@ -29,6 +36,7 @@ const mockOnDeleted = vi.fn();
 describe('CourseCard', () => {
   afterEach(() => {
     cleanup();
+    vi.clearAllMocks();
   });
 
   /**
@@ -85,19 +93,21 @@ describe('CourseCard', () => {
       </MemoryRouter>
     );
 
-    expect(screen.queryByText(/no items yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/no tasks yet/i)).not.toBeInTheDocument();
   });
 
   /**
-   * Test case: Expand on click
+   * Test case: Expand on click — shows empty state when course has no tasks
    *
    * Scenario:
-   * The toggle button is clicked.
+   * The toggle button is clicked and the API returns an empty task list.
    *
    * Expected behavior:
-   * - The "No items yet." placeholder becomes visible
+   * - The "No tasks yet." placeholder becomes visible
    */
-  it('expands when the toggle button is clicked', () => {
+  it('expands when the toggle button is clicked', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([]);
+
     render(
       <MemoryRouter>
         <CourseCard course={mockCourse} onUpdated={mockOnUpdated} onDeleted={mockOnDeleted} />
@@ -106,7 +116,9 @@ describe('CourseCard', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /toggle course/i }));
 
-    expect(screen.getByText(/no items yet/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/no tasks yet/i)).toBeInTheDocument();
+    });
   });
 
   /**
@@ -116,9 +128,11 @@ describe('CourseCard', () => {
    * The toggle button is clicked twice.
    *
    * Expected behavior:
-   * - The "No items yet." placeholder is hidden again
+   * - The task list is hidden again
    */
-  it('collapses when the toggle button is clicked again', () => {
+  it('collapses when the toggle button is clicked again', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([]);
+
     render(
       <MemoryRouter>
         <CourseCard course={mockCourse} onUpdated={mockOnUpdated} onDeleted={mockOnDeleted} />
@@ -126,8 +140,9 @@ describe('CourseCard', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /toggle course/i }));
-    fireEvent.click(screen.getByRole('button', { name: /toggle course/i }));
+    await waitFor(() => expect(screen.getByText(/no tasks yet/i)).toBeInTheDocument());
 
-    expect(screen.queryByText(/no items yet/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /toggle course/i }));
+    expect(screen.queryByText(/no tasks yet/i)).not.toBeInTheDocument();
   });
 });
