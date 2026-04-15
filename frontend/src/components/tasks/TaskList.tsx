@@ -28,6 +28,7 @@ interface TaskListProps {
   tasks: TaskDto[];
   onTaskUpdated: (task: TaskDto) => void;
   onTaskDeleted: (id: string) => void;
+  onTasksReordered: (tasks: TaskDto[]) => void;
 }
 
 const PRIORITY_ORDER: Record<TaskDto['priority'], number> = { LOW: 0, MEDIUM: 1, HIGH: 2 };
@@ -107,7 +108,13 @@ function SortableTaskCard({ task, onEdit, onDelete }: SortableTaskCardProps) {
  * - Persist manual order to PATCH /courses/:courseId/tasks/order
  * - Open EditTaskModal and DeleteTaskModal on user actions
  */
-export default function TaskList({ courseId, tasks, onTaskUpdated, onTaskDeleted }: TaskListProps) {
+export default function TaskList({
+  courseId,
+  tasks,
+  onTaskUpdated,
+  onTaskDeleted,
+  onTasksReordered,
+}: TaskListProps) {
   const [sortField, setSortField] = useState<SortField>('manual');
   const [editingTask, setEditingTask] = useState<TaskDto | null>(null);
   const [deletingTask, setDeletingTask] = useState<TaskDto | null>(null);
@@ -122,9 +129,12 @@ export default function TaskList({ courseId, tasks, onTaskUpdated, onTaskDeleted
 
     const oldIndex = tasks.findIndex((t) => t.id === active.id);
     const newIndex = tasks.findIndex((t) => t.id === over.id);
-    const reordered = arrayMove(tasks, oldIndex, newIndex);
+    const reordered = arrayMove(tasks, oldIndex, newIndex).map((task, index) => ({
+      ...task,
+      position: index,
+    }));
 
-    reordered.forEach((task, index) => onTaskUpdated({ ...task, position: index }));
+    onTasksReordered(reordered);
     setReorderError('');
 
     try {
@@ -132,7 +142,7 @@ export default function TaskList({ courseId, tasks, onTaskUpdated, onTaskDeleted
         order: reordered.map((t) => t.id),
       });
     } catch {
-      reordered.forEach((task, index) => onTaskUpdated({ ...tasks[index], position: index }));
+      onTasksReordered(tasks);
       setReorderError('Failed to save order. Please try again.');
     }
   }

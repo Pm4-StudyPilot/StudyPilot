@@ -61,6 +61,10 @@ export default function CourseDetailPage() {
     setTasks((prev) => prev.filter((t) => t.id !== id));
   }
 
+  function handleTasksReordered(reordered: TaskDto[]) {
+    setTasks(reordered);
+  }
+
   // Only compute the formatted date once the course has loaded
   const formattedDate = course
     ? new Date(course.createdAt).toLocaleDateString('en-US', {
@@ -109,6 +113,7 @@ export default function CourseDetailPage() {
               tasks={tasks}
               onTaskUpdated={handleTaskUpdated}
               onTaskDeleted={handleTaskDeleted}
+              onTasksReordered={handleTasksReordered}
             />
           </div>
         )}
