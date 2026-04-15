@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { TaskController } from '../controllers/task.controller';
 import { authenticate } from '../middleware/auth';
+import { generalLimiter } from '../middleware/rateLimiter';
 
 const taskRouter = Router({ mergeParams: true });
 const taskController = new TaskController();
@@ -63,8 +64,8 @@ const taskController = new TaskController();
  *       404:
  *         description: Course not found.
  */
-taskRouter.get('/', authenticate, (req, res) => taskController.list(req, res));
-taskRouter.post('/', authenticate, (req, res) => taskController.create(req, res));
+taskRouter.get('/', generalLimiter, authenticate, (req, res) => taskController.list(req, res));
+taskRouter.post('/', generalLimiter, authenticate, (req, res) => taskController.create(req, res));
 
 /**
  * @openapi
@@ -158,9 +159,15 @@ taskRouter.post('/', authenticate, (req, res) => taskController.create(req, res)
  *       404:
  *         description: Task not found.
  */
-taskRouter.get('/:id', authenticate, (req, res) => taskController.getById(req, res));
-taskRouter.patch('/:id', authenticate, (req, res) => taskController.update(req, res));
-taskRouter.delete('/:id', authenticate, (req, res) => taskController.remove(req, res));
+taskRouter.get('/:id', generalLimiter, authenticate, (req, res) =>
+  taskController.getById(req, res)
+);
+taskRouter.patch('/:id', generalLimiter, authenticate, (req, res) =>
+  taskController.update(req, res)
+);
+taskRouter.delete('/:id', generalLimiter, authenticate, (req, res) =>
+  taskController.remove(req, res)
+);
 
 /**
  * @openapi
@@ -202,7 +209,7 @@ taskRouter.delete('/:id', authenticate, (req, res) => taskController.remove(req,
  *       404:
  *         description: Task not found.
  */
-taskRouter.patch('/:id/completion', authenticate, (req, res) =>
+taskRouter.patch('/:id/completion', generalLimiter, authenticate, (req, res) =>
   taskController.setCompletion(req, res)
 );
 
