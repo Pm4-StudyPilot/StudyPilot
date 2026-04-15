@@ -50,6 +50,11 @@ class DocumentController {
     } catch (error) {
       logger.error({ err: error }, 'Failed to upload document');
 
+      if (error instanceof Error && error.message === 'Course not found.') {
+        res.status(404).json({ message: 'Course not found.' });
+        return;
+      }
+
       res.status(500).json({ message: 'Failed to upload document.' });
     }
   }

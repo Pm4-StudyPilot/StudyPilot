@@ -24,11 +24,11 @@ class DocumentService {
    * @returns Created document entry
    */
   async upload({ file, courseId, ownerId }: UploadDocumentInput) {
-    // Check if the course exists
-    const course = await prisma.course.findUnique({
+    // Check if the course exists and belongs to the uploading user
+    const course = await prisma.course.findFirst({
       where: {
         id: courseId,
-        ownerId: ownerId,
+        ownerId,
       },
     });
 
