@@ -163,6 +163,17 @@ const swaggerDefinition = {
           completed: { type: 'boolean' },
         },
       },
+      ReorderTasksRequest: {
+        type: 'object',
+        required: ['order'],
+        properties: {
+          order: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Task ids in the desired order.',
+          },
+        },
+      },
     },
   },
 } as const;

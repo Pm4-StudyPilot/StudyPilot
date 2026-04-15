@@ -5,6 +5,7 @@ import {
   CreateTaskRequest,
   UpdateTaskRequest,
   PatchTaskCompletionRequest,
+  ReorderTasksRequest,
 } from '../types';
 import { logger } from '../lib/logger';
 
@@ -180,6 +181,42 @@ export class TaskController {
     } catch (error: unknown) {
       logger.error({ error }, '[TaskController#setCompletion]');
       res.status(500).json({ message: 'Failed to update task completion' });
+    }
+  }
+
+  async reorder(req: Request, res: Response): Promise<void> {
+    try {
+      const authUser = req.user as AuthenticatedUser;
+      const rawCourseId = req.params.courseId;
+      const courseId = Array.isArray(rawCourseId) ? rawCourseId[0] : rawCourseId;
+
+      if (!courseId) {
+        res.status(400).json({ message: 'Course id is required' });
+        return;
+      }
+
+      const { order } = req.body as ReorderTasksRequest;
+
+      if (!Array.isArray(order) || order.length === 0) {
+        res.status(400).json({ message: 'order must be a non-empty array of task ids' });
+        return;
+      }
+
+      if (!order.every((id) => typeof id === 'string')) {
+        res.status(400).json({ message: 'All order entries must be strings' });
+        return;
+      }
+
+      const success = await taskService.reorderTasks(courseId, authUser.id, order);
+      if (!success) {
+        res.status(404).json({ message: 'Course not found or task ids are invalid' });
+        return;
+      }
+
+      res.status(204).send();
+    } catch (error: unknown) {
+      logger.error({ error }, '[TaskController#reorder]');
+      res.status(500).json({ message: 'Failed to reorder tasks' });
     }
   }
 
