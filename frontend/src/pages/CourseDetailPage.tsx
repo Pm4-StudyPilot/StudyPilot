@@ -4,6 +4,7 @@ import Navbar from '../components/shared/layout/Navbar';
 import DocumentUploadForm from '../components/courses/DocumentUploadForm';
 import CourseDocumentsList from '../components/courses/CourseDocumentsList';
 import CreateTaskModal from '../components/tasks/CreateTaskModal';
+import TaskList from '../components/tasks/TaskList';
 import { api } from '../services/api';
 import { CourseDto, TaskDto } from '../types/dto';
 
@@ -57,6 +58,18 @@ export default function CourseDetailPage() {
   function handleTaskCreated(task: TaskDto) {
     setTasks((prev) => [...prev, task]);
     setCreateModalOpen(false);
+  }
+
+  function handleTaskUpdated(task: TaskDto) {
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
+  }
+
+  function handleTaskDeleted(id: string) {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  function handleTasksReordered(reordered: TaskDto[]) {
+    setTasks(reordered);
   }
 
   // Only compute the formatted date once the course has loaded
@@ -121,6 +134,14 @@ export default function CourseDetailPage() {
                 No tasks yet. Add one to get started.
               </div>
             )}
+            
+            <TaskList
+              courseId={id!}
+              tasks={tasks}
+              onTaskUpdated={handleTaskUpdated}
+              onTaskDeleted={handleTaskDeleted}
+              onTasksReordered={handleTasksReordered}
+            />
           </div>
         )}
 

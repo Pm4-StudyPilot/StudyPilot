@@ -31,6 +31,7 @@ type MockDb = {
     deleteMany?: (args: unknown) => Promise<{ count: number }>;
     aggregate?: (args: unknown) => Promise<{ _max: { position: number | null } }>;
   };
+  $transaction?: (fns: unknown[]) => Promise<unknown[]>;
 };
 
 function createMockTask(overrides: Partial<MockTask> = {}): MockTask {
@@ -242,5 +243,56 @@ describe('TaskService', () => {
     const result = await service.deleteForOwner('t1', 'u2');
 
     expect(result).toBe(false);
+  });
+
+  it('should return false when reordering tasks for a course the user does not own', async () => {
+    const findFirst = mock(async () => null);
+
+    const db: MockDb = {
+      course: { findFirst },
+      task: {},
+    };
+
+    const service = new TaskService(db as unknown as ConstructorParameters<typeof TaskService>[0]);
+    const result = await service.reorderTasks('c1', 'u2', ['t1', 't2']);
+
+    expect(result).toBe(false);
+    expect(findFirst).toHaveBeenCalledWith({ where: { id: 'c1', ownerId: 'u2' } });
+  });
+
+  it('should return false when provided task ids do not match the course tasks', async () => {
+    const course: MockCourse = { id: 'c1', name: 'Biology', ownerId: 'u1' };
+    const courseFindFirst = mock(async () => course);
+    const findMany = mock(async () => [createMockTask({ id: 't1' }), createMockTask({ id: 't2' })]);
+
+    const db: MockDb = {
+      course: { findFirst: courseFindFirst },
+      task: { findMany },
+    };
+
+    const service = new TaskService(db as unknown as ConstructorParameters<typeof TaskService>[0]);
+    const result = await service.reorderTasks('c1', 'u1', ['t1', 't3']);
+
+    expect(result).toBe(false);
+  });
+
+  it('should update positions atomically when reordering owned tasks', async () => {
+    const course: MockCourse = { id: 'c1', name: 'Biology', ownerId: 'u1' };
+    const courseFindFirst = mock(async () => course);
+    const findMany = mock(async () => [createMockTask({ id: 't1' }), createMockTask({ id: 't2' })]);
+    const update = mock(async (args: unknown) => args as MockTask);
+    const $transaction = mock(async () => []);
+
+    const db: MockDb = {
+      course: { findFirst: courseFindFirst },
+      task: { findMany, update },
+      $transaction,
+    };
+
+    const service = new TaskService(db as unknown as ConstructorParameters<typeof TaskService>[0]);
+    const result = await service.reorderTasks('c1', 'u1', ['t2', 't1']);
+
+    expect(result).toBe(true);
+    expect($transaction).toHaveBeenCalledTimes(1);
   });
 });
