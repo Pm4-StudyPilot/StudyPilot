@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/shared/layout/Navbar';
+import DocumentUploadForm from '../components/courses/DocumentUploadForm';
 import { api } from '../services/api';
 import { CourseDto } from '../types/dto';
 
@@ -76,6 +77,8 @@ export default function CourseDetailPage() {
           <div className="course-panel rounded p-4">
             <h2 className="text-white fw-bold mb-1">{course.name}</h2>
             <p className="course-detail__date text-secondary mb-4">Added {formattedDate}</p>
+
+            <DocumentUploadForm courseId={course.id} courseName={course.name} />
 
             {/* Content placeholder — will be replaced with modules and assignments */}
             <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
