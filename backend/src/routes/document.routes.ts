@@ -125,4 +125,32 @@ documentRouter.post('/', authenticate, handleDocumentUpload, (req, res) =>
   documentController.upload(req, res)
 );
 
+/**
+ * @openapi
+ * /documents/course/{courseId}:
+ *   get:
+ *     tags:
+ *       - Documents
+ *     summary: List documents for a course
+ *     description: Returns all uploaded documents for a course owned by the authenticated user.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Documents returned successfully.
+ *       401:
+ *         description: Unauthorized.
+ *       404:
+ *         description: Course not found.
+ */
+documentRouter.get('/course/:courseId', authenticate, (req, res) =>
+  documentController.listByCourse(req, res)
+);
+
 export { documentRouter };

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 type DocumentUploadFormProps = {
   courseId: string;
   courseName: string;
+  onUploadSuccess: () => void;
 };
 
 /**
@@ -14,15 +15,21 @@ type DocumentUploadFormProps = {
  * - Render the selected course context
  * - Render a file input for selecting a document
  * - Keep track of the selected file in local component state
- * - Provide a submit button for triggering the upload flow later
+ * - Submit the selected file to the backend upload endpoint
+ * - Display success and error feedback to the user
  *
  * Notes:
  * - The course is already selected via the course detail page context
- * - Backend integration is added in a later step
+ * - The upload request is sent as multipart/form-data
  */
-export default function DocumentUploadForm({ courseId, courseName }: DocumentUploadFormProps) {
+export default function DocumentUploadForm({
+  courseId,
+  courseName,
+  onUploadSuccess,
+}: DocumentUploadFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [formMessage, setFormMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   /**
    * Handles file input changes and stores the selected file in state.
@@ -34,10 +41,25 @@ export default function DocumentUploadForm({ courseId, courseName }: DocumentUpl
   }
 
   /**
-   * Handles form submission.
-   * Backend integration will be added in a later step.
+   * Handles upload form submission.
+   *
+   * Workflow:
+   * 1. Prevent the default browser form submission
+   * 2. Validate that a file has been selected
+   * 3. Read the JWT token from localStorage
+   * 4. Build a FormData payload containing the file and courseId
+   * 5. Send the upload request to the backend
+   * 6. Show a success or error message depending on the response
+   *
+   * Important:
+   * - The project uses a shared API helper (api.ts) for JSON-based requests
+   * - File uploads require multipart/form-data, which is not compatible with the
+   *   default JSON configuration of the API helper.
+   * - Therefore, this upload request is implemented using fetch directly.
+   * - The Content-Type header is not set manually, as the browser automatically
+   *   adds the correct multipart boundary for FormData.
    */
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!selectedFile) {
@@ -45,7 +67,44 @@ export default function DocumentUploadForm({ courseId, courseName }: DocumentUpl
       return;
     }
 
-    setFormMessage(`Ready to upload "${selectedFile.name}" to ${courseName}.`);
+    try {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        setFormMessage('You are not authenticated.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('courseId', courseId);
+
+      const response = await fetch('/api/documents', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || 'Upload failed.');
+      }
+
+      const result = await response.json();
+
+      setFormMessage(`Upload successful: ${result.filename}`);
+      setSelectedFile(null);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
+      onUploadSuccess();
+    } catch (error) {
+      setFormMessage(error instanceof Error ? error.message : 'Upload failed.');
+    }
   }
 
   return (
@@ -73,18 +132,13 @@ export default function DocumentUploadForm({ courseId, courseName }: DocumentUpl
             Select a file
           </label>
           <input
+            ref={fileInputRef}
             id="document-upload"
             type="file"
             className="form-control"
             onChange={handleFileChange}
           />
         </div>
-
-        {selectedFile && (
-          <p className="text-secondary mb-0">
-            Selected file: <span className="text-white">{selectedFile.name}</span>
-          </p>
-        )}
 
         {formMessage && <div className="alert alert-secondary mb-0">{formMessage}</div>}
 

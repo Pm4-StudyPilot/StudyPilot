@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/shared/layout/Navbar';
 import DocumentUploadForm from '../components/courses/DocumentUploadForm';
+import CourseDocumentsList from '../components/courses/CourseDocumentsList';
 import { api } from '../services/api';
 import { CourseDto } from '../types/dto';
 
@@ -27,6 +28,7 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<CourseDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!id) return;
@@ -39,6 +41,10 @@ export default function CourseDetailPage() {
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  function handleUploadSuccess() {
+    setDocumentsRefreshKey((prev) => prev + 1);
+  }
 
   // Only compute the formatted date once the course has loaded
   const formattedDate = course
@@ -78,11 +84,18 @@ export default function CourseDetailPage() {
             <h2 className="text-white fw-bold mb-1">{course.name}</h2>
             <p className="course-detail__date text-secondary mb-4">Added {formattedDate}</p>
 
-            <DocumentUploadForm courseId={course.id} courseName={course.name} />
+            <div className="row g-4">
+              <div className="col-lg-7">
+                <CourseDocumentsList courseId={course.id} refreshKey={documentsRefreshKey} />
+              </div>
 
-            {/* Content placeholder — will be replaced with modules and assignments */}
-            <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
-              No content yet.
+              <div className="col-lg-5">
+                <DocumentUploadForm
+                  courseId={course.id}
+                  courseName={course.name}
+                  onUploadSuccess={handleUploadSuccess}
+                />
+              </div>
             </div>
           </div>
         )}

@@ -50,6 +50,36 @@ class DocumentService {
 
     return document;
   }
+
+  /**
+   * Returns all documents for a course owned by the authenticated user.
+   *
+   * @param courseId ID of the course
+   * @param ownerId ID of the authenticated user
+   * @returns List of documents sorted by newest first
+   */
+  async listByCourse(courseId: string, ownerId: string) {
+    const course = await prisma.course.findFirst({
+      where: {
+        id: courseId,
+        ownerId,
+      },
+    });
+
+    if (!course) {
+      throw new Error('Course not found.');
+    }
+
+    return prisma.document.findMany({
+      where: {
+        courseId,
+        ownerId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
 }
 
 export { DocumentService };
