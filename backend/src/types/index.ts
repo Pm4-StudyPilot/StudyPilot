@@ -55,6 +55,25 @@ export interface ResetPasswordRequest {
   newPassword: string;
 }
 
+export interface CreateTaskRequest {
+  title: string;
+  description?: string;
+  dueDate?: string;
+  priority?: TaskPriority;
+}
+
+export interface UpdateTaskRequest {
+  title?: string;
+  description?: string | null;
+  dueDate?: string | null;
+  priority?: TaskPriority;
+  status?: TaskStatus;
+}
+
+export interface PatchTaskCompletionRequest {
+  completed: boolean;
+}
+
 // --- Response DTOs ---
 
 export interface UserDto {
@@ -67,6 +86,23 @@ export interface UserDto {
 export interface AuthResponse {
   user: UserDto;
   token: string;
+}
+
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
+export type TaskStatus = 'OPEN' | 'IN_PROGRESS' | 'DONE';
+
+export interface TaskDto {
+  id: string;
+  title: string;
+  description: string | null;
+  dueDate: Date | null;
+  priority: TaskPriority;
+  status: TaskStatus;
+  position: number;
+  completed: boolean;
+  courseId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CourseDto {

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/shared/layout/Navbar';
+import CreateTaskModal from '../components/tasks/CreateTaskModal';
 import { api } from '../services/api';
-import { CourseDto } from '../types/dto';
+import { CourseDto, TaskDto } from '../types/dto';
 
 /**
  * CourseDetailPage
@@ -26,6 +27,8 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<CourseDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [tasks, setTasks] = useState<TaskDto[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -37,7 +40,17 @@ export default function CourseDetailPage() {
         setError(err instanceof Error ? err.message : 'Failed to load course');
       })
       .finally(() => setLoading(false));
+
+    api
+      .get<TaskDto[]>(`/courses/${id}/tasks`)
+      .then(setTasks)
+      .catch(() => {});
   }, [id]);
+
+  function handleTaskCreated(task: TaskDto) {
+    setTasks((prev) => [...prev, task]);
+    setCreateModalOpen(false);
+  }
 
   // Only compute the formatted date once the course has loaded
   const formattedDate = course
@@ -74,14 +87,28 @@ export default function CourseDetailPage() {
 
         {!loading && !error && course && (
           <div className="course-panel rounded p-4">
-            <h2 className="text-white fw-bold mb-1">{course.name}</h2>
+            <div className="d-flex align-items-center justify-content-between mb-1">
+              <h2 className="text-white fw-bold mb-0">{course.name}</h2>
+              <button className="btn btn-primary btn-sm" onClick={() => setCreateModalOpen(true)}>
+                + New Task
+              </button>
+            </div>
             <p className="course-detail__date text-secondary mb-4">Added {formattedDate}</p>
 
-            {/* Content placeholder — will be replaced with modules and assignments */}
-            <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
-              No content yet.
-            </div>
+            {tasks.length === 0 && (
+              <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
+                No tasks yet. Add one to get started.
+              </div>
+            )}
           </div>
+        )}
+
+        {createModalOpen && id && (
+          <CreateTaskModal
+            courseId={id}
+            onClose={() => setCreateModalOpen(false)}
+            onCreated={handleTaskCreated}
+          />
         )}
       </div>
     </>

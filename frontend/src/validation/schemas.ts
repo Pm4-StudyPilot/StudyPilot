@@ -130,6 +130,27 @@ export const createCourseSchema = z.object({
 });
 
 /**
+ * Create Task Schema
+ *
+ * Defines validation rules for creating a new task.
+ *
+ * Fields:
+ * - title: the task title (required, non-empty)
+ * - description: optional free-text notes
+ * - dueDate: optional ISO date string
+ * - priority: optional priority level (LOW, MEDIUM, HIGH)
+ *
+ * This schema is used for:
+ * - Frontend form validation in the CreateTaskModal
+ */
+export const createTaskSchema = z.object({
+  title: z.string().min(1, 'Task title is required'),
+  description: z.string().optional(),
+  dueDate: z.string().optional(),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
+});
+
+/**
  * Reset Password Schema
  *
  * Validates the new password and confirmation on the "Reset Password" form.
