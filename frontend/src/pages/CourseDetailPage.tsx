@@ -3,8 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/shared/layout/Navbar';
 import DocumentUploadForm from '../components/courses/DocumentUploadForm';
 import CourseDocumentsList from '../components/courses/CourseDocumentsList';
+import CreateTaskModal from '../components/tasks/CreateTaskModal';
 import { api } from '../services/api';
-import { CourseDto } from '../types/dto';
+import { CourseDto, TaskDto } from '../types/dto';
 
 /**
  * CourseDetailPage
@@ -29,6 +30,8 @@ export default function CourseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [tasks, setTasks] = useState<TaskDto[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -40,10 +43,20 @@ export default function CourseDetailPage() {
         setError(err instanceof Error ? err.message : 'Failed to load course');
       })
       .finally(() => setLoading(false));
+
+    api
+      .get<TaskDto[]>(`/courses/${id}/tasks`)
+      .then(setTasks)
+      .catch(() => {});
   }, [id]);
 
   function handleUploadSuccess() {
     setDocumentsRefreshKey((prev) => prev + 1);
+  }
+
+  function handleTaskCreated(task: TaskDto) {
+    setTasks((prev) => [...prev, task]);
+    setCreateModalOpen(false);
   }
 
   // Only compute the formatted date once the course has loaded
@@ -81,7 +94,12 @@ export default function CourseDetailPage() {
 
         {!loading && !error && course && (
           <div className="course-panel rounded p-4">
-            <h2 className="text-white fw-bold mb-1">{course.name}</h2>
+            <div className="d-flex align-items-center justify-content-between mb-1">
+              <h2 className="text-white fw-bold mb-0">{course.name}</h2>
+              <button className="btn btn-primary btn-sm" onClick={() => setCreateModalOpen(true)}>
+                + New Task
+              </button>
+            </div>
             <p className="course-detail__date text-secondary mb-4">Added {formattedDate}</p>
 
             <div className="row g-4">
@@ -97,7 +115,21 @@ export default function CourseDetailPage() {
                 />
               </div>
             </div>
+
+            {tasks.length === 0 && (
+              <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
+                No tasks yet. Add one to get started.
+              </div>
+            )}
           </div>
+        )}
+
+        {createModalOpen && id && (
+          <CreateTaskModal
+            courseId={id}
+            onClose={() => setCreateModalOpen(false)}
+            onCreated={handleTaskCreated}
+          />
         )}
       </div>
     </>
