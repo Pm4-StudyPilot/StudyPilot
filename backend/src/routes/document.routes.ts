@@ -122,7 +122,7 @@ function handleDocumentUpload(req: Request, res: Response, next: NextFunction): 
  *       401:
  *         description: Unauthorized.
  */
-documentRouter.post('/', authenticate, sensitiveLimiter, handleDocumentUpload, (req, res) =>
+documentRouter.post('/', sensitiveLimiter, authenticate, handleDocumentUpload, (req, res) =>
   documentController.upload(req, res)
 );
 
@@ -150,7 +150,7 @@ documentRouter.post('/', authenticate, sensitiveLimiter, handleDocumentUpload, (
  *       404:
  *         description: Course not found.
  */
-documentRouter.get('/course/:courseId', authenticate, generalLimiter, (req, res) =>
+documentRouter.get('/course/:courseId', generalLimiter, authenticate, (req, res) =>
   documentController.listByCourse(req, res)
 );
 
