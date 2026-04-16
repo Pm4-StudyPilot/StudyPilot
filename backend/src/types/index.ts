@@ -74,6 +74,10 @@ export interface PatchTaskCompletionRequest {
   completed: boolean;
 }
 
+export interface ReorderTasksRequest {
+  order: string[];
+}
+
 // --- Response DTOs ---
 
 export interface UserDto {

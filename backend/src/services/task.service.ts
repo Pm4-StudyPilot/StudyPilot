@@ -82,6 +82,27 @@ export class TaskService {
     }) as Promise<TaskDto>;
   }
 
+  async reorderTasks(courseId: string, ownerId: string, taskIds: string[]): Promise<boolean> {
+    const course = await this.db.course.findFirst({ where: { id: courseId, ownerId } });
+    if (!course) return false;
+
+    const existingTasks = await this.db.task.findMany({
+      where: { courseId },
+      select: { id: true },
+    });
+
+    const existingIds = new Set(existingTasks.map((t) => t.id));
+    if (taskIds.length !== existingIds.size || !taskIds.every((id) => existingIds.has(id))) {
+      return false;
+    }
+
+    await this.db.$transaction(
+      taskIds.map((id, index) => this.db.task.update({ where: { id }, data: { position: index } }))
+    );
+
+    return true;
+  }
+
   async deleteForOwner(id: string, ownerId: string): Promise<boolean> {
     const result = await this.db.task.deleteMany({
       where: {

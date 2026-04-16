@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/shared/layout/Navbar';
 import CreateTaskModal from '../components/tasks/CreateTaskModal';
+import TaskList from '../components/tasks/TaskList';
 import { api } from '../services/api';
 import { CourseDto, TaskDto } from '../types/dto';
 
@@ -52,6 +53,18 @@ export default function CourseDetailPage() {
     setCreateModalOpen(false);
   }
 
+  function handleTaskUpdated(task: TaskDto) {
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
+  }
+
+  function handleTaskDeleted(id: string) {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  function handleTasksReordered(reordered: TaskDto[]) {
+    setTasks(reordered);
+  }
+
   // Only compute the formatted date once the course has loaded
   const formattedDate = course
     ? new Date(course.createdAt).toLocaleDateString('en-US', {
@@ -95,11 +108,13 @@ export default function CourseDetailPage() {
             </div>
             <p className="course-detail__date text-secondary mb-4">Added {formattedDate}</p>
 
-            {tasks.length === 0 && (
-              <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
-                No tasks yet. Add one to get started.
-              </div>
-            )}
+            <TaskList
+              courseId={id!}
+              tasks={tasks}
+              onTaskUpdated={handleTaskUpdated}
+              onTaskDeleted={handleTaskDeleted}
+              onTasksReordered={handleTasksReordered}
+            />
           </div>
         )}
 

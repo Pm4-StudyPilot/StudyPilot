@@ -69,6 +69,41 @@ taskRouter.post('/', generalLimiter, authenticate, (req, res) => taskController.
 
 /**
  * @openapi
+ * /courses/{courseId}/tasks/order:
+ *   patch:
+ *     tags:
+ *       - Tasks
+ *     summary: Reorder tasks within a course
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ReorderTasksRequest'
+ *     responses:
+ *       204:
+ *         description: Tasks reordered.
+ *       400:
+ *         description: Invalid input.
+ *       401:
+ *         description: Unauthorized.
+ *       404:
+ *         description: Course not found or task ids are invalid.
+ */
+taskRouter.patch('/order', generalLimiter, authenticate, (req, res) =>
+  taskController.reorder(req, res)
+);
+
+/**
+ * @openapi
  * /courses/{courseId}/tasks/{id}:
  *   get:
  *     tags:
