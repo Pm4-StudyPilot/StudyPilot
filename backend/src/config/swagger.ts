@@ -120,6 +120,49 @@ const swaggerDefinition = {
           name: { type: 'string' },
         },
       },
+      Task: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          title: { type: 'string' },
+          description: { type: 'string', nullable: true },
+          dueDate: { type: 'string', format: 'date-time', nullable: true },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
+          status: { type: 'string', enum: ['OPEN', 'IN_PROGRESS', 'DONE'] },
+          position: { type: 'integer' },
+          completed: { type: 'boolean' },
+          courseId: { type: 'string' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateTaskRequest: {
+        type: 'object',
+        required: ['title'],
+        properties: {
+          title: { type: 'string' },
+          description: { type: 'string' },
+          dueDate: { type: 'string', format: 'date-time' },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
+        },
+      },
+      UpdateTaskRequest: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          description: { type: 'string', nullable: true },
+          dueDate: { type: 'string', format: 'date-time', nullable: true },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
+          status: { type: 'string', enum: ['OPEN', 'IN_PROGRESS', 'DONE'] },
+        },
+      },
+      PatchTaskCompletionRequest: {
+        type: 'object',
+        required: ['completed'],
+        properties: {
+          completed: { type: 'boolean' },
+        },
+      },
     },
   },
 } as const;

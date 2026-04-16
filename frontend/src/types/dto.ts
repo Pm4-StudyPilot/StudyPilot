@@ -22,3 +22,20 @@ export interface CourseDto {
   createdAt: string;
   updatedAt: string;
 }
+
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
+export type TaskStatus = 'OPEN' | 'IN_PROGRESS' | 'DONE';
+
+export interface TaskDto {
+  id: string;
+  title: string;
+  description: string | null;
+  dueDate: string | null;
+  priority: TaskPriority;
+  status: TaskStatus;
+  position: number;
+  completed: boolean;
+  courseId: string;
+  createdAt: string;
+  updatedAt: string;
+}
