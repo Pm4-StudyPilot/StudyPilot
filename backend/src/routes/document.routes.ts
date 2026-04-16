@@ -4,6 +4,7 @@ import path from 'node:path';
 import type { Request, Response, NextFunction } from 'express';
 import { authenticate } from '../middleware/auth';
 import { DocumentController } from '../controllers/document.controller';
+import { generalLimiter, sensitiveLimiter } from '../middleware/rateLimiter';
 
 const documentRouter = Router();
 const documentController = new DocumentController();
@@ -121,7 +122,7 @@ function handleDocumentUpload(req: Request, res: Response, next: NextFunction): 
  *       401:
  *         description: Unauthorized.
  */
-documentRouter.post('/', authenticate, handleDocumentUpload, (req, res) =>
+documentRouter.post('/', authenticate, sensitiveLimiter, handleDocumentUpload, (req, res) =>
   documentController.upload(req, res)
 );
 
@@ -149,7 +150,7 @@ documentRouter.post('/', authenticate, handleDocumentUpload, (req, res) =>
  *       404:
  *         description: Course not found.
  */
-documentRouter.get('/course/:courseId', authenticate, (req, res) =>
+documentRouter.get('/course/:courseId', authenticate, generalLimiter, (req, res) =>
   documentController.listByCourse(req, res)
 );
 
