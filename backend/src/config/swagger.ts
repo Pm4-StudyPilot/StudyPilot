@@ -104,6 +104,16 @@ const swaggerDefinition = {
           ownerId: { type: 'string' },
           createdAt: { type: 'string', format: 'date-time' },
           updatedAt: { type: 'string', format: 'date-time' },
+          taskProgress: {
+            type: 'object',
+            properties: {
+              totalTasks: { type: 'integer' },
+              openTasks: { type: 'integer' },
+              inProgressTasks: { type: 'integer' },
+              completedTasks: { type: 'integer' },
+              completionPercentage: { type: 'integer' },
+            },
+          },
         },
       },
       CreateCourseRequest: {

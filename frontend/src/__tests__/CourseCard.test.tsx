@@ -18,6 +18,13 @@ const mockCourse: CourseDto = {
   ownerId: 'u1',
   createdAt: '2026-03-26T12:00:00.000Z',
   updatedAt: '2026-03-26T12:00:00.000Z',
+  taskProgress: {
+    totalTasks: 5,
+    openTasks: 2,
+    inProgressTasks: 1,
+    completedTasks: 2,
+    completionPercentage: 40,
+  },
 };
 
 const mockOnUpdated = vi.fn();
@@ -75,6 +82,17 @@ describe('CourseCard', () => {
     );
 
     expect(screen.getByText(/added/i)).toBeInTheDocument();
+  });
+
+  it('renders the course progress summary', () => {
+    render(
+      <MemoryRouter>
+        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} onDeleted={mockOnDeleted} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText(/2 open · 1 in progress · 2 completed/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/2 open, 1 in progress, 2 completed/i)).toBeInTheDocument();
   });
 
   /**
