@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/shared/layout/Navbar';
+import DocumentUploadForm from '../components/courses/DocumentUploadForm';
+import CourseDocumentsList from '../components/courses/CourseDocumentsList';
 import CreateTaskModal from '../components/tasks/CreateTaskModal';
 import TaskList from '../components/tasks/TaskList';
 import { api } from '../services/api';
@@ -28,6 +30,7 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<CourseDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [tasks, setTasks] = useState<TaskDto[]>([]);
 
@@ -47,6 +50,10 @@ export default function CourseDetailPage() {
       .then(setTasks)
       .catch(() => {});
   }, [id]);
+
+  function handleUploadSuccess() {
+    setDocumentsRefreshKey((prev) => prev + 1);
+  }
 
   function handleTaskCreated(task: TaskDto) {
     setTasks((prev) => [...prev, task]);
@@ -108,6 +115,26 @@ export default function CourseDetailPage() {
             </div>
             <p className="course-detail__date text-secondary mb-4">Added {formattedDate}</p>
 
+            <div className="row g-4">
+              <div className="col-lg-7">
+                <CourseDocumentsList courseId={course.id} refreshKey={documentsRefreshKey} />
+              </div>
+
+              <div className="col-lg-5">
+                <DocumentUploadForm
+                  courseId={course.id}
+                  courseName={course.name}
+                  onUploadSuccess={handleUploadSuccess}
+                />
+              </div>
+            </div>
+
+            {tasks.length === 0 && (
+              <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
+                No tasks yet. Add one to get started.
+              </div>
+            )}
+            
             <TaskList
               courseId={id!}
               tasks={tasks}

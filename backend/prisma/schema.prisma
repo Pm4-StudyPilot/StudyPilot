@@ -30,9 +30,10 @@ model User {
   username               String    @unique
   password               String
   role                   Role      @default(USER)
-  passwordResetToken   String?   @unique
-  passwordResetExpires DateTime?
+  passwordResetToken     String?   @unique
+  passwordResetExpires   DateTime?
   courses                Course[]
+  documents              Document[]
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
 }
@@ -42,12 +43,31 @@ model Course {
   name      String
   ownerId   String
   owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  documents Document[]
   tasks     Task[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([ownerId])
 }
+
+model Document {
+  id        String   @id @default(uuid())
+  filename  String
+  filePath  String
+  fileSize  Int?
+  fileType  String?
+  courseId  String
+  ownerId   String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([courseId])
+  @@index([ownerId])
+}
+
 
 model Task {
   id          String       @id @default(uuid())
