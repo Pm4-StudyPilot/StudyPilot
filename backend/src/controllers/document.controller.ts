@@ -3,6 +3,19 @@ import type { Request, Response } from 'express';
 import { DocumentService } from '../services/document.service';
 
 /**
+ * Returns a query parameter only if it is a single string value.
+ *
+ * Express query params may also be arrays or nested ParsedQs objects.
+ * This helper normalizes them to a simple string | undefined shape.
+ *
+ * @param value Raw query parameter value
+ * @returns Single string value or undefined
+ */
+function getSingleQueryParam(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+/**
  * Controller responsible for handling document-related HTTP requests.
  * Acts as a bridge between incoming requests and the service layer.
  */
@@ -60,9 +73,16 @@ class DocumentController {
   }
 
   /**
-   * Returns all uploaded documents for a course.
+   * Returns uploaded documents for a course owned by the authenticated user.
    *
-   * @param req Express request containing courseId in path params
+   * Supports optional query parameters for:
+   * - sorting
+   * - filtering by MIME type
+   * - searching by filename
+   *
+   * @param req Express request containing:
+   * - courseId in path params
+   * - optional sortBy, fileType, and search in query params
    * @param res Express response
    */
   async listByCourse(req: Request, res: Response): Promise<void> {
@@ -82,7 +102,24 @@ class DocumentController {
         return;
       }
 
-      const documents = await this.documentService.listByCourse(courseId, userId);
+      const sortBy = getSingleQueryParam(req.query.sortBy);
+      const fileType = getSingleQueryParam(req.query.fileType);
+      const search = getSingleQueryParam(req.query.search);
+
+      const documents = await this.documentService.listByCourse(courseId, userId, {
+        sortBy: sortBy as
+          | 'dateDesc'
+          | 'dateAsc'
+          | 'nameAsc'
+          | 'nameDesc'
+          | 'sizeAsc'
+          | 'sizeDesc'
+          | 'typeAsc'
+          | 'typeDesc'
+          | undefined,
+        fileType,
+        search,
+      });
 
       res.status(200).json(documents);
     } catch (error) {
