@@ -77,4 +77,19 @@ export class UserService {
       },
     });
   }
+
+  async deleteAccount(userId: string): Promise<UserDto> {
+    const existingUser = await prisma.user.findFirst({
+      where: { id: userId },
+      select: { id: true },
+    });
+
+    if (!existingUser) {
+      throw new Error('User not found');
+    }
+
+    return prisma.user.delete({
+      where: { id: userId },
+    });
+  }
 }

@@ -443,3 +443,97 @@ describe('UserController.updateProfile', () => {
     expect(res.json).toHaveBeenCalledWith({ message: 'Email is already in use' });
   });
 });
+
+/**
+ * Test cases for UserController.deleteAccount
+ */
+describe('UserController.deleteAccount', () => {
+  it('should delete the authenticated user and return a success message', async () => {
+    const userDto = {
+      id: 'user-1',
+      email: 'test@students.zhaw.ch',
+      username: 'testuser',
+      role: 'USER',
+    };
+
+    const mockUserService = {
+      findById: mock(async () => userDto),
+      changePassword: mock(),
+      updateProfile: mock(),
+      deleteAccount: mock(async () => userDto),
+    };
+
+    const controller = new UserController(mockUserService as unknown as UserService);
+
+    const req = {
+      user: { id: 'user-1', email: 'test@students.zhaw.ch', username: 'testuser', role: 'USER' },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.deleteAccount(req, res);
+
+    expect(mockUserService.findById).toHaveBeenCalledWith('user-1');
+    expect(mockUserService.deleteAccount).toHaveBeenCalledWith('user-1');
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'User was deleted successfully',
+      id: 'user-1',
+    });
+  });
+
+  it('should return 404 when the authenticated user no longer exists', async () => {
+    const mockUserService = {
+      findById: mock(async () => null),
+      changePassword: mock(),
+      updateProfile: mock(),
+      deleteAccount: mock(),
+    };
+
+    const controller = new UserController(mockUserService as unknown as UserService);
+
+    const req = {
+      user: { id: 'ghost-id', email: 'ghost@students.zhaw.ch', username: 'ghost', role: 'USER' },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.deleteAccount(req, res);
+
+    expect(mockUserService.findById).toHaveBeenCalledWith('ghost-id');
+    expect(mockUserService.deleteAccount).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ message: 'User not found' });
+  });
+
+  it('should return 500 on unexpected error', async () => {
+    const userDto = {
+      id: 'user-1',
+      email: 'test@students.zhaw.ch',
+      username: 'testuser',
+      role: 'USER',
+    };
+
+    const mockUserService = {
+      findById: mock(async () => userDto),
+      changePassword: mock(),
+      updateProfile: mock(),
+      deleteAccount: mock(async () => {
+        throw new Error('DB connection lost');
+      }),
+    };
+
+    const controller = new UserController(mockUserService as unknown as UserService);
+
+    const req = {
+      user: { id: 'user-1', email: 'test@students.zhaw.ch', username: 'testuser', role: 'USER' },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.deleteAccount(req, res);
+
+    expect(mockUserService.deleteAccount).toHaveBeenCalledWith('user-1');
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Failed to delete user' });
+  });
+});
