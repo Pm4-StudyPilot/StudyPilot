@@ -115,6 +115,15 @@ export interface CourseDto {
   ownerId: string;
   createdAt: Date;
   updatedAt: Date;
+  taskProgress: CourseTaskProgressDto;
+}
+
+export interface CourseTaskProgressDto {
+  totalTasks: number;
+  openTasks: number;
+  inProgressTasks: number;
+  completedTasks: number;
+  completionPercentage: number;
 }
 
 // --- Object Storage ---

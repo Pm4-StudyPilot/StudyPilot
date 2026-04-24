@@ -21,6 +21,15 @@ export interface CourseDto {
   ownerId: string;
   createdAt: string;
   updatedAt: string;
+  taskProgress?: CourseTaskProgressDto;
+}
+
+export interface CourseTaskProgressDto {
+  totalTasks: number;
+  openTasks: number;
+  inProgressTasks: number;
+  completedTasks: number;
+  completionPercentage: number;
 }
 
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';

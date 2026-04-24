@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="15.1">
+  <zoom_level>9</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>117</x>
+      <y>54</y>
+      <w>1008</w>
+      <h>630</h>
+    </coordinates>
+    <panel_attributes>&lt;&lt;arc42 Whitebox&gt;&gt;
+StudyPilot Frontend (React + Vite)
+--
+Responsibilities:
+- SPA for learning workflows
+- Authenticated user interactions
+- API + realtime integration</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>207</x>
+      <y>153</y>
+      <w>234</w>
+      <h>135</h>
+    </coordinates>
+    <panel_attributes>1. App Bootstrap
+--
+main.tsx
+- ReactDOM root
+- BrowserRouter
+- AuthProvider
+- Global styles</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>477</x>
+      <y>153</y>
+      <w>252</w>
+      <h>153</h>
+    </coordinates>
+    <panel_attributes>2. Router + Route Guard
+--
+App.tsx
+ProtectedRoute
+- Public routes: login/register/reset
+- Protected routes: home/settings/courses</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>765</x>
+      <y>153</y>
+      <w>252</w>
+      <h>153</h>
+    </coordinates>
+    <panel_attributes>3. Page Layer
+--
+pages/*
+- HomePage
+- CourseDetailPage
+- SettingsPage
+- Login/Register/Password Reset</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>207</x>
+      <y>333</y>
+      <w>252</w>
+      <h>162</h>
+    </coordinates>
+    <panel_attributes>4. Auth State
+--
+context/AuthProvider.tsx
+context/useAuth.ts
+- token + user in memory
+- localStorage persistence
+- login/logout/updateUser</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>495</x>
+      <y>342</y>
+      <w>234</w>
+      <h>153</h>
+    </coordinates>
+    <panel_attributes>5. API Client Adapter
+--
+services/api.ts
+- base /api
+- Bearer token propagation
+- typed get/post/patch/delete
+- shared error mapping</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>765</x>
+      <y>342</y>
+      <w>252</w>
+      <h>153</h>
+    </coordinates>
+    <panel_attributes>6. Realtime Adapter
+--
+socket/index.ts
+- connectSocket(token)
+- singleton socket lifecycle
+- disconnect/getSocket helpers</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>207</x>
+      <y>549</y>
+      <w>270</w>
+      <h>117</h>
+    </coordinates>
+    <panel_attributes>7. Browser Facilities
+--
+- localStorage (token, user)
+- Fetch API
+- Navigation history</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>738</x>
+      <y>549</y>
+      <w>306</w>
+      <h>117</h>
+    </coordinates>
+    <panel_attributes>8. External System
+--
+StudyPilot Backend API (/api)
+Socket.IO endpoint</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>441</x>
+      <y>207</y>
+      <w>45</w>
+      <h>27</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;30.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>729</x>
+      <y>216</y>
+      <w>45</w>
+      <h>27</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;30.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>333</x>
+      <y>288</y>
+      <w>27</w>
+      <h>54</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;40.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>603</x>
+      <y>306</y>
+      <w>27</w>
+      <h>45</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;30.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>891</x>
+      <y>306</y>
+      <w>27</w>
+      <h>45</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;30.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>450</x>
+      <y>387</y>
+      <w>54</w>
+      <h>36</h>
+    </coordinates>
+    <panel_attributes>uses
+lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;20.0;40.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>729</x>
+      <y>387</y>
+      <w>45</w>
+      <h>36</h>
+    </coordinates>
+    <panel_attributes>uses
+lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;20.0;30.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>333</x>
+      <y>495</y>
+      <w>63</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>persist
+lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>612</x>
+      <y>495</y>
+      <w>126</w>
+      <h>126</h>
+    </coordinates>
+    <panel_attributes>HTTP
+lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;120.0;120.0;120.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>891</x>
+      <y>495</y>
+      <w>90</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>WebSocket
+lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+  </element>
+</diagram>
