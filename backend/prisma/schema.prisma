@@ -54,7 +54,8 @@ model Course {
 model Document {
   id        String   @id @default(uuid())
   filename  String
-  filePath  String
+  bucket    String
+  objectKey String
   fileSize  Int?
   fileType  String?
   courseId  String
@@ -66,6 +67,7 @@ model Document {
 
   @@index([courseId])
   @@index([ownerId])
+  @@index([bucket, objectKey])
 }
 
 
