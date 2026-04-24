@@ -67,7 +67,7 @@ export default function ChangePasswordPage() {
     <>
       <Navbar />
       <div className="container d-flex justify-content-center mt-5">
-        <div className="card shadow" style={{ maxWidth: '480px', width: '100%' }}>
+        <div className="auth-card auth-card--wide card shadow">
           <div className="card-body p-4">
             <h4 className="mb-1">Change Password</h4>
             <p className="text-muted mb-4">Update your password to keep your account secure.</p>

@@ -55,13 +55,13 @@ export default function RequestPasswordResetPage() {
 
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="card shadow" style={{ maxWidth: '400px', width: '100%' }}>
+      <div className="auth-card auth-card--narrow card shadow">
         <div className="card-body p-4">
           <h2 className="text-center mb-4">
             <Logo />
           </h2>
           <h5 className="text-center mb-1">Forgot Password</h5>
-          <p className="text-muted text-center mb-4" style={{ fontSize: '14px' }}>
+          <p className="auth-card__lead text-muted text-center mb-4">
             Enter your email and we'll send you a reset link.
           </p>
 

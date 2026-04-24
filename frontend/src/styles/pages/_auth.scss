@@ -1,0 +1,16 @@
+.auth-card {
+  width: 100%;
+
+  &--narrow {
+    max-width: 400px;
+  }
+
+  &--wide {
+    max-width: 480px;
+  }
+
+  &__lead,
+  &__muted-link {
+    font-size: 14px;
+  }
+}

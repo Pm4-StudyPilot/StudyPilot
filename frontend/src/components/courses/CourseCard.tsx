@@ -158,15 +158,12 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
                   {tasks.map((task) => (
                     <li
                       key={task.id}
-                      className="d-flex align-items-center justify-content-between py-1"
-                      style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                      className="course-card__task d-flex align-items-center justify-content-between py-1"
                     >
-                      <span className="text-white" style={{ fontSize: '0.9rem' }}>
-                        {task.title}
-                      </span>
+                      <span className="course-card__task-title text-white">{task.title}</span>
                       <div className="d-flex align-items-center gap-2">
                         {task.dueDate && (
-                          <span className="text-secondary" style={{ fontSize: '0.78rem' }}>
+                          <span className="course-card__task-date text-secondary">
                             {new Date(task.dueDate).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
@@ -174,8 +171,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
                           </span>
                         )}
                         <span
-                          className={`badge ${STATUS_BADGE[task.status]}`}
-                          style={{ fontSize: '0.68rem' }}
+                          className={`course-card__task-status badge ${STATUS_BADGE[task.status]}`}
                         >
                           {STATUS_LABEL[task.status]}
                         </span>
@@ -185,8 +181,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
                 </ul>
                 <Link
                   to={`/courses/${course.id}`}
-                  className="text-secondary text-decoration-none"
-                  style={{ fontSize: '0.82rem' }}
+                  className="course-card__tasks-link text-secondary text-decoration-none"
                 >
                   View all tasks →
                 </Link>
