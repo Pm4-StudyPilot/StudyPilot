@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="15.1">
+  <zoom_level>9</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>72</x>
+      <y>90</y>
+      <w>990</w>
+      <h>720</h>
+    </coordinates>
+    <panel_attributes>&lt;&lt;arc42 Whitebox&gt;&gt;
+StudyPilot Backend (Node.js + Express)
+--
+Responsibilities:
+- Authentication and authorization
+- Course/task/document/user APIs
+- Storage + realtime + persistence</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>108</x>
+      <y>189</y>
+      <w>270</w>
+      <h>153</h>
+    </coordinates>
+    <panel_attributes>1. Entry + Infrastructure
+--
+index.ts
+- Express app + HTTP server
+- Socket.IO server
+- Passport init
+- Swagger docs
+- global error handler</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>414</x>
+      <y>189</y>
+      <w>270</w>
+      <h>171</h>
+    </coordinates>
+    <panel_attributes>2. Routing Layer
+--
+routes/index.ts + modules
+- auth.routes
+- course.routes
+- task.routes
+- user.routes
+- document.routes
+- storage.routes
+- health endpoint</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>720</x>
+      <y>189</y>
+      <w>297</w>
+      <h>171</h>
+    </coordinates>
+    <panel_attributes>3. Controller Layer
+--
+controllers/*
+- validates request data
+- maps HTTP to use-cases
+- maps errors to status codes</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>108</x>
+      <y>396</y>
+      <w>306</w>
+      <h>198</h>
+    </coordinates>
+    <panel_attributes>4. Service Layer (Business Logic)
+--
+services/*
+- AuthService
+- UserService
+- CourseService
+- TaskService
+- DocumentService
+- EmailService
+- MinioService / StorageService</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>450</x>
+      <y>396</y>
+      <w>261</w>
+      <h>198</h>
+    </coordinates>
+    <panel_attributes>5. Middleware + Cross Cutting
+--
+middleware/*
+- authenticate
+- rateLimiter
+config/passport.ts
+lib/logger.ts</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>747</x>
+      <y>396</y>
+      <w>270</w>
+      <h>198</h>
+    </coordinates>
+    <panel_attributes>6. Realtime Layer
+--
+socket/index.ts
+- socket event handlers
+- uses authenticated context
+- emits updates to clients</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>108</x>
+      <y>630</y>
+      <w>306</w>
+      <h>126</h>
+    </coordinates>
+    <panel_attributes>7. Persistence Adapter
+--
+config/database.ts
+Prisma Client + PrismaPg adapter
+PostgreSQL database</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>441</x>
+      <y>630</y>
+      <w>270</w>
+      <h>126</h>
+    </coordinates>
+    <panel_attributes>8. Object Storage Adapter
+--
+config/minio.ts
+MinioService
+- bucket ensure
+- presigned URL
+- object operations</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>738</x>
+      <y>630</y>
+      <w>279</w>
+      <h>126</h>
+    </coordinates>
+    <panel_attributes>9. External Systems
+--
+- Frontend SPA clients
+- SMTP provider (email)
+- MinIO server
+- PostgreSQL server</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>378</x>
+      <y>252</y>
+      <w>45</w>
+      <h>27</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;30.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>684</x>
+      <y>261</y>
+      <w>45</w>
+      <h>27</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;30.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>855</x>
+      <y>360</y>
+      <w>27</w>
+      <h>45</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;30.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>261</x>
+      <y>342</y>
+      <w>27</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>540</x>
+      <y>360</y>
+      <w>90</w>
+      <h>45</h>
+    </coordinates>
+    <panel_attributes>auth / limits
+lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;30.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>405</x>
+      <y>477</y>
+      <w>54</w>
+      <h>36</h>
+    </coordinates>
+    <panel_attributes>uses
+lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;20.0;40.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>702</x>
+      <y>486</y>
+      <w>54</w>
+      <h>36</h>
+    </coordinates>
+    <panel_attributes>events
+lt=-&gt;</panel_attributes>
+    <additional_attributes>20.0;20.0;40.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>252</x>
+      <y>594</y>
+      <w>63</w>
+      <h>45</h>
+    </coordinates>
+    <panel_attributes>CRUD
+lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;30.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>252</x>
+      <y>756</y>
+      <w>657</w>
+      <h>54</h>
+    </coordinates>
+    <panel_attributes>uses storage
+lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;40.0;710.0;40.0;710.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>567</x>
+      <y>594</y>
+      <w>81</w>
+      <h>45</h>
+    </coordinates>
+    <panel_attributes>object ops
+lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;30.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>882</x>
+      <y>594</y>
+      <w>63</w>
+      <h>45</h>
+    </coordinates>
+    <panel_attributes>clients
+lt=-&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;30.0</additional_attributes>
+  </element>
+</diagram>

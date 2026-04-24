@@ -4,6 +4,7 @@ import { CourseDto, TaskDto } from '../../types/dto';
 import { api } from '../../services/api';
 import EditCourseModal from './EditCourseModal';
 import DeleteCourseModal from './DeleteCourseModal';
+import ProgressRing from '../shared/ProgressRing';
 
 type CourseCardProps = {
   course: CourseDto;
@@ -48,6 +49,13 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [tasks, setTasks] = useState<TaskDto[] | null>(null);
   const [tasksLoading, setTasksLoading] = useState(false);
+  const progress = course.taskProgress ?? {
+    totalTasks: 0,
+    completedTasks: 0,
+    openTasks: 0,
+    inProgressTasks: 0,
+    completionPercentage: 0,
+  };
 
   function handleToggle() {
     setExpanded((prev) => {
@@ -79,10 +87,15 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
       <div className="course-card rounded mb-2">
         <div className="d-flex align-items-center justify-content-between p-3">
           <div className="d-flex align-items-center gap-3">
-            {/* Progress ring placeholder — will show completion percentage once progress data exists */}
-            <div className="course-card__progress-ring rounded-circle flex-shrink-0" />
+            <ProgressRing
+              openTasks={progress.openTasks}
+              inProgressTasks={progress.inProgressTasks}
+              completedTasks={progress.completedTasks}
+              totalTasks={progress.totalTasks}
+              className="course-card__progress-ring flex-shrink-0"
+              label={`${progress.openTasks} open, ${progress.inProgressTasks} in progress, ${progress.completedTasks} completed`}
+            />
             <div>
-              {/* Course name links to the detail page */}
               <Link
                 to={`/courses/${course.id}`}
                 className="course-card__name fw-semibold text-white text-decoration-none"
@@ -90,6 +103,10 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
                 {course.name}
               </Link>
               <div className="course-card__date text-secondary">Added {formattedDate}</div>
+              <div className="course-card__progress-text text-secondary">
+                {progress.openTasks} open · {progress.inProgressTasks} in progress ·{' '}
+                {progress.completedTasks} completed
+              </div>
             </div>
           </div>
 
@@ -108,7 +125,6 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
             >
               <i className="fa-solid fa-trash" />
             </button>
-            {/* Toggle button to expand/collapse course content */}
             <button
               className="btn btn-sm btn-link text-secondary p-0"
               onClick={handleToggle}
