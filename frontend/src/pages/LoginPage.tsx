@@ -115,7 +115,7 @@ export default function LoginPage() {
             {/* Password */}
             <PasswordField
               label="Password"
-              showToggle={false}
+              showToggle={true}
               value={values.password}
               onChange={(e) => handleChange('password', e.target.value)}
               error={errors.password}
