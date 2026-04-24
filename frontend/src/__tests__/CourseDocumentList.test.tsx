@@ -46,7 +46,7 @@ function createDeferred<T>() {
  * - loading state is shown while fetching
  * - empty state is shown when no documents exist
  * - documents are rendered after successful fetch
- * - default sortBy=dateDesc is sent to the backend
+ * - default sort=dateDesc is sent to the backend
  * - clicking Name toggles sorting from asc to desc
  * - refreshKey triggers a refetch
  * - error message is shown when the request fails
@@ -142,15 +142,15 @@ describe('CourseDocumentsList', () => {
    * The component is rendered initially.
    *
    * Expected behavior:
-   * - The backend is called with sortBy=dateDesc
+   * - The backend is called with sort=createdAt:desc
    */
-  it('calls backend with default sortBy=dateDesc', async () => {
+  it('calls backend with default sort=createdAt:desc', async () => {
     vi.mocked(api.get).mockResolvedValueOnce([]);
 
     render(<CourseDocumentsList courseId="course-1" refreshKey={0} />);
 
     await waitFor(() => {
-      expect(api.get).toHaveBeenCalledWith('/documents/course/course-1?sortBy=dateDesc');
+      expect(api.get).toHaveBeenCalledWith('/documents/course/course-1?sort=createdAt:desc');
     });
   });
 
@@ -161,8 +161,8 @@ describe('CourseDocumentsList', () => {
    * The user clicks the Name button twice.
    *
    * Expected behavior:
-   * - First click sends nameAsc
-   * - Second click sends nameDesc
+   * - First click sends filename:asc
+   * - Second click sends filename:desc
    */
   it('toggles name sorting from asc to desc on repeated clicks', async () => {
     vi.mocked(api.get)
@@ -173,7 +173,7 @@ describe('CourseDocumentsList', () => {
     render(<CourseDocumentsList courseId="course-1" refreshKey={0} />);
 
     await waitFor(() => {
-      expect(api.get).toHaveBeenCalledWith('/documents/course/course-1?sortBy=dateDesc');
+      expect(api.get).toHaveBeenCalledWith('/documents/course/course-1?sort=createdAt:desc');
     });
 
     const nameButton = screen.getByRole('button', { name: /Name/i });
@@ -181,13 +181,13 @@ describe('CourseDocumentsList', () => {
     fireEvent.click(nameButton);
 
     await waitFor(() => {
-      expect(api.get).toHaveBeenCalledWith('/documents/course/course-1?sortBy=nameAsc');
+      expect(api.get).toHaveBeenCalledWith('/documents/course/course-1?sort=filename:asc');
     });
 
     fireEvent.click(nameButton);
 
     await waitFor(() => {
-      expect(api.get).toHaveBeenCalledWith('/documents/course/course-1?sortBy=nameDesc');
+      expect(api.get).toHaveBeenCalledWith('/documents/course/course-1?sort=filename:desc');
     });
   });
 

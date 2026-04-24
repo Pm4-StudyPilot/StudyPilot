@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getSortIcon } from '../../utils/sort';
 import { api } from '../../services/api';
 
 type CourseDocumentsListProps = {
@@ -14,29 +15,32 @@ type DocumentDto = {
   createdAt: string;
 };
 
-type DocumentSortOption =
-  | 'dateDesc'
-  | 'dateAsc'
-  | 'nameAsc'
-  | 'nameDesc'
-  | 'sizeAsc'
-  | 'sizeDesc'
-  | 'typeAsc'
-  | 'typeDesc';
-
-type DocumentSortField = 'date' | 'name' | 'type' | 'size';
 type SortDirection = 'asc' | 'desc';
+
+type SortKey<
+  T,
+  Suffixes extends string = SortDirection,
+> = `${Extract<keyof T, string>}:${Suffixes}`;
+
+type DocumentSortableFields = {
+  createdAt: string;
+  filename: string;
+  fileType: string | null;
+  fileSize: number | null;
+};
+
+type DocumentSortField = keyof DocumentSortableFields;
+type DocumentSortOption = SortKey<DocumentSortableFields>;
+
+const defaultSortDirection: Record<DocumentSortField, SortDirection> = {
+  createdAt: 'desc',
+  fileSize: 'desc',
+  filename: 'asc',
+  fileType: 'asc',
+};
 
 /**
  * Formats a file size in bytes into a human-readable string.
- *
- * Behavior:
- * - values below 1 MB are shown in KB
- * - values from 1 MB onward are shown in MB
- * - missing values fall back to "Unknown size"
- *
- * @param bytes File size in bytes
- * @returns Formatted file size string
  */
 function formatFileSize(bytes?: number | null): string {
   if (!bytes) return 'Unknown size';
@@ -53,16 +57,6 @@ function formatFileSize(bytes?: number | null): string {
 
 /**
  * Converts MIME types into short readable labels for display in the UI.
- *
- * Examples:
- * - application/pdf -> PDF
- * - application/msword -> DOC
- * - text/plain -> TXT
- *
- * Unknown MIME types are returned unchanged.
- *
- * @param fileType MIME type returned by the backend
- * @returns Short display label
  */
 function formatFileType(fileType?: string | null): string {
   if (!fileType) return 'Unknown';
@@ -81,12 +75,6 @@ function formatFileType(fileType?: string | null): string {
 
 /**
  * Returns a Font Awesome icon class for the given document MIME type.
- *
- * This helps visually distinguish different document types in the compact list.
- * Unknown file types fall back to a generic file icon.
- *
- * @param fileType MIME type returned by the backend
- * @returns Font Awesome icon class string
  */
 function getFileIcon(fileType?: string | null): string {
   const map: Record<string, string> = {
@@ -104,21 +92,17 @@ function getFileIcon(fileType?: string | null): string {
 }
 
 /**
- * Builds the backend sort option from a UI sort field and direction.
+ * Builds a backend-compatible sort query value.
  *
- * @param field Selected document sort field
- * @param direction Selected direction
- * @returns Backend-compatible sort option
+ * Format:
+ * - "<field>:<direction>"
+ *
+ * Examples:
+ * - "createdAt:desc"
+ * - "filename:asc"
  */
 function buildSortOption(field: DocumentSortField, direction: SortDirection): DocumentSortOption {
-  if (field === 'date' && direction === 'desc') return 'dateDesc';
-  if (field === 'date' && direction === 'asc') return 'dateAsc';
-  if (field === 'name' && direction === 'asc') return 'nameAsc';
-  if (field === 'name' && direction === 'desc') return 'nameDesc';
-  if (field === 'type' && direction === 'asc') return 'typeAsc';
-  if (field === 'type' && direction === 'desc') return 'typeDesc';
-  if (field === 'size' && direction === 'asc') return 'sizeAsc';
-  return 'sizeDesc';
+  return `${field}:${direction}`;
 }
 
 /**
@@ -129,7 +113,7 @@ function buildSortOption(field: DocumentSortField, direction: SortDirection): Do
  * Responsibilities:
  * - fetch document metadata for the selected course
  * - refresh the list when a new upload succeeds
- * - send the selected sort option to the backend
+ * - send the selected generic sort value to the backend
  * - allow toggling sort direction per field
  * - handle loading, error, and empty states
  * - render each document in a compact row similar to the task list
@@ -142,10 +126,10 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
   const [documents, setDocuments] = useState<DocumentDto[]>([]);
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState('');
-  const [sortField, setSortField] = useState<DocumentSortField>('date');
+  const [sortField, setSortField] = useState<DocumentSortField>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  const sortBy = buildSortOption(sortField, sortDirection);
+  const sort = buildSortOption(sortField, sortDirection);
 
   /**
    * Handles clicks on sort buttons.
@@ -153,14 +137,7 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
    * Behavior:
    * - clicking the active sort field toggles the direction
    * - clicking a different field switches to that field and applies
-   *   a sensible default direction
-   *
-   * Default directions:
-   * - date: desc (newest first)
-   * - size: desc (largest first)
-   * - name/type: asc (alphabetical)
-   *
-   * @param field Selected sort field
+   *   a field-specific default direction
    */
   function handleSortClick(field: DocumentSortField) {
     if (sortField === field) {
@@ -169,38 +146,25 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
     }
 
     setSortField(field);
-
-    switch (field) {
-      case 'date':
-        setSortDirection('desc');
-        break;
-      case 'size':
-        setSortDirection('desc');
-        break;
-      case 'name':
-      case 'type':
-      default:
-        setSortDirection('asc');
-        break;
-    }
+    setSortDirection(defaultSortDirection[field]);
   }
 
   /**
-   * Returns a visual arrow indicator for the active sort field.
-   *
-   * @param field Sort field shown in the button
-   * @returns Arrow string for the active field, otherwise empty string
+   * Renders the sort icon for the active sort field.
    */
-  function getSortIndicator(field: DocumentSortField): string {
-    if (sortField !== field) return '';
-    return sortDirection === 'asc' ? ' ↑' : ' ↓';
+  function renderSortIcon(field: DocumentSortField) {
+    const icon = getSortIcon(field, sortField, sortDirection);
+
+    if (!icon) return null;
+
+    return <i className={`fa-solid ${icon} ms-1`} aria-hidden="true" />;
   }
 
   useEffect(() => {
     let isCancelled = false;
 
     api
-      .get<DocumentDto[]>(`/documents/course/${courseId}?sortBy=${sortBy}`)
+      .get<DocumentDto[]>(`/documents/course/${courseId}?sort=${sort}`)
       .then((data) => {
         if (isCancelled) return;
         setDocuments(data);
@@ -216,7 +180,7 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
     return () => {
       isCancelled = true;
     };
-  }, [courseId, refreshKey, sortBy]);
+  }, [courseId, refreshKey, sort]);
 
   const isLoading = status === 'loading';
   const hasError = status === 'error';
@@ -230,34 +194,42 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
 
         <button
           type="button"
-          className={`btn btn-sm ${sortField === 'date' ? 'btn-primary' : 'btn-outline-secondary'}`}
-          onClick={() => handleSortClick('date')}
+          className={`btn btn-sm ${
+            sortField === 'createdAt' ? 'btn-primary' : 'btn-outline-secondary'
+          }`}
+          onClick={() => handleSortClick('createdAt')}
         >
-          Newest{getSortIndicator('date')}
+          Newest{renderSortIcon('createdAt')}
         </button>
 
         <button
           type="button"
-          className={`btn btn-sm ${sortField === 'name' ? 'btn-primary' : 'btn-outline-secondary'}`}
-          onClick={() => handleSortClick('name')}
+          className={`btn btn-sm ${
+            sortField === 'filename' ? 'btn-primary' : 'btn-outline-secondary'
+          }`}
+          onClick={() => handleSortClick('filename')}
         >
-          Name{getSortIndicator('name')}
+          Name{renderSortIcon('filename')}
         </button>
 
         <button
           type="button"
-          className={`btn btn-sm ${sortField === 'type' ? 'btn-primary' : 'btn-outline-secondary'}`}
-          onClick={() => handleSortClick('type')}
+          className={`btn btn-sm ${
+            sortField === 'fileType' ? 'btn-primary' : 'btn-outline-secondary'
+          }`}
+          onClick={() => handleSortClick('fileType')}
         >
-          Type{getSortIndicator('type')}
+          Type{renderSortIcon('fileType')}
         </button>
 
         <button
           type="button"
-          className={`btn btn-sm ${sortField === 'size' ? 'btn-primary' : 'btn-outline-secondary'}`}
-          onClick={() => handleSortClick('size')}
+          className={`btn btn-sm ${
+            sortField === 'fileSize' ? 'btn-primary' : 'btn-outline-secondary'
+          }`}
+          onClick={() => handleSortClick('fileSize')}
         >
-          Size{getSortIndicator('size')}
+          Size{renderSortIcon('fileSize')}
         </button>
       </div>
 

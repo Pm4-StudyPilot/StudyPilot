@@ -289,7 +289,7 @@ describe('DocumentController.listByCourse', () => {
    * Scenario:
    * - courseId is present
    * - user is authenticated
-   * - query params contain sortBy, fileType, and search
+   * - query params contain sort, fileType, and search
    *
    * Expected behavior:
    * - DocumentService.listByCourse() is called with normalized options
@@ -318,7 +318,7 @@ describe('DocumentController.listByCourse', () => {
     const req = {
       params: { courseId: 'course-1' },
       query: {
-        sortBy: 'nameAsc',
+        sort: 'filename:asc',
         fileType: 'application/pdf',
         search: 'agile',
       },
@@ -330,7 +330,7 @@ describe('DocumentController.listByCourse', () => {
     await controller.listByCourse(req, res);
 
     expect(mockDocumentService.listByCourse).toHaveBeenCalledWith('course-1', 'user-1', {
-      sortBy: 'nameAsc',
+      sort: 'filename:asc',
       fileType: 'application/pdf',
       search: 'agile',
     });
@@ -482,7 +482,7 @@ describe('DocumentController.listByCourse', () => {
     const req = {
       params: { courseId: 'course-1' },
       query: {
-        sortBy: ['nameAsc'],
+        sort: ['filename:asc'],
         fileType: { nested: 'application/pdf' },
         search: ['agile'],
       },
@@ -494,7 +494,7 @@ describe('DocumentController.listByCourse', () => {
     await controller.listByCourse(req, res);
 
     expect(mockDocumentService.listByCourse).toHaveBeenCalledWith('course-1', 'user-1', {
-      sortBy: undefined,
+      sort: undefined,
       fileType: undefined,
       search: undefined,
     });

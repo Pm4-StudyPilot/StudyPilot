@@ -18,40 +18,62 @@ type UploadDocumentInput = {
 };
 
 /**
- * Supported sorting options for document queries.
+ * Supported sort directions for document queries.
+ */
+type SortDirection = 'asc' | 'desc';
+
+/**
+ * Generic sort key format used by query parameters.
  *
- * Naming convention:
- * - <field><direction>
+ * Format:
+ * - "<field>:<direction>"
+ *
+ * Example:
+ * - "createdAt:desc"
+ * - "filename:asc"
+ */
+type SortKey<
+  T,
+  Suffixes extends string = SortDirection,
+> = `${Extract<keyof T, string>}:${Suffixes}`;
+
+/**
+ * Document fields that are allowed to be used for sorting.
+ *
+ * Only these fields can be selected through the sort query parameter.
+ */
+type DocumentSortableFields = {
+  createdAt: Date;
+  filename: string;
+  fileSize: number | null;
+  fileType: string | null;
+};
+
+/**
+ * Valid document sort query value.
  *
  * Examples:
- * - dateDesc: newest documents first (default)
- * - nameAsc: alphabetical order (A → Z)
- * - sizeDesc: largest files first
- *
- * These values are typically provided by the frontend via query parameters.
+ * - "createdAt:desc" for newest documents first
+ * - "filename:asc" for alphabetical order
+ * - "fileSize:desc" for largest files first
  */
-type DocumentSortOption =
-  | 'dateDesc'
-  | 'dateAsc'
-  | 'nameAsc'
-  | 'nameDesc'
-  | 'sizeAsc'
-  | 'sizeDesc'
-  | 'typeAsc'
-  | 'typeDesc';
+type DocumentSort = SortKey<DocumentSortableFields>;
 
 /**
  * Options for filtering and sorting document queries.
  *
  * Properties:
- * - sortBy: defines how the result set should be ordered
- * - fileType: optional MIME type filter (e.g. application/pdf)
+ * - sort: optional sort value in the format "<field>:<direction>"
+ *   Example: "createdAt:desc", "filename:asc", "fileSize:desc"
+ * - fileType: optional MIME type filter, e.g. "application/pdf"
  * - search: case-insensitive search string for filename matching
  *
- * These options are usually mapped from HTTP query parameters.
+ * These values are mapped from HTTP query parameters.
+ * The sort value is accepted as a string because query parameters are untrusted input
+ * and are validated before being used in the Prisma query.
  */
 type ListDocumentsOptions = {
-  sortBy?: DocumentSortOption;
+  sort?: string;
   fileType?: string;
   search?: string;
 };
@@ -62,37 +84,45 @@ type ListDocumentsOptions = {
 const DOCUMENTS_BUCKET = 'documents';
 
 /**
- * Maps a DocumentSortOption to a Prisma-compatible orderBy clause.
+ * Default sort order for document listings.
+ */
+const DEFAULT_DOCUMENT_SORT: DocumentSort = 'createdAt:desc';
+
+/**
+ * Builds a Prisma-compatible orderBy clause from a generic sort query value.
  *
- * This function translates frontend-friendly sort options into
- * database query instructions.
+ * Expected format:
+ * - "<field>:<direction>"
  *
- * Default behavior:
- * - If no sort option is provided, documents are sorted by newest first.
+ * Supported fields:
+ * - createdAt
+ * - filename
+ * - fileSize
+ * - fileType
  *
- * @param sortBy Selected sort option (e.g. "nameAsc", "sizeDesc")
+ * Supported directions:
+ * - asc
+ * - desc
+ *
+ * Invalid or missing sort values fall back to "createdAt:desc".
+ *
+ * @param sort Sort query value, e.g. "filename:asc" or "createdAt:desc"
  * @returns Prisma orderBy object
  */
-function getDocumentOrderBy(sortBy: DocumentSortOption = 'dateDesc') {
-  switch (sortBy) {
-    case 'dateAsc':
-      return { createdAt: 'asc' as const };
-    case 'nameAsc':
-      return { filename: 'asc' as const };
-    case 'nameDesc':
-      return { filename: 'desc' as const };
-    case 'sizeAsc':
-      return { fileSize: 'asc' as const };
-    case 'sizeDesc':
-      return { fileSize: 'desc' as const };
-    case 'typeAsc':
-      return { fileType: 'asc' as const };
-    case 'typeDesc':
-      return { fileType: 'desc' as const };
-    case 'dateDesc':
-    default:
-      return { createdAt: 'desc' as const };
+function getDocumentOrderBy(sort: string = DEFAULT_DOCUMENT_SORT) {
+  const allowedFields = ['createdAt', 'filename', 'fileSize', 'fileType'] as const;
+  const [field, direction] = sort.split(':');
+
+  if (
+    !allowedFields.includes(field as (typeof allowedFields)[number]) ||
+    (direction !== 'asc' && direction !== 'desc')
+  ) {
+    return { createdAt: 'desc' as const };
   }
+
+  return {
+    [field]: direction,
+  };
 }
 
 /**
@@ -209,7 +239,7 @@ class DocumentService {
    * Workflow:
    * 1. Verify that the course exists and belongs to the authenticated user
    * 2. Build a dynamic filter object based on provided options
-   * 3. Apply sorting using a predefined mapping function
+   * 3. Apply sorting using a validated generic sort key
    * 4. Query document metadata from the database
    *
    * Filtering capabilities:
@@ -217,10 +247,13 @@ class DocumentService {
    * - search: case-insensitive partial match on filename
    *
    * Sorting capabilities:
-   * - date (createdAt)
+   * - createdAt
    * - filename
    * - fileSize
    * - fileType
+   *
+   * Sort format:
+   * - "<field>:<asc|desc>", e.g. "createdAt:desc"
    *
    * Notes:
    * - Only metadata is returned, not the binary file content
@@ -283,9 +316,9 @@ class DocumentService {
 
       /**
        * Dynamic sorting based on provided option.
-       * Falls back to "createdAt desc" if no option is given.
+       * Falls back to "createdAt:desc" if no valid option is given.
        */
-      orderBy: getDocumentOrderBy(options.sortBy),
+      orderBy: getDocumentOrderBy(options?.sort),
 
       /**
        * Select only relevant metadata fields for the frontend.

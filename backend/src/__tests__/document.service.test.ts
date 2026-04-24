@@ -443,7 +443,7 @@ describe('DocumentService', () => {
       const service = new DocumentService();
 
       await service.listByCourse('course-1', 'user-1', {
-        sortBy: 'nameAsc',
+        sort: 'filename:asc',
       });
 
       expect(mockDocumentFindMany).toHaveBeenCalledWith({
@@ -482,7 +482,7 @@ describe('DocumentService', () => {
       const service = new DocumentService();
 
       await service.listByCourse('course-1', 'user-1', {
-        sortBy: 'sizeDesc',
+        sort: 'fileSize:desc',
         fileType: 'application/pdf',
         search: 'intro',
       });

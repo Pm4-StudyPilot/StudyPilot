@@ -1,19 +1,7 @@
 import { logger } from '../lib/logger';
+import { getSingleQueryParam } from '../utils/query';
 import type { Request, Response } from 'express';
 import { DocumentService } from '../services/document.service';
-
-/**
- * Returns a query parameter only if it is a single string value.
- *
- * Express query params may also be arrays or nested ParsedQs objects.
- * This helper normalizes them to a simple string | undefined shape.
- *
- * @param value Raw query parameter value
- * @returns Single string value or undefined
- */
-function getSingleQueryParam(value: unknown): string | undefined {
-  return typeof value === 'string' ? value : undefined;
-}
 
 /**
  * Controller responsible for handling document-related HTTP requests.
@@ -82,7 +70,7 @@ class DocumentController {
    *
    * @param req Express request containing:
    * - courseId in path params
-   * - optional sortBy, fileType, and search in query params
+   * - optional sort, fileType, and search in query params
    * @param res Express response
    */
   async listByCourse(req: Request, res: Response): Promise<void> {
@@ -102,21 +90,12 @@ class DocumentController {
         return;
       }
 
-      const sortBy = getSingleQueryParam(req.query.sortBy);
+      const sort = getSingleQueryParam(req.query.sort);
       const fileType = getSingleQueryParam(req.query.fileType);
       const search = getSingleQueryParam(req.query.search);
 
       const documents = await this.documentService.listByCourse(courseId, userId, {
-        sortBy: sortBy as
-          | 'dateDesc'
-          | 'dateAsc'
-          | 'nameAsc'
-          | 'nameDesc'
-          | 'sizeAsc'
-          | 'sizeDesc'
-          | 'typeAsc'
-          | 'typeDesc'
-          | undefined,
+        sort,
         fileType,
         search,
       });
