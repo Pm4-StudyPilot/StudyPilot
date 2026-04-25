@@ -1,3 +1,94 @@
 body {
-  background-color: var(--color-background);
+  background-color: var(--color-app-bg);
+  color: var(--color-text-primary);
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--color-text-primary);
+}
+
+p {
+  color: var(--color-text-secondary);
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.18s ease;
+
+  &:hover {
+    color: color-mix(in srgb, var(--color-primary) 82%, white);
+  }
+}
+
+hr {
+  border-color: var(--color-divider);
+  opacity: 1;
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--color-primary) 28%, transparent);
+  color: var(--color-text-primary);
+}
+
+.form-control {
+  background-color: var(--color-input-bg);
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+
+  &::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  &:focus {
+    background-color: var(--color-input-bg);
+    color: var(--color-text-primary);
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-focus-accent);
+  }
+}
+
+.form-label {
+  color: var(--color-text-secondary);
+}
+
+.card {
+  background-color: var(--color-card-bg);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+}
+
+.dropdown-menu {
+  background-color: var(--color-panel-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+}
+
+.dropdown-item {
+  color: var(--color-text-secondary);
+
+  &:hover,
+  &:focus {
+    background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+    color: var(--color-text-primary);
+  }
+}
+
+.btn-close {
+  filter: invert(1) grayscale(1);
 }
