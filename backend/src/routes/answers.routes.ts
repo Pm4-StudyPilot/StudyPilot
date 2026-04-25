@@ -8,7 +8,7 @@ const answerController = new AnswerController();
 
 /**
  * @openapi
- * /courses/{questionId}/answers:
+ * /courses/{courseId}/quizzes/{quizId}/questions/{questionId}/answers:
  *   get:
  *     tags:
  *       - Answers
@@ -16,6 +16,16 @@ const answerController = new AnswerController();
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: quizId
+ *         required: true
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: questionId
  *         required: true
@@ -39,6 +49,16 @@ const answerController = new AnswerController();
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: quizId
+ *         required: true
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: questionId
  *         required: true
@@ -71,7 +91,7 @@ answerRouter.post('/', generalLimiter, authenticate, (req, res) =>
 
 /**
  * @openapi
- * /courses/{questionId}/answers/order:
+ * /courses/{courseId}/quizzes/{quizId}/questions/{questionId}/answers/order:
  *   patch:
  *     tags:
  *       - Answers
@@ -79,6 +99,16 @@ answerRouter.post('/', generalLimiter, authenticate, (req, res) =>
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: quizId
+ *         required: true
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: questionId
  *         required: true
@@ -106,7 +136,7 @@ answerRouter.patch('/order', generalLimiter, authenticate, (req, res) =>
 
 /**
  * @openapi
- * /courses/{questionId}/answers/{id}:
+ * /courses/{courseId}/quizzes/{quizId}/questions/{questionId}/answers/{id}:
  *   get:
  *     tags:
  *       - Answers
@@ -114,6 +144,16 @@ answerRouter.patch('/order', generalLimiter, authenticate, (req, res) =>
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: quizId
+ *         required: true
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: questionId
  *         required: true
@@ -142,6 +182,16 @@ answerRouter.patch('/order', generalLimiter, authenticate, (req, res) =>
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: quizId
+ *         required: true
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: questionId
  *         required: true
@@ -178,6 +228,16 @@ answerRouter.patch('/order', generalLimiter, authenticate, (req, res) =>
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: quizId
+ *         required: true
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: questionId
  *         required: true

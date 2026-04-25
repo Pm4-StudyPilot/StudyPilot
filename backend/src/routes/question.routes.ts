@@ -8,7 +8,7 @@ const questionController = new QuestionController();
 
 /**
  * @openapi
- * /courses/{quizId}/questions:
+ * /courses/{courseId}/quizzes/{quizId}/questions:
  *   get:
  *     tags:
  *       - Questions
@@ -16,6 +16,11 @@ const questionController = new QuestionController();
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: quizId
  *         required: true
@@ -39,6 +44,11 @@ const questionController = new QuestionController();
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: quizId
  *         required: true
@@ -73,7 +83,7 @@ questionRouter.post('/', generalLimiter, authenticate, (req, res) =>
 
 /**
  * @openapi
- * /courses/{quizId}/questions/order:
+ * /courses/{courseId}/quizzes/{quizId}/questions/order:
  *   patch:
  *     tags:
  *       - Questions
@@ -81,6 +91,11 @@ questionRouter.post('/', generalLimiter, authenticate, (req, res) =>
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: quizId
  *         required: true
@@ -108,7 +123,7 @@ questionRouter.patch('/order', generalLimiter, authenticate, (req, res) =>
 
 /**
  * @openapi
- * /courses/{quizId}/questions/{id}:
+ * /courses/{courseId}/quizzes/{quizId}/questions/{id}:
  *   get:
  *     tags:
  *       - Questions
@@ -116,6 +131,11 @@ questionRouter.patch('/order', generalLimiter, authenticate, (req, res) =>
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: quizId
  *         required: true
@@ -144,6 +164,11 @@ questionRouter.patch('/order', generalLimiter, authenticate, (req, res) =>
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: quizId
  *         required: true
@@ -180,6 +205,11 @@ questionRouter.patch('/order', generalLimiter, authenticate, (req, res) =>
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: quizId
  *         required: true
