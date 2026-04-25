@@ -108,7 +108,7 @@ describe('QuizService', () => {
     });
   });
 
-  it('should list tasks for an owned course', async () => {
+  it('should list quizzes for an owned course', async () => {
     const quizzes = [createMockQuiz({ id: 'q1' }), createMockQuiz({ id: 'q2' })];
     const findMany = mock(async () => quizzes);
 
