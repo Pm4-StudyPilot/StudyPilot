@@ -1,3 +1,58 @@
 .progress-bar--strength {
   height: 0.5rem;
 }
+
+.progress-ring {
+  --progress-open-color: color-mix(in srgb, var(--progress-accent) 28%, #0f1014);
+  --progress-in-progress-color: color-mix(in srgb, var(--progress-accent) 62%, white);
+  --progress-completed-color: var(--progress-accent);
+  --progress-track-color: var(--color-divider);
+  --progress-glow: none;
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--color-text-primary);
+  background-color: var(--progress-track-color);
+  background-repeat: no-repeat;
+  box-shadow: var(--progress-glow);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background-color: var(--color-card-bg);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  }
+
+  &__label {
+    position: relative;
+    z-index: 1;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  &--primary {
+    --progress-accent: var(--color-primary);
+    --progress-glow: 0 0 18px rgba(255, 75, 38, 0.18);
+  }
+
+  &--secondary {
+    --progress-accent: var(--color-secondary);
+    --progress-glow: 0 0 18px rgba(68, 138, 255, 0.18);
+  }
+
+  &--tertiary {
+    --progress-accent: var(--color-tertiary);
+    --progress-glow: 0 0 18px rgba(76, 175, 80, 0.18);
+  }
+
+  &--quaternary {
+    --progress-accent: var(--color-quaternary);
+    --progress-glow: 0 0 18px rgba(183, 132, 255, 0.2);
+  }
+}
