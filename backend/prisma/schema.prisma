@@ -45,6 +45,7 @@ model Course {
   owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   documents Document[]
   tasks     Task[]
+  quizzes   Quiz[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -93,6 +94,7 @@ model Quiz {
   title       String
   description String?
   isOrderRandom Boolean    @default(false)
+  questions   Question[]
   courseId    String
   course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
   createdAt   DateTime     @default(now())
@@ -112,6 +114,7 @@ model Question {
   description String?
   position    Int          @default(0)
   type        QuestionType @default(SINGLE_CHOICE)
+  answers     Answer[]
   quizId      String
   quiz        Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
   createdAt   DateTime     @default(now())
