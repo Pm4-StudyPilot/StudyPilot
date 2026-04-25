@@ -133,16 +133,8 @@ export default function UploadButton({
           children
         )}
       </button>
-      {result && (
-        <p className="text-success mt-2 mb-0" style={{ fontSize: '0.85rem' }}>
-          Uploaded: {result.key}
-        </p>
-      )}
-      {error && (
-        <p className="text-danger mt-2 mb-0" style={{ fontSize: '0.85rem' }}>
-          {error}
-        </p>
-      )}
+      {result && <p className="task-list__label text-success mt-2 mb-0">Uploaded: {result.key}</p>}
+      {error && <p className="task-list__label text-danger mt-2 mb-0">{error}</p>}
     </div>
   );
 }

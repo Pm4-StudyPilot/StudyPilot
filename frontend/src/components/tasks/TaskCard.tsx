@@ -57,19 +57,12 @@ export default function TaskCard({
     : null;
 
   return (
-    <div
-      className={`task-card rounded p-3 mb-2${isDragging ? ' opacity-50' : ''}`}
-      style={{
-        background: 'var(--color-panel, #1e1e2e)',
-        border: '1px solid rgba(255,255,255,0.08)',
-      }}
-    >
+    <div className={`task-card rounded p-3 mb-2${isDragging ? ' opacity-50' : ''}`}>
       <div className="d-flex align-items-center gap-2">
         {dragHandleProps && (
           <span
             {...dragHandleProps}
             className="task-card__drag-handle text-secondary"
-            style={{ cursor: 'grab', fontSize: '0.85rem' }}
             aria-label="drag handle"
           >
             <i className="fa-solid fa-grip-vertical" />
@@ -82,23 +75,22 @@ export default function TaskCard({
           aria-expanded={expanded}
         >
           <i
-            className={`fa-solid fa-chevron-${expanded ? 'down' : 'right'} me-2 text-secondary`}
-            style={{ fontSize: '0.7rem' }}
+            className={`task-card__chevron fa-solid fa-chevron-${expanded ? 'down' : 'right'} me-2 text-secondary`}
           />
           <span className="fw-semibold">{task.title}</span>
         </button>
 
         <div className="d-flex align-items-center gap-2 ms-auto">
           {formattedDueDate && (
-            <span className="text-secondary" style={{ fontSize: '0.8rem' }}>
+            <span className="task-card__due-date text-secondary">
               <i className="fa-regular fa-calendar me-1" />
               {formattedDueDate}
             </span>
           )}
-          <span className={`badge ${PRIORITY_BADGE[task.priority]}`} style={{ fontSize: '0.7rem' }}>
+          <span className={`task-card__priority badge ${PRIORITY_BADGE[task.priority]}`}>
             {task.priority}
           </span>
-          <span className={`badge ${STATUS_BADGE[task.status]}`} style={{ fontSize: '0.7rem' }}>
+          <span className={`task-card__status badge ${STATUS_BADGE[task.status]}`}>
             {STATUS_LABEL[task.status]}
           </span>
           <button
@@ -119,10 +111,7 @@ export default function TaskCard({
       </div>
 
       {expanded && (
-        <div
-          className="task-card__description mt-2 pt-2 text-secondary"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: '0.9rem' }}
-        >
+        <div className="task-card__description mt-2 pt-2 text-secondary">
           {task.description ?? <em>No description.</em>}
         </div>
       )}

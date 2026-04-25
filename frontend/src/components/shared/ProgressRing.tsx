@@ -4,6 +4,7 @@ type ProgressRingProps = {
   completedTasks: number;
   totalTasks: number;
   label: string;
+  variant?: 'primary' | 'secondary' | 'tertiary' | 'quaternary';
   size?: number;
   className?: string;
 };
@@ -31,6 +32,7 @@ export default function ProgressRing({
   completedTasks,
   totalTasks,
   label,
+  variant = 'primary',
   size = 40,
   className,
 }: ProgressRingProps) {
@@ -41,7 +43,9 @@ export default function ProgressRing({
     totalTasks
   );
   const notDoneTasks = openTasks + inProgressTasks;
-  const classes = ['progress-ring', className].filter(Boolean).join(' ');
+  const classes = ['progress-ring', `progress-ring--${variant}`, className]
+    .filter(Boolean)
+    .join(' ');
 
   // Build conic-gradient: OPEN (grey) -> IN_PROGRESS (blue) -> DONE (green) -> unfilled (dark)
   const openEnd = segments.open;
@@ -49,10 +53,10 @@ export default function ProgressRing({
   const completedEnd = inProgressEnd + segments.completed;
 
   const gradient = `conic-gradient(
-    #6c757d 0% ${openEnd}%,
-    #0d6efd ${openEnd}% ${inProgressEnd}%,
-    #198754 ${inProgressEnd}% ${completedEnd}%,
-    #2e3050 ${completedEnd}% 100%
+    var(--progress-open-color) 0% ${openEnd}%,
+    var(--progress-in-progress-color) ${openEnd}% ${inProgressEnd}%,
+    var(--progress-completed-color) ${inProgressEnd}% ${completedEnd}%,
+    var(--progress-track-color) ${completedEnd}% 100%
   )`;
 
   return (

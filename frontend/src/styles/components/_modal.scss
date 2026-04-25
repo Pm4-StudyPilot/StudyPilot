@@ -1,0 +1,37 @@
+.modal {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  background-color: var(--color-overlay);
+
+  > div > .card {
+    width: 100%;
+    max-width: 400px;
+    background-color: var(--color-panel);
+    border: 1px solid var(--color-accent);
+    color: #fff;
+
+    .form-control {
+      background-color: var(--color-surface);
+      border-color: var(--color-border);
+      color: #fff;
+
+      &:focus {
+        background-color: var(--color-surface);
+        border-color: var(--color-accent);
+        color: #fff;
+        box-shadow: var(--shadow-focus-accent);
+      }
+    }
+
+    label {
+      color: var(--color-text-muted);
+    }
+
+    h5 {
+      color: #fff;
+    }
+  }
+}

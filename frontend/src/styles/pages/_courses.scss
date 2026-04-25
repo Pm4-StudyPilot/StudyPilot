@@ -1,0 +1,118 @@
+// Shared panel used by CourseList and CourseDetailPage
+.course-panel {
+  background-color: var(--color-panel-bg);
+  border: 1px solid var(--color-border);
+}
+
+// CourseList
+.course-list {
+  &__title {
+    font-size: 1.4rem;
+  }
+
+  &__subtitle {
+    font-size: var(--font-size-sm);
+  }
+
+  &__error {
+    font-size: var(--font-size-md);
+  }
+
+  &__empty {
+    font-size: var(--font-size-base);
+  }
+}
+
+// CourseCard
+.course-card {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+
+  &__toggle {
+    background-color: transparent;
+    color: inherit;
+  }
+
+  &__progress-ring {
+    width: 40px;
+    height: 40px;
+  }
+
+  &__progress-text {
+    font-size: 0.76rem;
+    line-height: 1.2;
+  }
+
+  &__name {
+    font-size: 0.95rem;
+  }
+
+  &__date {
+    font-size: 0.78rem;
+  }
+
+  &__chevron {
+    font-size: 0.75rem;
+  }
+
+  &__empty {
+    font-size: var(--font-size-sm);
+  }
+
+  &__task {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  &__task-title {
+    font-size: 0.9rem;
+  }
+
+  &__task-date {
+    font-size: 0.78rem;
+  }
+
+  &__task-status {
+    font-size: 0.68rem;
+  }
+
+  &__tasks-link {
+    font-size: 0.82rem;
+  }
+}
+
+// DeleteCourseModal
+.delete-course-modal {
+  &__message {
+    color: var(--color-text-muted);
+  }
+
+  &__error {
+    font-size: var(--font-size-md);
+  }
+}
+
+// CourseDetailPage
+.course-detail {
+  &__back-link {
+    font-size: 0.9rem;
+  }
+
+  &__date {
+    font-size: var(--font-size-sm);
+  }
+
+  &__error {
+    font-size: var(--font-size-md);
+  }
+
+  &__placeholder,
+  &__documents,
+  &__upload-form {
+    background-color: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+  }
+
+  &__placeholder {
+    font-size: var(--font-size-base);
+  }
+}
