@@ -140,11 +140,6 @@ export class AnswerController {
         return;
       }
 
-      if (!order.every((id) => typeof id === 'string')) {
-        res.status(400).json({ message: 'All order entries must be strings' });
-        return;
-      }
-
       const success = await answerService.reorderAnswers(quizId, authUser.id, order);
       if (!success) {
         res.status(404).json({ message: 'Question not found or answer ids are invalid' });

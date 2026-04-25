@@ -1,4 +1,4 @@
-import { Role } from '../generated/prisma/client';
+import { Role } from '../generated/prisma/enums';
 
 // --- Internal types ---
 

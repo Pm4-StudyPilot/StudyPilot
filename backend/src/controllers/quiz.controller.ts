@@ -67,11 +67,6 @@ export class QuizController {
         return;
       }
 
-      if (isOrderRandom !== undefined && typeof isOrderRandom !== 'boolean') {
-        res.status(400).json({ message: 'Invalid isOrderRandom value' });
-        return;
-      }
-
       const quiz = await quizService.create(
         { title, description, isOrderRandom },
 
@@ -105,11 +100,6 @@ export class QuizController {
 
       if (data.title !== undefined && !data.title.trim()) {
         res.status(400).json({ message: 'Quiz title cannot be empty' });
-        return;
-      }
-
-      if (data.isOrderRandom !== undefined && typeof data.isOrderRandom !== 'boolean') {
-        res.status(400).json({ message: 'Invalid isOrderRandom value' });
         return;
       }
 
