@@ -184,6 +184,92 @@ const swaggerDefinition = {
           },
         },
       },
+      Quiz: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          title: { type: 'string' },
+          description: { type: 'string', nullable: true },
+          isOrderRandom: { type: 'boolean' },
+          courseId: { type: 'string' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateQuizRequest: {
+        type: 'object',
+        required: ['title'],
+        properties: {
+          title: { type: 'string' },
+          description: { type: 'string' },
+          isOrderRandom: { type: 'boolean' },
+        },
+      },
+      UpdateQuizRequest: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          description: { type: 'string', nullable: true },
+          isOrderRandom: { type: 'boolean' },
+        },
+      },
+      Question: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          title: { type: 'string' },
+          description: { type: 'string', nullable: true },
+          position: { type: 'integer' },
+          type: { type: 'string', enum: ['MULTIPLE_CHOICE', 'SINGLE_CHOICE', 'CARD'] },
+          quizId: { type: 'string' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateQuestionRequest: {
+        type: 'object',
+        required: ['title'],
+        properties: {
+          title: { type: 'string' },
+          description: { type: 'string' },
+          type: { type: 'string', enum: ['MULTIPLE_CHOICE', 'SINGLE_CHOICE', 'CARD'] },
+        },
+      },
+      UpdateQuestionRequest: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          description: { type: 'string', nullable: true },
+          type: { type: 'string', enum: ['MULTIPLE_CHOICE', 'SINGLE_CHOICE', 'CARD'] },
+        },
+      },
+      Answer: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          isCorrect: { type: 'boolean' },
+          content: { type: 'string' },
+          position: { type: 'integer' },
+          questionId: { type: 'string' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateAnswerRequest: {
+        type: 'object',
+        required: ['content'],
+        properties: {
+          content: { type: 'string' },
+          isCorrect: { type: 'boolean' },
+        },
+      },
+      UpdateAnswerRequest: {
+        type: 'object',
+        properties: {
+          content: { type: 'string' },
+          isCorrect: { type: 'boolean' },
+        },
+      },
     },
   },
 } as const;

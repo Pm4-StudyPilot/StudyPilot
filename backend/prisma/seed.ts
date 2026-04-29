@@ -237,6 +237,157 @@ async function main() {
     }
   }
 
+  const quizSeeds = [
+    {
+      courseName: 'Introduction to Computer Science',
+      ownerId: admin.id,
+      quizzes: [
+        {
+          title: 'Quiz 1: Basics of Programming',
+          description: 'Test your understanding of programming fundamentals.',
+          isOrderRandom: true,
+          questions: [
+            {
+              title: 'What is the output of the following code snippet? console.log(2 + "2");',
+              description: 'Consider type coercion in JavaScript.',
+              type: 'SINGLE_CHOICE' as const,
+              position: 0,
+              answers: [
+                { content: '4', isCorrect: false, position: 0 },
+                { content: '22', isCorrect: true, position: 1 },
+                { content: 'Error', isCorrect: false, position: 2 },
+              ],
+            },
+            {
+              title: 'What is the output of the following code snippet? console.log(2 * "2");',
+              description: 'Consider type coercion in JavaScript.',
+              type: 'MULTIPLE_CHOICE' as const,
+              position: 1,
+              answers: [
+                { content: '4', isCorrect: true, position: 0 },
+                { content: '22', isCorrect: true, position: 1 },
+                { content: 'Error', isCorrect: false, position: 2 },
+              ],
+            },
+            {
+              title: 'What is the output of the following code snippet? console.log(2 - "2");',
+              description: 'Consider type coercion in JavaScript.',
+              type: 'CARD' as const,
+              position: 2,
+              answers: [
+                {
+                  content: 'TThe correct answer is 0. This is because Javascript is weird.',
+                  isCorrect: false,
+                  position: 0,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      courseName: 'Creative Writing',
+      ownerId: regularUser.id,
+      quizzes: [
+        {
+          title: 'Quiz 1: Elements of a Story',
+          description: 'Identify the key components of a narrative.',
+          isOrderRandom: false,
+          questions: [
+            {
+              title: 'Which of the following is NOT a common element of a story?',
+              description: 'Think about the basic structure of a narrative.',
+              type: 'SINGLE_CHOICE' as const,
+              position: 0,
+              answers: [
+                { content: 'Character', isCorrect: false, position: 0 },
+                { content: 'Plot', isCorrect: false, position: 1 },
+                { content: 'Setting', isCorrect: false, position: 2 },
+                { content: 'Font', isCorrect: true, position: 3 },
+              ],
+            },
+            {
+              title: 'Which of the following best describes "setting" in a story?',
+              description: 'Consider how the environment influences the narrative.',
+              type: 'MULTIPLE_CHOICE' as const,
+              position: 1,
+              answers: [
+                {
+                  content: 'The time and place where the story occurs',
+                  isCorrect: true,
+                  position: 0,
+                },
+                { content: 'The main conflict of the story', isCorrect: false, position: 1 },
+                {
+                  content: 'The background against which the characters operate',
+                  isCorrect: true,
+                  position: 2,
+                },
+                { content: 'The resolution of the story', isCorrect: false, position: 3 },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ];
+
+  for (const courseSeed of quizSeeds) {
+    const course = seededCourses.find(
+      (item) => item.name === courseSeed.courseName && item.ownerId === courseSeed.ownerId
+    );
+
+    if (!course) {
+      logger.warn(
+        { courseName: courseSeed.courseName },
+        'Skipping quiz seed because course is missing'
+      );
+      continue;
+    }
+
+    for (const quiz of courseSeed.quizzes) {
+      const existingQuiz = await prisma.quiz.findFirst({
+        where: {
+          courseId: course.id,
+          title: quiz.title,
+        },
+      });
+
+      if (!existingQuiz) {
+        await prisma.quiz.create({
+          data: {
+            courseId: course.id,
+            title: quiz.title,
+            description: quiz.description,
+            isOrderRandom: quiz.isOrderRandom,
+            questions: {
+              create: quiz.questions.map((question) => ({
+                title: question.title,
+                description: question.description,
+                type: question.type,
+                position: question.position,
+                answers: {
+                  create: question.answers.map((answer) => ({
+                    content: answer.content,
+                    isCorrect: answer.isCorrect,
+                    position: answer.position,
+                  })),
+                },
+              })),
+            },
+          },
+        });
+        logger.info({ courseName: courseSeed.courseName, quizTitle: quiz.title }, 'Created quiz');
+      } else {
+        logger.info(
+          { courseName: courseSeed.courseName, quizTitle: quiz.title },
+          'Quiz already exists'
+        );
+      }
+    }
+  }
+
   logger.info('Seeding complete!');
 }
 
