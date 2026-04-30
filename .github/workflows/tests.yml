@@ -146,6 +146,11 @@ jobs:
           name: backend-coverage
           path: backend/coverage/
 
+      - name: Upload backend coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
   # ─── Frontend Unit Tests ────────────────────────────────────────
   frontend-tests:
     name: Frontend Tests
@@ -174,6 +179,11 @@ jobs:
         with:
           name: frontend-coverage
           path: frontend/coverage/
+
+      - name: Upload frontend coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   # ─── Cypress E2E Tests ─────────────────────────────────────────
   e2e-tests:
