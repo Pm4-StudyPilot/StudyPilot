@@ -58,11 +58,11 @@ export class AnswerController {
     try {
       const authUser = req.user as AuthenticatedUser;
 
-      const rawQuizId = req.params.quizId;
-      const quizId = Array.isArray(rawQuizId) ? rawQuizId[0] : rawQuizId;
+      const rawQuestionId = req.params.questionId;
+      const questionId = Array.isArray(rawQuestionId) ? rawQuestionId[0] : rawQuestionId;
 
-      if (!quizId) {
-        res.status(400).json({ message: 'Quiz id is required' });
+      if (!questionId) {
+        res.status(400).json({ message: 'Question id is required' });
         return;
       }
 
@@ -73,9 +73,9 @@ export class AnswerController {
         return;
       }
 
-      const answer = await answerService.create({ content, isCorrect }, quizId, authUser.id);
+      const answer = await answerService.create({ content, isCorrect }, questionId, authUser.id);
       if (!answer) {
-        res.status(404).json({ message: 'Course not found' });
+        res.status(404).json({ message: 'Question not found' });
         return;
       }
 
@@ -99,7 +99,7 @@ export class AnswerController {
 
       const data = req.body as UpdateAnswerRequest;
 
-      if (data.isCorrect !== undefined && !data.isCorrect) {
+      if (data.isCorrect !== undefined) {
         res.status(400).json({ message: 'Question isCorrect cannot be empty' });
         return;
       }
@@ -125,11 +125,11 @@ export class AnswerController {
   async reorder(req: Request, res: Response): Promise<void> {
     try {
       const authUser = req.user as AuthenticatedUser;
-      const rawQuizId = req.params.quizId;
-      const quizId = Array.isArray(rawQuizId) ? rawQuizId[0] : rawQuizId;
+      const rawQuestionId = req.params.questionId;
+      const questionId = Array.isArray(rawQuestionId) ? rawQuestionId[0] : rawQuestionId;
 
-      if (!quizId) {
-        res.status(400).json({ message: 'Quiz id is required' });
+      if (!questionId) {
+        res.status(400).json({ message: 'Question id is required' });
         return;
       }
 
@@ -140,7 +140,7 @@ export class AnswerController {
         return;
       }
 
-      const success = await answerService.reorderAnswers(quizId, authUser.id, order);
+      const success = await answerService.reorderAnswers(questionId, authUser.id, order);
       if (!success) {
         res.status(404).json({ message: 'Question not found or answer ids are invalid' });
         return;
