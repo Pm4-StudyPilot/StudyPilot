@@ -18,8 +18,9 @@ const SORT_LABELS: Record<SortField, string> = {
 function sortItems(items: CourseFeedItem[], field: SortField): CourseFeedItem[] {
   return [...items].sort((a, b) => {
     switch (field) {
-      case 'title':
+      case 'title': {
         return a.data.title.localeCompare(b.data.title);
+      }
       case 'dateAdded': {
         const dateA = new Date(a.data.createdAt).getTime();
         const dateB = new Date(b.data.createdAt).getTime();
