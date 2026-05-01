@@ -48,3 +48,34 @@ export interface TaskDto {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface QuizDto {
+  id: string;
+  title: string;
+  description: string | null;
+  isOrderRandom: boolean;
+  courseId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type QuestionType = 'MULTIPLE_CHOICE' | 'SINGLE_CHOICE' | 'CARD';
+
+export interface QuestionDto {
+  id: string;
+  title: string;
+  description: string | null;
+  type: QuestionType;
+  quizId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AnswerDto {
+  id: string;
+  content: string;
+  isCorrect: boolean;
+  questionId: string;
+  createdAt: string;
+  updatedAt: string;
+}
