@@ -112,6 +112,13 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
           </div>
 
           <div className="d-flex align-items-center gap-2">
+            <Link
+              to={`/courses/${course.id}`}
+              className="btn btn-sm btn-link text-secondary p-0 text-decoration-none"
+              aria-label="Open course"
+            >
+              Open
+            </Link>
             <button
               className="btn btn-sm btn-link text-secondary p-0"
               onClick={() => setEditOpen(true)}

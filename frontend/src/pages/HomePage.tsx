@@ -1,85 +1,62 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import ProgressRing from '../components/shared/ProgressRing';
-import Logo from '../components/shared/Logo';
-import { useAuth } from '../context/useAuth';
 import { api } from '../services/api';
-import { CourseDto } from '../types/dto';
+import { CourseDto, TaskDto } from '../types/dto';
+import DashboardLayout from '../components/shared/layout/DashboardLayout';
 
 type RingVariant = 'primary' | 'secondary' | 'tertiary' | 'quaternary';
 
 type DashboardAssignment = {
+  id: string;
   title: string;
   meta: string;
   status: 'urgent' | 'done';
 };
 
+type DocumentDto = {
+  id: string;
+  filename: string;
+  fileType?: string | null;
+  fileSize?: number | null;
+  createdAt: string;
+};
+
+type QuizDto = {
+  id: string;
+  title: string;
+  description: string | null;
+  isOrderRandom: boolean;
+  courseId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type DashboardCourseData = {
+  course: CourseDto;
+  tasks: TaskDto[];
+  documents: DocumentDto[];
+  quizzes: QuizDto[];
+  taskError?: string;
+  documentError?: string;
+  quizError?: string;
+};
+
 type DeadlineItem = {
+  id: string;
   month: string;
   day: string;
   title: string;
-  courseCode: string;
+  courseName: string;
   time: string;
   variant: RingVariant;
 };
 
 const COURSE_VARIANTS: RingVariant[] = ['primary', 'secondary', 'tertiary', 'quaternary'];
-const MONTH_LABELS = [
-  'JAN',
-  'FEB',
-  'MAR',
-  'APR',
-  'MAY',
-  'JUN',
-  'JUL',
-  'AUG',
-  'SEP',
-  'OCT',
-  'NOV',
-  'DEC',
-];
 const WEEKDAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-function buildCourseCode(course: CourseDto, index: number) {
-  // TODO(backend): Replace derived dashboard course codes with a real backend field once course codes are exposed.
-  const initials = course.name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
-
-  return `${initials || 'CR'}-${301 + index * 9}`;
-}
-
-function buildNextFocus(_course: CourseDto, index: number) {
-  // TODO(backend): Replace the rotating "next focus" labels with backend-driven upcoming topic or lesson data.
-  const topics = [
-    'Neural architecture review',
-    'Priority queue exercises',
-    'Bayesian inference lab',
-    'Transformer model notes',
-  ];
-
-  return topics[index % topics.length];
-}
-
-function buildFeaturedAssignments(course: CourseDto): DashboardAssignment[] {
-  // TODO(backend): Replace these mock featured assignments with recent/high-priority tasks from the backend.
-  const prefix = course.name.split(/\s+/).slice(0, 2).join(' ') || 'Course';
-
-  return [
-    {
-      title: `${prefix} checkpoint`,
-      meta: 'Due in 2 days - Project',
-      status: 'urgent',
-    },
-    {
-      title: `${prefix} quiz review`,
-      meta: 'Completed - 95/100',
-      status: 'done',
-    },
-  ];
+function getVariant(index: number): RingVariant {
+  return COURSE_VARIANTS[index % COURSE_VARIANTS.length];
 }
 
 function buildCalendarDays(currentDate: Date) {
@@ -103,121 +80,196 @@ function buildCalendarDays(currentDate: Date) {
   });
 }
 
-function buildDeadlineItems(courses: CourseDto[], currentDate: Date): DeadlineItem[] {
-  // TODO(backend): Replace derived deadline cards with real upcoming deadlines once assignments/tasks expose due-date details here.
-  const defaults = [
-    { title: 'Research paper draft', time: '11:59 PM' },
-    { title: 'Quiz checkpoint', time: '2:00 PM' },
-    { title: 'Lab worksheet', time: '5:00 PM' },
-  ];
+function formatDeadlineTime(value: string | null) {
+  if (!value) return 'No due time';
 
-  return courses.slice(0, 3).map((course, index) => {
-    const deadlineDate = new Date(currentDate);
-    deadlineDate.setDate(currentDate.getDate() + index + 1);
-
-    return {
-      month: MONTH_LABELS[deadlineDate.getMonth()],
-      day: String(deadlineDate.getDate()).padStart(2, '0'),
-      title: `${course.name.split(':')[0]} ${defaults[index]?.title ?? 'Milestone'}`,
-      courseCode: buildCourseCode(course, index),
-      time: defaults[index]?.time ?? '6:00 PM',
-      variant: COURSE_VARIANTS[index % COURSE_VARIANTS.length],
-    };
+  return new Date(value).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
   });
 }
 
-function DashboardSidebar({ username, onLogout }: { username: string; onLogout: () => void }) {
-  return (
-    <aside className="dashboard-sidebar">
-      <div>
-        <div className="dashboard-brand">
-          <Logo className="dashboard-brand__logo" />
-          {/* TODO(backend): Replace the hard-coded academic term with backend/user-specific semester data if available. */}
-          <div className="dashboard-brand__meta">SPRING 2026</div>
-        </div>
+function formatShortDate(value: string | null) {
+  if (!value) return 'No due date';
 
-        <nav className="dashboard-nav">
-          <Link to="/" className="dashboard-nav__item dashboard-nav__item--active">
-            <i className="fa-solid fa-table-cells-large" />
-            <span>Dashboard</span>
-          </Link>
-          <Link to="/" className="dashboard-nav__item">
-            <i className="fa-solid fa-book-open" />
-            <span>Courses</span>
-          </Link>
-          <button type="button" className="dashboard-nav__item">
-            <i className="fa-solid fa-folder-open" />
-            <span>Resources</span>
-          </button>
-          <button type="button" className="dashboard-nav__item">
-            <i className="fa-regular fa-calendar-days" />
-            <span>Schedule</span>
-          </button>
-        </nav>
-      </div>
-
-      <div className="dashboard-sidebar__footer">
-        <button type="button" className="dashboard-nav__item">
-          <i className="fa-regular fa-circle-question" />
-          <span>Support</span>
-        </button>
-        <button
-          type="button"
-          className="dashboard-nav__item dashboard-nav__item--logout"
-          onClick={onLogout}
-        >
-          <i className="fa-solid fa-arrow-right-from-bracket" />
-          <span>Logout</span>
-        </button>
-        <div className="dashboard-sidebar__username">@{username}</div>
-      </div>
-    </aside>
-  );
+  return new Date(value).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
-function DashboardTopbar({ username, onSettings }: { username: string; onSettings: () => void }) {
-  return (
-    <header className="dashboard-topbar">
-      <label className="dashboard-search" htmlFor="dashboard-search">
-        <i className="fa-solid fa-magnifying-glass" />
-        <input
-          id="dashboard-search"
-          type="search"
-          placeholder="Search for courses, notes, or deadlines..."
-        />
-      </label>
+function createTaskMeta(task: TaskDto) {
+  if (task.status === 'DONE') {
+    return `Completed - ${task.priority.toLowerCase()} priority`;
+  }
 
-      <div className="dashboard-topbar__actions">
-        <button type="button" className="dashboard-topbar__icon" aria-label="Notifications">
-          <i className="fa-solid fa-bell" />
-        </button>
-        <button
-          type="button"
-          className="dashboard-topbar__icon"
-          aria-label="Settings"
-          onClick={onSettings}
-        >
-          <i className="fa-solid fa-gear" />
-        </button>
-        <div className="dashboard-topbar__divider" />
-        <button type="button" className="dashboard-avatar" aria-label="Profile">
-          {username.slice(0, 1).toUpperCase()}
-        </button>
-      </div>
-    </header>
-  );
+  if (task.dueDate) {
+    return `Due ${formatShortDate(task.dueDate)} - ${task.priority.toLowerCase()} priority`;
+  }
+
+  return `${task.status.replace('_', ' ').toLowerCase()} - ${task.priority.toLowerCase()} priority`;
 }
 
-function FeaturedCourseCard({
-  course,
-  code,
-  assignments,
-}: {
-  course: CourseDto;
-  code: string;
-  assignments: DashboardAssignment[];
-}) {
-  const progress = course.taskProgress ?? {
+function buildFeaturedAssignments(tasks: TaskDto[]): DashboardAssignment[] {
+  return [...tasks]
+    .sort((a, b) => {
+      if (a.status === 'DONE' && b.status !== 'DONE') return 1;
+      if (a.status !== 'DONE' && b.status === 'DONE') return -1;
+
+      if (a.dueDate && b.dueDate) {
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      }
+
+      if (a.dueDate) return -1;
+      if (b.dueDate) return 1;
+
+      return a.position - b.position;
+    })
+    .slice(0, 2)
+    .map((task) => ({
+      id: task.id,
+      title: task.title,
+      meta: createTaskMeta(task),
+      status: task.status === 'DONE' ? 'done' : 'urgent',
+    }));
+}
+
+function buildCourseSupportMeta(data: DashboardCourseData) {
+  const nextTask = [...data.tasks]
+    .filter((task) => task.status !== 'DONE')
+    .sort((a, b) => {
+      if (a.dueDate && b.dueDate) {
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      }
+
+      if (a.dueDate) return -1;
+      if (b.dueDate) return 1;
+
+      return a.position - b.position;
+    })[0];
+
+  if (nextTask) {
+    return `Next task: ${nextTask.title}`;
+  }
+
+  if (data.quizzes.length > 0) {
+    return `Quiz available: ${data.quizzes[0].title}`;
+  }
+
+  if (data.documents.length > 0) {
+    return `Document uploaded: ${data.documents[0].filename}`;
+  }
+
+  if (data.taskError || data.quizError || data.documentError) {
+    return 'Supporting dashboard data could not be fully loaded';
+  }
+
+  return 'No tasks, quizzes, or documents available';
+}
+
+function buildDeadlineItems(
+  courses: DashboardCourseData[],
+  currentDate: Date
+): { items: DeadlineItem[]; missingDueDates: boolean } {
+  const startOfToday = new Date(currentDate);
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const allTasks = courses.flatMap((entry, index) =>
+    entry.tasks.map((task) => ({
+      task,
+      courseName: entry.course.name,
+      variant: getVariant(index),
+    }))
+  );
+
+  const dueTasks = allTasks
+    .filter(({ task }) => task.dueDate)
+    .sort(
+      (a, b) =>
+        new Date(a.task.dueDate as string).getTime() - new Date(b.task.dueDate as string).getTime()
+    );
+
+  const upcoming = dueTasks
+    .filter(({ task }) => new Date(task.dueDate as string).getTime() >= startOfToday.getTime())
+    .slice(0, 3);
+
+  return {
+    items: upcoming.map(({ task, courseName, variant }) => {
+      const dueDate = new Date(task.dueDate as string);
+
+      return {
+        id: task.id,
+        month: dueDate.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
+        day: String(dueDate.getDate()).padStart(2, '0'),
+        title: task.title,
+        courseName,
+        time: formatDeadlineTime(task.dueDate),
+        variant,
+      };
+    }),
+    missingDueDates: dueTasks.length === 0,
+  };
+}
+
+function collectDashboardWarnings(data: DashboardCourseData[]) {
+  const warnings = new Set<string>();
+
+  if (data.some((entry) => entry.taskError)) {
+    warnings.add('Some task data could not be loaded.');
+  }
+
+  if (data.some((entry) => entry.quizError)) {
+    warnings.add('Some quiz data could not be loaded.');
+  }
+
+  if (data.some((entry) => entry.documentError)) {
+    warnings.add('Some document data could not be loaded.');
+  }
+
+  return [...warnings];
+}
+
+async function loadDashboardCourseData(courses: CourseDto[]) {
+  const results = await Promise.all(
+    courses.map(async (course) => {
+      const [tasksResult, documentsResult, quizzesResult] = await Promise.allSettled([
+        api.get<TaskDto[]>(`/courses/${course.id}/tasks`),
+        api.get<DocumentDto[]>(`/documents/course/${course.id}`),
+        api.get<QuizDto[]>(`/courses/${course.id}/quizzes`),
+      ]);
+
+      return {
+        course,
+        tasks: tasksResult.status === 'fulfilled' ? tasksResult.value : [],
+        documents: documentsResult.status === 'fulfilled' ? documentsResult.value : [],
+        quizzes: quizzesResult.status === 'fulfilled' ? quizzesResult.value : [],
+        taskError:
+          tasksResult.status === 'rejected'
+            ? tasksResult.reason instanceof Error
+              ? tasksResult.reason.message
+              : 'Failed to load tasks'
+            : undefined,
+        documentError:
+          documentsResult.status === 'rejected'
+            ? documentsResult.reason instanceof Error
+              ? documentsResult.reason.message
+              : 'Failed to load documents'
+            : undefined,
+        quizError:
+          quizzesResult.status === 'rejected'
+            ? quizzesResult.reason instanceof Error
+              ? quizzesResult.reason.message
+              : 'Failed to load quizzes'
+            : undefined,
+      } satisfies DashboardCourseData;
+    })
+  );
+
+  return results;
+}
+
+function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
+  const progress = data.course.taskProgress ?? {
     totalTasks: 0,
     completedTasks: 0,
     openTasks: 0,
@@ -225,34 +277,50 @@ function FeaturedCourseCard({
     completionPercentage: 0,
   };
 
+  const assignments = buildFeaturedAssignments(data.tasks);
+  const quizSummary =
+    data.quizzes.length > 0
+      ? `${data.quizzes.length} quiz${data.quizzes.length !== 1 ? 'zes' : ''} available`
+      : 'No quizzes available';
+
   return (
     <article className="dashboard-featured-card">
       <div className="dashboard-featured-card__content">
         <div className="dashboard-featured-card__eyebrow">
-          <span className="dashboard-pill">High Priority</span>
-          <span>{code}</span>
+          <span className="dashboard-pill">
+            {progress.openTasks > 0 ? 'Action Needed' : 'On Track'}
+          </span>
+          <span>{quizSummary}</span>
         </div>
-        <h2 className="dashboard-featured-card__title">{course.name}</h2>
+        <h2 className="dashboard-featured-card__title">{data.course.name}</h2>
 
         <div className="dashboard-featured-card__section-label">Recent Assignments</div>
-        <div className="dashboard-featured-card__assignments">
-          {assignments.map((assignment) => (
-            <div
-              key={assignment.title}
-              className={`dashboard-assignment dashboard-assignment--${assignment.status}`}
-            >
-              <div>
-                <div className="dashboard-assignment__title">{assignment.title}</div>
-                <div className="dashboard-assignment__meta">{assignment.meta}</div>
+        {assignments.length > 0 ? (
+          <div className="dashboard-featured-card__assignments">
+            {assignments.map((assignment) => (
+              <div
+                key={assignment.id}
+                className={`dashboard-assignment dashboard-assignment--${assignment.status}`}
+              >
+                <div>
+                  <div className="dashboard-assignment__title">{assignment.title}</div>
+                  <div className="dashboard-assignment__meta">{assignment.meta}</div>
+                </div>
+                <i
+                  className={`fa-solid ${
+                    assignment.status === 'done' ? 'fa-circle-check' : 'fa-angle-right'
+                  }`}
+                />
               </div>
-              <i
-                className={`fa-solid ${
-                  assignment.status === 'done' ? 'fa-circle-check' : 'fa-angle-right'
-                }`}
-              />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="dashboard-section-message">
+            {data.taskError
+              ? `Tasks unavailable: ${data.taskError}`
+              : 'No task data is available for this course yet.'}
+          </div>
+        )}
       </div>
 
       <div className="dashboard-featured-card__progress">
@@ -276,15 +344,15 @@ function FeaturedCourseCard({
           </div>
         </div>
         <p className="dashboard-featured-card__summary">
-          {progress.completedTasks} / {progress.totalTasks || 0} modules done
+          {progress.completedTasks} / {progress.totalTasks || 0} tasks completed
         </p>
       </div>
     </article>
   );
 }
 
-function CompactCourseCard({ course, index }: { course: CourseDto; index: number }) {
-  const progress = course.taskProgress ?? {
+function CompactCourseCard({ data, index }: { data: DashboardCourseData; index: number }) {
+  const progress = data.course.taskProgress ?? {
     totalTasks: 0,
     completedTasks: 0,
     openTasks: 0,
@@ -292,12 +360,14 @@ function CompactCourseCard({ course, index }: { course: CourseDto; index: number
     completionPercentage: 0,
   };
 
-  const variant = COURSE_VARIANTS[index % COURSE_VARIANTS.length];
-  const code = buildCourseCode(course, index);
-  const nextFocus = buildNextFocus(course, index);
+  const variant = getVariant(index);
+  const quizLabel =
+    data.quizzes.length > 0
+      ? `${data.quizzes.length} quiz${data.quizzes.length !== 1 ? 'zes' : ''}`
+      : 'No quizzes';
 
   return (
-    <Link to={`/courses/${course.id}`} className="dashboard-course-card">
+    <Link to={`/courses/${data.course.id}`} className="dashboard-course-card">
       <div className="dashboard-course-card__ring-wrap">
         <ProgressRing
           openTasks={progress.openTasks}
@@ -312,9 +382,9 @@ function CompactCourseCard({ course, index }: { course: CourseDto; index: number
       </div>
 
       <div className="dashboard-course-card__body">
-        <div className="dashboard-course-card__code">{code}</div>
-        <h3 className="dashboard-course-card__title">{course.name}</h3>
-        <div className="dashboard-course-card__meta">Next: {nextFocus}</div>
+        <div className="dashboard-course-card__code">{quizLabel}</div>
+        <h3 className="dashboard-course-card__title">{data.course.name}</h3>
+        <div className="dashboard-course-card__meta">{buildCourseSupportMeta(data)}</div>
       </div>
     </Link>
   );
@@ -325,11 +395,13 @@ function DashboardRail({
   deadlines,
   dueThisWeek,
   averageProgress,
+  missingDueDates,
 }: {
   currentDate: Date;
   deadlines: DeadlineItem[];
   dueThisWeek: number;
   averageProgress: number;
+  missingDueDates: boolean;
 }) {
   const calendarDays = buildCalendarDays(currentDate);
 
@@ -378,24 +450,32 @@ function DashboardRail({
 
       <section className="dashboard-rail__panel">
         <h2 className="dashboard-rail__section-title">Upcoming Deadlines</h2>
-        <div className="dashboard-deadlines">
-          {deadlines.map((deadline) => (
-            <div key={`${deadline.title}-${deadline.day}`} className="dashboard-deadline">
-              <div
-                className={`dashboard-deadline__date dashboard-deadline__date--${deadline.variant}`}
-              >
-                <span>{deadline.month}</span>
-                <strong>{deadline.day}</strong>
-              </div>
-              <div>
-                <div className="dashboard-deadline__title">{deadline.title}</div>
-                <div className="dashboard-deadline__meta">
-                  {deadline.courseCode} - {deadline.time}
+        {deadlines.length > 0 ? (
+          <div className="dashboard-deadlines">
+            {deadlines.map((deadline) => (
+              <div key={deadline.id} className="dashboard-deadline">
+                <div
+                  className={`dashboard-deadline__date dashboard-deadline__date--${deadline.variant}`}
+                >
+                  <span>{deadline.month}</span>
+                  <strong>{deadline.day}</strong>
+                </div>
+                <div>
+                  <div className="dashboard-deadline__title">{deadline.title}</div>
+                  <div className="dashboard-deadline__meta">
+                    {deadline.courseName} - {deadline.time}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="dashboard-section-message">
+            {missingDueDates
+              ? 'No tasks with due dates are available from the backend.'
+              : 'No upcoming deadlines are currently scheduled.'}
+          </div>
+        )}
       </section>
 
       <div className="dashboard-stats">
@@ -413,112 +493,140 @@ function DashboardRail({
 }
 
 export default function HomePage() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [courses, setCourses] = useState<CourseDto[]>([]);
+  const [dashboardCourses, setDashboardCourses] = useState<DashboardCourseData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api
-      .get<CourseDto[]>('/courses')
-      .then(setCourses)
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Failed to load courses');
-      })
-      .finally(() => setLoading(false));
+    let cancelled = false;
+
+    async function loadDashboard() {
+      try {
+        const courses = await api.get<CourseDto[]>('/courses');
+        const data = await loadDashboardCourseData(courses);
+
+        if (cancelled) return;
+        setDashboardCourses(data);
+        setError('');
+      } catch (err: unknown) {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadDashboard();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const currentDate = new Date();
-  const username = user?.username ?? 'A';
-  const featuredCourse = courses[0] ?? null;
-  const compactCourses = courses.slice(1, 4);
-  const totalCredits = courses.length * 6;
+  const currentDate = useMemo(() => new Date(), []);
+  const featuredCourse = dashboardCourses[0] ?? null;
+  const compactCourses = dashboardCourses.slice(1, 4);
   const averageProgress =
-    courses.length > 0
+    dashboardCourses.length > 0
       ? Math.round(
-          courses.reduce(
-            (sum, course) => sum + (course.taskProgress?.completionPercentage ?? 0),
+          dashboardCourses.reduce(
+            (sum, entry) => sum + (entry.course.taskProgress?.completionPercentage ?? 0),
             0
-          ) / courses.length
+          ) / dashboardCourses.length
         )
       : 0;
-  const deadlines = buildDeadlineItems(courses, currentDate);
-  const dueThisWeek = deadlines.length;
 
-  function handleLogout() {
-    sessionStorage.setItem('logoutMessage', 'Successfully logged out');
-    logout();
-    navigate('/login');
-  }
+  const { items: deadlines, missingDueDates } = useMemo(
+    () => buildDeadlineItems(dashboardCourses, currentDate),
+    [dashboardCourses, currentDate]
+  );
+
+  const dueThisWeek = useMemo(() => {
+    const startOfToday = new Date(currentDate);
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfToday);
+    endOfWeek.setDate(startOfToday.getDate() + 7);
+
+    return dashboardCourses
+      .flatMap((entry) => entry.tasks)
+      .filter((task) => {
+        if (!task.dueDate || task.status === 'DONE') return false;
+
+        const dueDate = new Date(task.dueDate).getTime();
+        return dueDate >= startOfToday.getTime() && dueDate < endOfWeek.getTime();
+      }).length;
+  }, [dashboardCourses, currentDate]);
+
+  const warnings = useMemo(() => collectDashboardWarnings(dashboardCourses), [dashboardCourses]);
 
   return (
-    <div className="dashboard-shell">
-      <DashboardSidebar username={username} onLogout={handleLogout} />
+    <DashboardLayout activeNav="dashboard">
+      <div className="dashboard-grid">
+        <section className="dashboard-content">
+          <header className="dashboard-page-header">
+            <div>
+              <p className="dashboard-page-header__eyebrow">Academic overview</p>
+              <h1>My Courses</h1>
+              <p className="dashboard-page-header__subline">
+                {dashboardCourses.length} courses loaded - Credits unavailable from backend
+              </p>
+            </div>
+          </header>
 
-      <main className="dashboard-main">
-        <DashboardTopbar username={username} onSettings={() => navigate('/settings')} />
+          {!loading && warnings.length > 0 && (
+            <div className="dashboard-warning-banner">
+              {warnings.map((warning) => (
+                <div key={warning}>{warning}</div>
+              ))}
+            </div>
+          )}
 
-        <div className="dashboard-grid">
-          <section className="dashboard-content">
-            <header className="dashboard-page-header">
-              <div>
-                <p className="dashboard-page-header__eyebrow">Academic overview</p>
-                <h1>My Courses</h1>
-                <p className="dashboard-page-header__subline">
-                  {/* TODO(backend): Replace the derived credit total with a real credits value from the backend when exposed. */}
-                  Spring Semester 2026 - {totalCredits} Credits
-                </p>
+          {loading && (
+            <div className="dashboard-state dashboard-state--loading">
+              <div className="spinner-border" role="status">
+                <span className="visually-hidden">Loading dashboard...</span>
               </div>
-            </header>
+            </div>
+          )}
 
-            {loading && (
-              <div className="dashboard-state dashboard-state--loading">
-                <div className="spinner-border" role="status">
-                  <span className="visually-hidden">Loading dashboard...</span>
-                </div>
+          {!loading && error && (
+            <div className="dashboard-state dashboard-state--error">{error}</div>
+          )}
+
+          {!loading && !error && featuredCourse && (
+            <>
+              <FeaturedCourseCard data={featuredCourse} />
+
+              <div className="dashboard-course-grid">
+                {compactCourses.map((entry, index) => (
+                  <CompactCourseCard key={entry.course.id} data={entry} index={index + 1} />
+                ))}
               </div>
-            )}
+            </>
+          )}
 
-            {!loading && error && (
-              <div className="dashboard-state dashboard-state--error">{error}</div>
-            )}
+          {!loading && !error && dashboardCourses.length === 0 && (
+            <div className="dashboard-state">
+              <h2>No courses yet</h2>
+              <p>
+                The backend returned no courses for this user, so the dashboard has nothing to
+                display yet.
+              </p>
+            </div>
+          )}
+        </section>
 
-            {!loading && !error && featuredCourse && (
-              <>
-                <FeaturedCourseCard
-                  course={featuredCourse}
-                  code={buildCourseCode(featuredCourse, 0)}
-                  assignments={buildFeaturedAssignments(featuredCourse)}
-                />
-
-                <div className="dashboard-course-grid">
-                  {compactCourses.map((course, index) => (
-                    <CompactCourseCard key={course.id} course={course} index={index + 1} />
-                  ))}
-                </div>
-              </>
-            )}
-
-            {!loading && !error && courses.length === 0 && (
-              <div className="dashboard-state">
-                <h2>No courses yet</h2>
-                <p>
-                  Create your first course to populate the dashboard cards, deadlines, and progress
-                  overview.
-                </p>
-              </div>
-            )}
-          </section>
-
-          <DashboardRail
-            currentDate={currentDate}
-            deadlines={deadlines}
-            dueThisWeek={dueThisWeek}
-            averageProgress={averageProgress}
-          />
-        </div>
-      </main>
-    </div>
+        <DashboardRail
+          currentDate={currentDate}
+          deadlines={deadlines}
+          dueThisWeek={dueThisWeek}
+          averageProgress={averageProgress}
+          missingDueDates={missingDueDates}
+        />
+      </div>
+    </DashboardLayout>
   );
 }

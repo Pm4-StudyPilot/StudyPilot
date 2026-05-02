@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import Navbar from '../components/shared/layout/Navbar';
+import DashboardLayout from '../components/shared/layout/DashboardLayout';
 import DocumentUploadForm from '../components/courses/DocumentUploadForm';
 import CourseDocumentsList from '../components/courses/CourseDocumentsList';
 import CreateTaskModal from '../components/tasks/CreateTaskModal';
 import TaskList from '../components/tasks/TaskList';
+import ProgressRing from '../components/shared/ProgressRing';
 import { api } from '../services/api';
 import { CourseDto, TaskDto } from '../types/dto';
 
@@ -33,6 +34,8 @@ export default function CourseDetailPage() {
   const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [tasks, setTasks] = useState<TaskDto[]>([]);
+  const [tasksLoading, setTasksLoading] = useState(true);
+  const [tasksError, setTasksError] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -48,7 +51,10 @@ export default function CourseDetailPage() {
     api
       .get<TaskDto[]>(`/courses/${id}/tasks`)
       .then(setTasks)
-      .catch(() => {});
+      .catch((err: unknown) => {
+        setTasksError(err instanceof Error ? err.message : 'Failed to load tasks');
+      })
+      .finally(() => setTasksLoading(false));
   }, [id]);
 
   function handleUploadSuccess() {
@@ -80,68 +86,156 @@ export default function CourseDetailPage() {
         day: 'numeric',
       })
     : '';
+  const progress = course?.taskProgress ?? {
+    totalTasks: 0,
+    completedTasks: 0,
+    openTasks: 0,
+    inProgressTasks: 0,
+    completionPercentage: 0,
+  };
+  const courseMeta = useMemo(() => {
+    if (!course) return [];
+
+    return [
+      `${progress.totalTasks} task${progress.totalTasks !== 1 ? 's' : ''}`,
+      `${progress.completedTasks} completed`,
+      `Created ${formattedDate}`,
+    ];
+  }, [course, progress.totalTasks, progress.completedTasks, formattedDate]);
 
   return (
-    <>
-      <Navbar />
-      <div className="container mt-4">
+    <DashboardLayout activeNav="courses">
+      <section className="dashboard-page-stack">
         <Link
-          to="/"
-          className="course-detail__back-link text-secondary text-decoration-none d-inline-flex align-items-center gap-2 mb-4"
+          to="/courses"
+          className="course-detail__back-link text-secondary text-decoration-none d-inline-flex align-items-center gap-2"
         >
           <i className="fa-solid fa-chevron-left" />
-          Back to My Courses
+          Back to Courses
         </Link>
 
         {loading && (
-          <div className="d-flex justify-content-center py-5">
+          <div className="dashboard-state dashboard-state--loading">
             <div className="spinner-border text-secondary" role="status">
               <span className="visually-hidden">Loading...</span>
             </div>
           </div>
         )}
 
-        {error && <div className="course-detail__error alert alert-danger">{error}</div>}
+        {error && <div className="dashboard-state dashboard-state--error">{error}</div>}
 
-        {!loading && !error && !course && <p className="text-secondary">Course not found.</p>}
+        {!loading && !error && !course && (
+          <div className="dashboard-state">
+            <h2>Course not found</h2>
+            <p>The backend did not return a course for this route.</p>
+          </div>
+        )}
 
         {!loading && !error && course && (
-          <div className="course-panel rounded p-4">
-            <div className="d-flex align-items-center justify-content-between mb-1">
-              <h2 className="text-white fw-bold mb-0">{course.name}</h2>
-              <button className="btn btn-primary btn-sm" onClick={() => setCreateModalOpen(true)}>
-                + New Task
-              </button>
-            </div>
-            <p className="course-detail__date text-secondary mb-4">Added {formattedDate}</p>
+          <div className="course-detail">
+            <div className="course-detail__hero">
+              <div className="course-detail__hero-copy">
+                <div className="course-detail__eyebrow">
+                  <span className="course-detail__pill">Course workspace</span>
+                  <span className="course-detail__meta-line">{courseMeta.join(' - ')}</span>
+                </div>
 
-            <div className="row g-4">
-              <div className="col-lg-7">
-                <CourseDocumentsList courseId={course.id} refreshKey={documentsRefreshKey} />
+                <h1 className="course-detail__title">{course.name}</h1>
+
+                <div className="course-detail__support-note">
+                  <div className="course-detail__support-label">Backend data available</div>
+                  <p className="mb-0">
+                    This page currently shows real course, task progress, task list, and document
+                    data from the backend. Instructor and course description are not available from
+                    the API yet.
+                  </p>
+                </div>
               </div>
 
-              <div className="col-lg-5">
+              <aside className="course-detail__progress-card">
+                <div className="course-detail__progress-ring-wrap">
+                  <ProgressRing
+                    openTasks={progress.openTasks}
+                    inProgressTasks={progress.inProgressTasks}
+                    completedTasks={progress.completedTasks}
+                    totalTasks={progress.totalTasks}
+                    label={`${progress.completionPercentage}% complete`}
+                    variant="primary"
+                    size={148}
+                  />
+                  <div className="course-detail__progress-center">
+                    <strong>{progress.completionPercentage}%</strong>
+                    <span>complete</span>
+                  </div>
+                </div>
+                <div className="course-detail__progress-summary">
+                  <h2>Course Progress</h2>
+                  <p>
+                    {progress.completedTasks} completed, {progress.inProgressTasks} in progress,{' '}
+                    {progress.openTasks} open
+                  </p>
+                </div>
+              </aside>
+            </div>
+
+            <div className="course-detail__body">
+              <section className="course-detail__tasks-column">
+                <div className="course-detail__section-header">
+                  <div className="course-detail__section-title">
+                    <span className="course-detail__section-accent course-detail__section-accent--primary" />
+                    <h2>Tasks</h2>
+                  </div>
+                  <button
+                    className="course-detail__add-button btn btn-primary"
+                    onClick={() => setCreateModalOpen(true)}
+                    aria-label="Add task"
+                  >
+                    <i className="fa-solid fa-plus" />
+                  </button>
+                </div>
+
+                {tasksLoading && (
+                  <div className="dashboard-state dashboard-state--loading course-detail__section-card">
+                    <div className="spinner-border text-secondary" role="status">
+                      <span className="visually-hidden">Loading tasks...</span>
+                    </div>
+                  </div>
+                )}
+
+                {!tasksLoading && tasksError && (
+                  <div className="dashboard-state dashboard-state--error course-detail__section-card">
+                    {tasksError}
+                  </div>
+                )}
+
+                {!tasksLoading && !tasksError && (
+                  <div className="course-detail__section-card">
+                    <TaskList
+                      courseId={id!}
+                      tasks={tasks}
+                      onTaskUpdated={handleTaskUpdated}
+                      onTaskDeleted={handleTaskDeleted}
+                      onTasksReordered={handleTasksReordered}
+                    />
+                  </div>
+                )}
+              </section>
+
+              <aside className="course-detail__documents-column">
+                <div className="course-detail__section-title">
+                  <span className="course-detail__section-accent course-detail__section-accent--secondary" />
+                  <h2>Course Documents</h2>
+                </div>
+
+                <CourseDocumentsList courseId={course.id} refreshKey={documentsRefreshKey} />
+
                 <DocumentUploadForm
                   courseId={course.id}
                   courseName={course.name}
                   onUploadSuccess={handleUploadSuccess}
                 />
-              </div>
+              </aside>
             </div>
-
-            {tasks.length === 0 && (
-              <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
-                No tasks yet. Add one to get started.
-              </div>
-            )}
-            
-            <TaskList
-              courseId={id!}
-              tasks={tasks}
-              onTaskUpdated={handleTaskUpdated}
-              onTaskDeleted={handleTaskDeleted}
-              onTasksReordered={handleTasksReordered}
-            />
           </div>
         )}
 
@@ -152,7 +246,7 @@ export default function CourseDetailPage() {
             onCreated={handleTaskCreated}
           />
         )}
-      </div>
-    </>
+      </section>
+    </DashboardLayout>
   );
 }

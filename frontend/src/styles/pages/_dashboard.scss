@@ -191,6 +191,11 @@
   min-width: 0;
 }
 
+.dashboard-page-stack {
+  display: grid;
+  gap: 1.5rem;
+}
+
 .dashboard-page-header {
   margin-bottom: 1.8rem;
 
@@ -650,6 +655,28 @@
   &--error {
     color: #ff9c89;
   }
+}
+
+.dashboard-warning-banner {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(255, 165, 0, 0.18);
+  border-radius: 1rem;
+  background: rgba(255, 166, 0, 0.08);
+  color: #f1c48d;
+  font-size: 0.92rem;
+}
+
+.dashboard-section-message {
+  padding: 1rem 1.1rem;
+  border: 1px dashed var(--color-divider);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 @media (max-width: 1200px) {
