@@ -45,6 +45,7 @@ model Course {
   owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   documents Document[]
   tasks     Task[]
+  quizzes   Quiz[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -85,4 +86,52 @@ model Task {
 
   @@index([courseId])
   @@index([courseId, position])
+}
+
+
+model Quiz {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  isOrderRandom Boolean    @default(false)
+  questions   Question[]
+  courseId    String
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  @@index([courseId])
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  SINGLE_CHOICE
+  CARD
+}
+
+model Question {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  position    Int          @default(0)
+  type        QuestionType @default(SINGLE_CHOICE)
+  answers     Answer[]
+  quizId      String
+  quiz        Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  @@index([quizId])
+  @@index([quizId, position])
+}
+
+model Answer {
+  id          String       @id @default(uuid())
+  isCorrect   Boolean      @default(true)
+  content        String
+  position    Int          @default(0)
+  questionId  String
+  question    Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  @@index([questionId])
+  @@index([questionId, position])
 }
