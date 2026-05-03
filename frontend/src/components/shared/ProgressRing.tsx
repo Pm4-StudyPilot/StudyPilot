@@ -42,7 +42,6 @@ export default function ProgressRing({
     completedTasks,
     totalTasks
   );
-  const notDoneTasks = openTasks + inProgressTasks;
   const classes = ['progress-ring', `progress-ring--${variant}`, className]
     .filter(Boolean)
     .join(' ');
@@ -66,8 +65,6 @@ export default function ProgressRing({
       title={label}
       aria-label={label}
       role="img"
-    >
-      <span className="progress-ring__label">{notDoneTasks}</span>
-    </div>
+    ></div>
   );
 }
