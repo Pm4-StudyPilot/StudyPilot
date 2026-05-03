@@ -10,25 +10,6 @@ import { useForm } from '../hooks/useForm';
 import { resetPasswordSchema } from '../validation/schemas';
 import { getPasswordChecks, getPasswordStrength } from '../utils/passwordStrength';
 
-/**
- * ResetPasswordPage
- *
- * Allows a user to set a new password after clicking a reset link from their email.
- *
- * Responsibilities:
- * - Read the reset token from the URL query parameter (?token=...)
- * - Render the new password form (newPassword + confirmNewPassword)
- * - Validate input using Zod schema
- * - Send POST request to /auth/reset-password
- * - Display success message and link to login on completion
- *
- * Workflow:
- * 1. Token is extracted from the URL on page load
- * 2. User enters and confirms a new password
- * 3. Form is validated using resetPasswordSchema
- * 4. API request is sent to /auth/reset-password with token + newPassword
- * 5. On success, a confirmation is shown with a link to login
- */
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') ?? '';
@@ -68,11 +49,11 @@ export default function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <div className="container d-flex justify-content-center align-items-center min-vh-100">
-        <div className="auth-card auth-card--narrow card shadow">
+      <div className="auth-shell">
+        <div className="auth-card auth-card--narrow auth-card--themed card">
           <div className="card-body p-4 text-center">
             <h2 className="mb-4">
-              <Logo />
+              <Logo className="auth-card__brand" />
             </h2>
             <div className="alert alert-danger" role="alert">
               Invalid or missing reset link. Please request a new one.
@@ -85,14 +66,15 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="auth-card auth-card--narrow card shadow">
+    <div className="auth-shell">
+      <div className="auth-card auth-card--narrow auth-card--themed card">
         <div className="card-body p-4">
           <h2 className="text-center mb-4">
-            <Logo />
+            <Logo className="auth-card__brand" />
           </h2>
-          <h5 className="text-center mb-1">Set New Password</h5>
-          <p className="auth-card__lead text-muted text-center mb-4">
+          <p className="auth-card__eyebrow">Recovery</p>
+          <h5 className="auth-card__title text-center mb-1">Set New Password</h5>
+          <p className="auth-card__lead text-center mb-4">
             Choose a strong password for your account.
           </p>
 
@@ -101,7 +83,7 @@ export default function ResetPasswordPage() {
               <div className="alert alert-success" role="alert">
                 {success}
               </div>
-              <div className="text-center mt-3">
+              <div className="text-center mt-3 auth-card__footer-link">
                 <Link to="/login">Back to Login</Link>
               </div>
             </>
@@ -118,20 +100,37 @@ export default function ResetPasswordPage() {
               <ProgressBar value={getPasswordStrength(values.newPassword)} />
 
               <div className="mt-2 mb-3 small">
-                <div className={passwordChecks.minLength ? 'text-success' : 'text-danger'}>
-                  {passwordChecks.minLength ? '✔' : '✖'} At least 12 characters
+                <div
+                  className={`auth-check ${passwordChecks.minLength ? 'auth-check--valid' : 'auth-check--invalid'}`}
+                >
+                  <span className="auth-check__icon">{passwordChecks.minLength ? 'OK' : 'NO'}</span>
+                  <span>At least 12 characters</span>
                 </div>
-                <div className={passwordChecks.uppercase ? 'text-success' : 'text-danger'}>
-                  {passwordChecks.uppercase ? '✔' : '✖'} At least one uppercase letter
+                <div
+                  className={`auth-check ${passwordChecks.uppercase ? 'auth-check--valid' : 'auth-check--invalid'}`}
+                >
+                  <span className="auth-check__icon">{passwordChecks.uppercase ? 'OK' : 'NO'}</span>
+                  <span>At least one uppercase letter</span>
                 </div>
-                <div className={passwordChecks.lowercase ? 'text-success' : 'text-danger'}>
-                  {passwordChecks.lowercase ? '✔' : '✖'} At least one lowercase letter
+                <div
+                  className={`auth-check ${passwordChecks.lowercase ? 'auth-check--valid' : 'auth-check--invalid'}`}
+                >
+                  <span className="auth-check__icon">{passwordChecks.lowercase ? 'OK' : 'NO'}</span>
+                  <span>At least one lowercase letter</span>
                 </div>
-                <div className={passwordChecks.number ? 'text-success' : 'text-danger'}>
-                  {passwordChecks.number ? '✔' : '✖'} At least one number
+                <div
+                  className={`auth-check ${passwordChecks.number ? 'auth-check--valid' : 'auth-check--invalid'}`}
+                >
+                  <span className="auth-check__icon">{passwordChecks.number ? 'OK' : 'NO'}</span>
+                  <span>At least one number</span>
                 </div>
-                <div className={passwordChecks.specialChar ? 'text-success' : 'text-danger'}>
-                  {passwordChecks.specialChar ? '✔' : '✖'} At least one special character
+                <div
+                  className={`auth-check ${passwordChecks.specialChar ? 'auth-check--valid' : 'auth-check--invalid'}`}
+                >
+                  <span className="auth-check__icon">
+                    {passwordChecks.specialChar ? 'OK' : 'NO'}
+                  </span>
+                  <span>At least one special character</span>
                 </div>
               </div>
 
@@ -144,8 +143,11 @@ export default function ResetPasswordPage() {
               />
 
               {values.confirmNewPassword && (
-                <div className={`mb-3 small ${passwordsMatch ? 'text-success' : 'text-danger'}`}>
-                  {passwordsMatch ? '✔' : '✖'} Passwords match
+                <div
+                  className={`auth-check mb-3 ${passwordsMatch ? 'auth-check--valid' : 'auth-check--invalid'}`}
+                >
+                  <span className="auth-check__icon">{passwordsMatch ? 'OK' : 'NO'}</span>
+                  <span>Passwords match</span>
                 </div>
               )}
 

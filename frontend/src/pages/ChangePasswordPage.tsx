@@ -10,23 +10,6 @@ import { useForm } from '../hooks/useForm';
 import { changePasswordSchema } from '../validation/schemas';
 import { getPasswordChecks, getPasswordStrength } from '../utils/passwordStrength';
 
-/**
- * ChangePasswordPage
- *
- * Allows authenticated users to change their password from account settings.
- *
- * Responsibilities:
- * - Render change password form (current password, new password, confirm new password)
- * - Validate input using Zod schema
- * - Send PATCH request to backend API
- * - Display success or error feedback
- *
- * Workflow:
- * 1. User enters current password and new password (twice)
- * 2. Form is validated using changePasswordSchema
- * 3. API PATCH request is sent to /users/me/password
- * 4. Success message is shown on completion
- */
 export default function ChangePasswordPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -66,12 +49,17 @@ export default function ChangePasswordPage() {
   return (
     <>
       <Navbar />
-      <div className="container d-flex justify-content-center mt-5">
-        <div className="auth-card auth-card--wide card shadow">
-          <div className="card-body p-4">
-            <h4 className="mb-1">Change Password</h4>
-            <p className="text-muted mb-4">Update your password to keep your account secure.</p>
+      <div className="settings-shell settings-shell--narrow container">
+        <div className="settings-page-header settings-page-header--compact">
+          <p className="settings-page-header__eyebrow">Security</p>
+          <h1>Change Password</h1>
+          <p className="settings-page-header__subline">
+            Update your password to keep your account secure.
+          </p>
+        </div>
 
+        <div className="auth-card auth-card--wide auth-card--themed card">
+          <div className="card-body p-4">
             {success && (
               <div className="alert alert-success" role="alert">
                 {success}
@@ -98,20 +86,37 @@ export default function ChangePasswordPage() {
               <ProgressBar value={getPasswordStrength(values.newPassword)} />
 
               <div className="mt-2 mb-3 small">
-                <div className={passwordChecks.minLength ? 'text-success' : 'text-danger'}>
-                  {passwordChecks.minLength ? '✔' : '✖'} At least 12 characters
+                <div
+                  className={`auth-check ${passwordChecks.minLength ? 'auth-check--valid' : 'auth-check--invalid'}`}
+                >
+                  <span className="auth-check__icon">{passwordChecks.minLength ? 'OK' : 'NO'}</span>
+                  <span>At least 12 characters</span>
                 </div>
-                <div className={passwordChecks.uppercase ? 'text-success' : 'text-danger'}>
-                  {passwordChecks.uppercase ? '✔' : '✖'} At least one uppercase letter
+                <div
+                  className={`auth-check ${passwordChecks.uppercase ? 'auth-check--valid' : 'auth-check--invalid'}`}
+                >
+                  <span className="auth-check__icon">{passwordChecks.uppercase ? 'OK' : 'NO'}</span>
+                  <span>At least one uppercase letter</span>
                 </div>
-                <div className={passwordChecks.lowercase ? 'text-success' : 'text-danger'}>
-                  {passwordChecks.lowercase ? '✔' : '✖'} At least one lowercase letter
+                <div
+                  className={`auth-check ${passwordChecks.lowercase ? 'auth-check--valid' : 'auth-check--invalid'}`}
+                >
+                  <span className="auth-check__icon">{passwordChecks.lowercase ? 'OK' : 'NO'}</span>
+                  <span>At least one lowercase letter</span>
                 </div>
-                <div className={passwordChecks.number ? 'text-success' : 'text-danger'}>
-                  {passwordChecks.number ? '✔' : '✖'} At least one number
+                <div
+                  className={`auth-check ${passwordChecks.number ? 'auth-check--valid' : 'auth-check--invalid'}`}
+                >
+                  <span className="auth-check__icon">{passwordChecks.number ? 'OK' : 'NO'}</span>
+                  <span>At least one number</span>
                 </div>
-                <div className={passwordChecks.specialChar ? 'text-success' : 'text-danger'}>
-                  {passwordChecks.specialChar ? '✔' : '✖'} At least one special character
+                <div
+                  className={`auth-check ${passwordChecks.specialChar ? 'auth-check--valid' : 'auth-check--invalid'}`}
+                >
+                  <span className="auth-check__icon">
+                    {passwordChecks.specialChar ? 'OK' : 'NO'}
+                  </span>
+                  <span>At least one special character</span>
                 </div>
               </div>
 
@@ -124,8 +129,11 @@ export default function ChangePasswordPage() {
               />
 
               {values.confirmNewPassword && (
-                <div className={`mb-3 small ${passwordsMatch ? 'text-success' : 'text-danger'}`}>
-                  {passwordsMatch ? '✔' : '✖'} Passwords match
+                <div
+                  className={`auth-check mb-3 ${passwordsMatch ? 'auth-check--valid' : 'auth-check--invalid'}`}
+                >
+                  <span className="auth-check__icon">{passwordsMatch ? 'OK' : 'NO'}</span>
+                  <span>Passwords match</span>
                 </div>
               )}
 
