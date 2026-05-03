@@ -88,7 +88,7 @@ export default function LoginPage() {
 
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="card shadow" style={{ maxWidth: '400px', width: '100%' }}>
+      <div className="auth-card auth-card--narrow card shadow">
         <div className="card-body p-4">
           <h2 className="text-center mb-4">
             <Logo />
@@ -133,7 +133,7 @@ export default function LoginPage() {
             <Link to="/register">Need an account? Register</Link>
           </div>
           <div className="text-center mt-2">
-            <Link to="/forgot-password" className="text-muted" style={{ fontSize: '14px' }}>
+            <Link to="/forgot-password" className="auth-card__muted-link text-muted">
               Forgot your password?
             </Link>
           </div>

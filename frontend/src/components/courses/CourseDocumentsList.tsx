@@ -14,9 +14,6 @@ type DocumentDto = {
   createdAt: string;
 };
 
-/**
- * Formats bytes into a more readable file size string.
- */
 function formatFileSize(bytes?: number | null): string {
   if (!bytes) return 'Unknown size';
 
@@ -30,9 +27,6 @@ function formatFileSize(bytes?: number | null): string {
   return `${mb.toFixed(2)} MB`;
 }
 
-/**
- * Converts MIME types into short readable labels.
- */
 function formatFileType(fileType?: string | null): string {
   if (!fileType) return 'Unknown type';
 
@@ -46,11 +40,6 @@ function formatFileType(fileType?: string | null): string {
   return map[fileType] || fileType;
 }
 
-/**
- * CourseDocumentsList
- *
- * Displays uploaded documents for a given course including basic metadata.
- */
 export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocumentsListProps) {
   const [documents, setDocuments] = useState<DocumentDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,8 +70,15 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
   }, [courseId, refreshKey]);
 
   return (
-    <div className="course-detail__documents rounded p-3 h-100">
-      <h3 className="text-white h5 mb-3">Uploaded documents</h3>
+    <div className="course-detail__documents">
+      <div className="course-detail__documents-header">
+        <p className="course-detail__documents-eyebrow">Backend documents</p>
+        <p className="course-detail__documents-count mb-0">
+          {loading
+            ? 'Loading documents...'
+            : `${documents.length} file${documents.length !== 1 ? 's' : ''}`}
+        </p>
+      </div>
 
       {loading && <p className="text-secondary mb-0">Loading documents...</p>}
 
@@ -95,7 +91,7 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
       )}
 
       {!loading && !error && documents.length > 0 && (
-        <div className="d-flex flex-column gap-3">
+        <div className="course-detail__documents-list">
           {documents.map((document) => {
             const formattedDate = new Date(document.createdAt).toLocaleDateString('en-US', {
               year: 'numeric',
@@ -104,12 +100,17 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
             });
 
             return (
-              <div key={document.id} className="rounded p-3 border border-secondary-subtle">
-                <p className="text-white fw-semibold mb-1">{document.filename}</p>
-                <p className="text-secondary mb-0">
-                  {formatFileType(document.fileType)} · {formatFileSize(document.fileSize)} ·
-                  Uploaded {formattedDate}
-                </p>
+              <div key={document.id} className="course-detail__document-item">
+                <div className="course-detail__document-icon">
+                  <i className="fa-regular fa-file-lines" />
+                </div>
+                <div className="course-detail__document-content">
+                  <p className="course-detail__document-name mb-1">{document.filename}</p>
+                  <p className="course-detail__document-meta mb-0">
+                    {formatFileType(document.fileType)} - {formatFileSize(document.fileSize)} -
+                    Uploaded {formattedDate}
+                  </p>
+                </div>
               </div>
             );
           })}

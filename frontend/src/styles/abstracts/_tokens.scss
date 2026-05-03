@@ -1,0 +1,50 @@
+:root {
+  /* Surfaces */
+  --color-app-bg: #0d0d0f;
+  --color-panel-bg: #151519;
+  --color-card-bg: #232329;
+  --color-input-bg: #26262d;
+  --color-overlay: rgba(8, 8, 12, 0.78);
+
+  /* Brand / Accent */
+  --color-primary: #ff4b26;
+  --color-secondary: #448aff;
+  --color-tertiary: #4caf50;
+  --color-quaternary: #b784ff;
+
+  /* Text */
+  --color-text-primary: #f2f0f3;
+  --color-text-secondary: #b7b1bb;
+  --color-text-muted: #8b8691;
+
+  /* Structure */
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-divider: rgba(255, 255, 255, 0.06);
+
+  /* Shape */
+  --radius-card: 18px;
+  --radius-pill: 999px;
+
+  /* Spacing */
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+
+  /* Type scale */
+  --font-size-xs: 0.7rem;
+  --font-size-sm: 0.85rem;
+  --font-size-md: 0.875rem;
+  --font-size-base: 0.9rem;
+  --font-size-lg: 0.95rem;
+
+  /* Effects */
+  --shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.28);
+  --glow-primary: 0 0 24px rgba(255, 75, 38, 0.22);
+  --shadow-focus-accent: 0 0 0 0.2rem rgba(255, 75, 38, 0.18);
+
+  /* Compatibility aliases for existing component styles */
+  --color-background: var(--color-app-bg);
+  --color-panel: var(--color-panel-bg);
+  --color-surface: var(--color-card-bg);
+  --color-accent: var(--color-primary);
+}

@@ -54,13 +54,21 @@ export default function SettingsPage() {
   return (
     <>
       <Navbar />
-      <div className="container mt-5">
+      <div className="settings-shell container">
+        <div className="settings-page-header">
+          <p className="settings-page-header__eyebrow">Account workspace</p>
+          <h1>Account Settings</h1>
+          <p className="settings-page-header__subline">
+            Manage your profile and security settings.
+          </p>
+        </div>
+
         <div className="row g-4">
           <div className="col-lg-7">
-            <div className="card shadow-sm">
+            <div className="settings-card card">
               <div className="card-body p-4">
-                <h1 className="h3 mb-1">Account Settings</h1>
-                <p className="text-muted mb-4">Manage your profile and security settings.</p>
+                <h2 className="settings-card__title">Profile</h2>
+                <p className="settings-card__subtitle">Update your visible account information.</p>
 
                 {success && (
                   <div className="alert alert-success" role="alert">
@@ -97,10 +105,12 @@ export default function SettingsPage() {
           </div>
 
           <div className="col-lg-5">
-            <div className="card shadow-sm">
+            <div className="settings-card card">
               <div className="card-body p-4">
-                <h2 className="h5 mb-2">Security</h2>
-                <p className="text-muted">Update your password to keep your account secure.</p>
+                <h2 className="settings-card__title">Security</h2>
+                <p className="settings-card__subtitle">
+                  Update your password to keep your account secure.
+                </p>
                 <Link to="/settings/password" className="btn btn-outline-primary">
                   Change Password
                 </Link>
