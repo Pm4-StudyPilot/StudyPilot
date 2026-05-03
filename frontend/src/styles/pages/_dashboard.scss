@@ -177,8 +177,10 @@
   border-radius: 1rem;
   background: linear-gradient(180deg, #13999b, #0d7c7f);
   color: #f7ffff;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   font-weight: 800;
+  display: grid;
+  place-items: center;
 }
 
 .dashboard-grid {
