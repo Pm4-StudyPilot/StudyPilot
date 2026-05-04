@@ -9,6 +9,7 @@ type MockUserRecord = {
 };
 
 type MockProfileConflict = Pick<MockUserRecord, 'email' | 'username'>;
+type MockFindFirstRecord = MockProfileConflict | Pick<MockUserRecord, 'id'>;
 
 /**
  * Mock functions for external dependencies.
@@ -35,8 +36,9 @@ const mockFindUniqueWithPassword = mock(
   })
 );
 
-const mockFindFirst = mock(async (): Promise<MockProfileConflict | null> => null);
+const mockFindFirst = mock(async (): Promise<MockFindFirstRecord | null> => null);
 const mockUpdate = mock(async () => ({}));
+const mockDelete = mock(async () => ({}));
 
 /**
  * Mock bcrypt module.
@@ -62,6 +64,7 @@ mock.module('../config/database', () => ({
       findUnique: mockFindUniqueWithPassword,
       findFirst: mockFindFirst,
       update: mockUpdate,
+      delete: mockDelete,
     },
   },
 }));
@@ -87,6 +90,7 @@ describe('UserService', () => {
     mockFindUniqueWithPassword.mockClear();
     mockFindFirst.mockClear();
     mockUpdate.mockClear();
+    mockDelete.mockClear();
 
     mockCompare.mockResolvedValue(true);
     mockFindFirst.mockResolvedValue(null);
@@ -302,6 +306,45 @@ describe('UserService', () => {
       ).rejects.toThrow('Email is already in use');
 
       expect(mockUpdate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteAccount', () => {
+    it('should delete and return the user when the account exists', async () => {
+      const deletedUser = {
+        id: 'user-1',
+        email: 'test@students.zhaw.ch',
+        username: 'testuser',
+        password: 'hashed-password',
+        role: 'USER',
+      };
+
+      mockFindFirst.mockResolvedValueOnce({ id: 'user-1' });
+      mockDelete.mockResolvedValueOnce(deletedUser);
+
+      const service = new UserService();
+      const result = await service.deleteAccount('user-1');
+
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        select: { id: true },
+      });
+
+      expect(mockDelete).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+      });
+
+      expect(result).toEqual(deletedUser);
+    });
+
+    it('should throw when the account does not exist', async () => {
+      mockFindFirst.mockResolvedValueOnce(null);
+
+      const service = new UserService();
+
+      await expect(service.deleteAccount('non-existent-id')).rejects.toThrow('User not found');
+
+      expect(mockDelete).not.toHaveBeenCalled();
     });
   });
 });
