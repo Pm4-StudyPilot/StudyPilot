@@ -5,8 +5,9 @@ import DocumentUploadForm from '../components/courses/DocumentUploadForm';
 import CourseDocumentsList from '../components/courses/CourseDocumentsList';
 import CreateTaskModal from '../components/tasks/CreateTaskModal';
 import TaskList from '../components/tasks/TaskList';
+import CourseFeed, { CourseFeedItem } from '../components/courses/CourseFeed';
 import { api } from '../services/api';
-import { CourseDto, TaskDto } from '../types/dto';
+import { CourseDto, QuizDto, TaskDto } from '../types/dto';
 
 /**
  * CourseDetailPage
@@ -47,6 +48,7 @@ export default function CourseDetailPage() {
   // Refresh and modal state
   const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [courseFeedItems, setCourseFeedItems] = useState<CourseFeedItem[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -64,6 +66,11 @@ export default function CourseDetailPage() {
     api
       .get<TaskDto[]>(`/courses/${id}/tasks`)
       .then(setTasks)
+      .catch(() => {});
+
+    api
+      .get<QuizDto[]>(`/courses/${id}/quizzes`)
+      .then((quizzes) => setCourseFeedItems(quizzes.map((quiz) => ({ type: 'quiz', data: quiz }))))
       .catch(() => {});
   }, [id]);
 
@@ -241,6 +248,10 @@ export default function CourseDetailPage() {
 
             {/* Active tab content */}
             {activeTab === 'documents' ? renderDocumentsTab() : renderTasksTab()}
+
+            <div className="course-detail__coursefeed mt-4">
+              <CourseFeed items={courseFeedItems} />
+            </div>
           </div>
         )}
 
