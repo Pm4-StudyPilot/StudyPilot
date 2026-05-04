@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import Logo from '../Logo';
 import { useAuth } from '../../../context/useAuth';
 
@@ -48,22 +48,10 @@ export default function DashboardLayout({ activeNav, children }: DashboardLayout
               <i className="fa-solid fa-book-open" />
               <span>Courses</span>
             </NavLink>
-            <button type="button" className="dashboard-nav__item">
-              <i className="fa-solid fa-folder-open" />
-              <span>Resources</span>
-            </button>
-            <button type="button" className="dashboard-nav__item">
-              <i className="fa-regular fa-calendar-days" />
-              <span>Schedule</span>
-            </button>
           </nav>
         </div>
 
         <div className="dashboard-sidebar__footer">
-          <button type="button" className="dashboard-nav__item">
-            <i className="fa-regular fa-circle-question" />
-            <span>Support</span>
-          </button>
           <button
             type="button"
             className="dashboard-nav__item dashboard-nav__item--logout"
@@ -88,9 +76,6 @@ export default function DashboardLayout({ activeNav, children }: DashboardLayout
           </label>
 
           <div className="dashboard-topbar__actions">
-            <button type="button" className="dashboard-topbar__icon" aria-label="Notifications">
-              <i className="fa-solid fa-bell" />
-            </button>
             <button
               type="button"
               className="dashboard-topbar__icon"
@@ -100,9 +85,9 @@ export default function DashboardLayout({ activeNav, children }: DashboardLayout
               <i className="fa-solid fa-gear" />
             </button>
             <div className="dashboard-topbar__divider" />
-            <Link to="/settings" className="dashboard-avatar" aria-label="Profile">
+            <div className="dashboard-avatar" aria-label="Profile">
               {username.slice(0, 1).toUpperCase()}
-            </Link>
+            </div>
           </div>
         </header>
 
