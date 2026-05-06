@@ -229,11 +229,7 @@ export default function CourseDetailPage() {
 
                 <CourseDocumentsList courseId={course.id} refreshKey={documentsRefreshKey} />
 
-                <DocumentUploadForm
-                  courseId={course.id}
-                  courseName={course.name}
-                  onUploadSuccess={handleUploadSuccess}
-                />
+                <DocumentUploadForm courseId={course.id} onUploadSuccess={handleUploadSuccess} />
               </aside>
             </div>
           </div>

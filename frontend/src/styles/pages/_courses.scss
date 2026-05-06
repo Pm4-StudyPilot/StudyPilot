@@ -362,6 +362,86 @@
     margin-bottom: 1rem;
   }
 
+  &__upload-zone {
+    display: grid;
+    justify-items: center;
+    text-align: center;
+    gap: 1rem;
+    padding: 1.8rem 1.4rem;
+    border: 1px dashed var(--color-border);
+    border-radius: 1rem;
+    background-color: var(--color-card-bg);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  &__upload-zone:hover,
+  &__upload-zone--active {
+    border-color: var(--color-primary);
+    background-color: rgba(68, 138, 255, 0.08);
+    box-shadow: var(--shadow-soft);
+  }
+
+  &__upload-zone-copy {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  &__upload-status {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.85rem 1rem;
+    border-radius: 0.95rem;
+    margin-top: 0.75rem;
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-text-secondary);
+    font-size: 0.93rem;
+    line-height: 1.4;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
+  }
+
+  &__upload-zone-icon {
+    display: grid;
+    place-items: center;
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 1rem;
+    background-color: rgba(255, 75, 38, 0.14);
+    color: #ff886b;
+  }
+
+  &__upload-zone-icon svg {
+    width: 2.1rem;
+    height: 2.1rem;
+  }
+
+  &__upload-zone-title {
+    margin: 0;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    font-size: 1rem;
+  }
+
+  &__upload-zone-hint {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--color-text-secondary);
+  }
+
+  &__upload-selected {
+    font-size: 0.95rem;
+    color: var(--color-text-primary);
+    padding: 0 0.15rem;
+  }
+
   &__upload-title {
     margin-bottom: 0.4rem;
     font-size: 1.3rem;
