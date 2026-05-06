@@ -80,7 +80,7 @@ export default function DashboardLayout({ activeNav, children }: DashboardLayout
               type="button"
               className="dashboard-topbar__icon"
               aria-label="Settings"
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate('/settings', { state: { from: location.pathname } })}
             >
               <i className="fa-solid fa-gear" />
             </button>
