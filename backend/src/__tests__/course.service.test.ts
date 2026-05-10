@@ -29,20 +29,24 @@ type MockCourseDb = {
       select: unknown;
     }) => Promise<MockCourse & { tasks: MockTask[] }>;
     findMany?: (args: {
-      where: { ownerId: string };
+      where: { ownerId?: string; courseShares?: unknown };
       orderBy: { createdAt: 'desc' };
       select: unknown;
     }) => Promise<(MockCourse & { tasks: MockTask[] })[]>;
     findFirst?: (args: {
-      where: { id: string; ownerId: string };
+      where: { id: string; ownerId?: string };
       select: unknown;
     }) => Promise<(MockCourse & { tasks: MockTask[] }) | null>;
+    findUnique?: (args: {
+      where: { id: string };
+      select: unknown;
+    }) => Promise<{ ownerId: string } | null>;
     update?: (args: {
       where: { id: string };
       data: { name: string };
       select: unknown;
     }) => Promise<MockCourse & { tasks: MockTask[] }>;
-    deleteMany?: (args: { where: { id: string; ownerId: string } }) => Promise<{ count: number }>;
+    deleteMany?: (args: { where: { id: string; ownerId?: string } }) => Promise<{ count: number }>;
   };
 };
 
@@ -94,7 +98,14 @@ describe('CourseService', () => {
       { ...createMockCourse('c2', 'Math', 'u1'), tasks: [{ status: 'DONE' }, { status: 'OPEN' }] },
       { ...createMockCourse('c1', 'Biology', 'u1'), tasks: [] },
     ];
-    const findMany = mock(async () => courses);
+
+    const findMany = mock(async (args) => {
+      // First call: owned courses, Second call: shared courses (return empty)
+      if ('ownerId' in (args?.where || {})) {
+        return courses;
+      }
+      return [];
+    });
 
     const db: MockCourseDb = {
       course: {
@@ -120,20 +131,26 @@ describe('CourseService', () => {
       },
       createMockCourse('c1', 'Biology', 'u1'),
     ]);
-    expect(findMany).toHaveBeenCalledWith({
-      where: { ownerId: 'u1' },
-      orderBy: { createdAt: 'desc' },
-      select: expect.any(Object),
-    });
+    expect(findMany).toHaveBeenCalledTimes(2);
   });
 
   it('should return course only when it belongs to owner', async () => {
     const course = { ...createMockCourse('c1', 'Biology', 'u1'), tasks: [{ status: 'DONE' }] };
-    const findFirst = mock(async () => course);
+
+    let callCount = 0;
+    const findUnique = mock(async (_args) => {
+      callCount++;
+      // First call: hasAccess check (select only ownerId)
+      // Second call: full course with tasks (select COURSE_OVERVIEW_SELECT)
+      if (callCount === 1) {
+        return { ownerId: 'u1' };
+      }
+      return course;
+    });
 
     const db: MockCourseDb = {
       course: {
-        findFirst,
+        findUnique,
       },
     };
 
@@ -151,13 +168,6 @@ describe('CourseService', () => {
         completedTasks: 1,
         completionPercentage: 100,
       },
-    });
-    expect(findFirst).toHaveBeenCalledWith({
-      where: {
-        id: 'c1',
-        ownerId: 'u1',
-      },
-      select: expect.any(Object),
     });
   });
 
@@ -181,7 +191,6 @@ describe('CourseService', () => {
         id: 'c1',
         ownerId: 'u2',
       },
-      select: expect.any(Object),
     });
   });
 

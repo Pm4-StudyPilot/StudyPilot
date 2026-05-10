@@ -34,6 +34,9 @@ model User {
   passwordResetExpires   DateTime?
   courses                Course[]
   documents              Document[]
+  tasks                  Task[]
+  courseSharesReceived   CourseShare[] @relation("SharedWith")
+  courseSharesInitiated  CourseShare[] @relation("SharedBy")
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
 }
@@ -46,6 +49,7 @@ model Course {
   documents Document[]
   tasks     Task[]
   quizzes   Quiz[]
+  courseShares CourseShare[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -82,11 +86,15 @@ model Task {
   position    Int          @default(0)
   completed   Boolean      @default(false)
   courseId    String
+  userId      String
   course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
   @@index([courseId])
+  @@index([userId])
+  @@index([courseId, userId])
   @@index([courseId, position])
 }
 
@@ -136,4 +144,20 @@ model Answer {
   updatedAt   DateTime     @updatedAt
   @@index([questionId])
   @@index([questionId, position])
+}
+
+model CourseShare {
+  id                String   @id @default(uuid())
+  courseId          String
+  sharedWithUserId  String
+  sharedByUserId    String
+  course            Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  sharedWithUser    User     @relation("SharedWith", fields: [sharedWithUserId], references: [id], onDelete: Cascade)
+  sharedByUser      User     @relation("SharedBy", fields: [sharedByUserId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+
+  @@unique([courseId, sharedWithUserId])
+  @@index([courseId])
+  @@index([sharedWithUserId])
+  @@index([sharedByUserId])
 }
