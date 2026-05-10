@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { CourseController } from '../controllers/course.controller';
 import { CourseShareController } from '../controllers/course-share.controller';
 import { authenticate } from '../middleware/auth';
+import { generalLimiter } from '../middleware/rateLimiter';
 
 const courseRouter = Router();
 const courseController = new CourseController();
@@ -191,10 +192,10 @@ courseRouter.delete('/:id', authenticate, (req, res) => courseController.remove(
  *       404:
  *         description: Course not found.
  */
-courseRouter.post('/:courseId/share', authenticate, (req, res) =>
+courseRouter.post('/:courseId/share', authenticate, generalLimiter, (req, res) =>
   courseShareController.share(req, res)
 );
-courseRouter.get('/:courseId/share', authenticate, (req, res) =>
+courseRouter.get('/:courseId/share', authenticate, generalLimiter, (req, res) =>
   courseShareController.getSharedUsers(req, res)
 );
 
@@ -226,7 +227,7 @@ courseRouter.get('/:courseId/share', authenticate, (req, res) =>
  *       404:
  *         description: Course share not found.
  */
-courseRouter.delete('/:courseId/share/:userId', authenticate, (req, res) =>
+courseRouter.delete('/:courseId/share/:userId', authenticate, generalLimiter, (req, res) =>
   courseShareController.unshare(req, res)
 );
 
@@ -245,7 +246,7 @@ courseRouter.delete('/:courseId/share/:userId', authenticate, (req, res) =>
  *       401:
  *         description: Unauthorized.
  */
-courseRouter.get('/shared/mine', authenticate, (req, res) =>
+courseRouter.get('/shared/mine', authenticate, generalLimiter, (req, res) =>
   courseShareController.getSharedCourses(req, res)
 );
 
