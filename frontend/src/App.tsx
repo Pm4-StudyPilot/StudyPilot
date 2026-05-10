@@ -9,6 +9,7 @@ import SettingsPage from './pages/SettingsPage';
 import RequestPasswordResetPage from './pages/RequestPasswordResetPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import CourseDetailPage from './pages/CourseDetailPage';
+import QuizDetailPage from './pages/QuizDetailPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
@@ -51,6 +52,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <ChangePasswordPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/courses/:courseId/quizzes/:quizId"
+        element={
+          <ProtectedRoute>
+            <QuizDetailPage />
           </ProtectedRoute>
         }
       />

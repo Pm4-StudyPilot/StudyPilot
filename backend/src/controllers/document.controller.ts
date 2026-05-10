@@ -1,4 +1,5 @@
 import { logger } from '../lib/logger';
+import { getSingleQueryParam } from '../utils/query';
 import type { Request, Response } from 'express';
 import { DocumentService } from '../services/document.service';
 
@@ -60,9 +61,16 @@ class DocumentController {
   }
 
   /**
-   * Returns all uploaded documents for a course.
+   * Returns uploaded documents for a course owned by the authenticated user.
    *
-   * @param req Express request containing courseId in path params
+   * Supports optional query parameters for:
+   * - sorting
+   * - filtering by MIME type
+   * - searching by filename
+   *
+   * @param req Express request containing:
+   * - courseId in path params
+   * - optional sort, fileType, and search in query params
    * @param res Express response
    */
   async listByCourse(req: Request, res: Response): Promise<void> {
@@ -82,7 +90,15 @@ class DocumentController {
         return;
       }
 
-      const documents = await this.documentService.listByCourse(courseId, userId);
+      const sort = getSingleQueryParam(req.query.sort);
+      const fileType = getSingleQueryParam(req.query.fileType);
+      const search = getSingleQueryParam(req.query.search);
+
+      const documents = await this.documentService.listByCourse(courseId, userId, {
+        sort,
+        fileType,
+        search,
+      });
 
       res.status(200).json(documents);
     } catch (error) {

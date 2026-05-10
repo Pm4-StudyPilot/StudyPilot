@@ -3,39 +3,25 @@ import { useParams, Link } from 'react-router-dom';
 import DashboardLayout from '../components/shared/layout/DashboardLayout';
 import DocumentUploadForm from '../components/courses/DocumentUploadForm';
 import CourseDocumentsList from '../components/courses/CourseDocumentsList';
+import CourseFeed, { CourseFeedItem } from '../components/courses/CourseFeed';
 import CreateTaskModal from '../components/tasks/CreateTaskModal';
 import TaskList from '../components/tasks/TaskList';
 import ProgressRing from '../components/shared/ProgressRing';
 import { api } from '../services/api';
-import { CourseDto, TaskDto } from '../types/dto';
+import { CourseDto, QuizDto, TaskDto } from '../types/dto';
 
-/**
- * CourseDetailPage
- *
- * Displays detailed information about a single course identified by its UUID in the URL.
- *
- * Responsibilities:
- * - Extract the course UUID from the URL params
- * - Fetch the course from the backend API
- * - Render course details including name and creation date
- * - Handle loading, not-found, and error states
- *
- * Workflow:
- * 1. UUID is read from /courses/:id via useParams
- * 2. GET /courses/:id is called on mount
- * 3. Course details are displayed on success
- * 4. A back link returns the user to the home page
- */
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
+
   const [course, setCourse] = useState<CourseDto | null>(null);
+  const [tasks, setTasks] = useState<TaskDto[]>([]);
+  const [courseFeedItems, setCourseFeedItems] = useState<CourseFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tasksLoading, setTasksLoading] = useState(true);
   const [error, setError] = useState('');
+  const [tasksError, setTasksError] = useState('');
   const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [tasks, setTasks] = useState<TaskDto[]>([]);
-  const [tasksLoading, setTasksLoading] = useState(true);
-  const [tasksError, setTasksError] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -55,6 +41,13 @@ export default function CourseDetailPage() {
         setTasksError(err instanceof Error ? err.message : 'Failed to load tasks');
       })
       .finally(() => setTasksLoading(false));
+
+    api
+      .get<QuizDto[]>(`/courses/${id}/quizzes`)
+      .then((quizzes) => setCourseFeedItems(quizzes.map((quiz) => ({ type: 'quiz', data: quiz }))))
+      .catch(() => {
+        setCourseFeedItems([]);
+      });
   }, [id]);
 
   function handleUploadSuccess() {
@@ -70,15 +63,14 @@ export default function CourseDetailPage() {
     setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
   }
 
-  function handleTaskDeleted(id: string) {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+  function handleTaskDeleted(taskId: string) {
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
   }
 
   function handleTasksReordered(reordered: TaskDto[]) {
     setTasks(reordered);
   }
 
-  // Only compute the formatted date once the course has loaded
   const formattedDate = course
     ? new Date(course.createdAt).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -86,6 +78,7 @@ export default function CourseDetailPage() {
         day: 'numeric',
       })
     : '';
+
   const progress = course?.taskProgress ?? {
     totalTasks: 0,
     completedTasks: 0,
@@ -93,6 +86,7 @@ export default function CourseDetailPage() {
     inProgressTasks: 0,
     completionPercentage: 0,
   };
+
   const courseMeta = useMemo(() => {
     if (!course) return [];
 
@@ -145,9 +139,9 @@ export default function CourseDetailPage() {
                 <div className="course-detail__support-note">
                   <div className="course-detail__support-label">Backend data available</div>
                   <p className="mb-0">
-                    This page currently shows real course, task progress, task list, and document
-                    data from the backend. Instructor and course description are not available from
-                    the API yet.
+                    This view shows real course, task progress, task list, quiz, and document data
+                    from the backend. Instructor and course description are still not exposed by the
+                    API.
                   </p>
                 </div>
               </div>
@@ -229,7 +223,24 @@ export default function CourseDetailPage() {
 
                 <CourseDocumentsList courseId={course.id} refreshKey={documentsRefreshKey} />
 
-                <DocumentUploadForm courseId={course.id} onUploadSuccess={handleUploadSuccess} />
+                <div className="course-detail__upload-form">
+                  <div className="course-detail__upload-header">
+                    <h3 className="course-detail__upload-title">Upload Document</h3>
+                    <p className="course-detail__upload-subtitle mb-0">
+                      Add files to this course workspace. The document list above refreshes after a
+                      successful upload.
+                    </p>
+                  </div>
+                  <DocumentUploadForm courseId={course.id} onUploadSuccess={handleUploadSuccess} />
+                </div>
+
+                <div className="course-detail__materials">
+                  <div className="course-detail__section-title">
+                    <span className="course-detail__section-accent course-detail__section-accent--tertiary" />
+                    <h2>Course Materials</h2>
+                  </div>
+                  <CourseFeed items={courseFeedItems} />
+                </div>
               </aside>
             </div>
           </div>

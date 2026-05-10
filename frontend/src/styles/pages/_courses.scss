@@ -256,6 +256,10 @@
     &--secondary {
       background-color: var(--color-secondary);
     }
+
+    &--tertiary {
+      background-color: var(--color-tertiary);
+    }
   }
 
   &__add-button {
@@ -294,6 +298,10 @@
     margin-bottom: 1.25rem;
   }
 
+  &__materials {
+    margin-top: 1.25rem;
+  }
+
   &__documents-header {
     display: flex;
     align-items: center;
@@ -314,6 +322,19 @@
   &__documents-count {
     color: var(--color-text-secondary);
     font-size: 0.9rem;
+  }
+
+  &__documents-sort {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  &__documents-sort-label {
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
   }
 
   &__documents-list {
@@ -461,6 +482,88 @@
 
   &__upload-button {
     justify-self: start;
+  }
+}
+
+.course-feed {
+  padding: 1.25rem;
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 1.2rem;
+  box-shadow: var(--shadow-soft);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  &__title {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  &__empty {
+    padding: 1rem;
+    background-color: rgba(12, 12, 15, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+  }
+}
+
+.quiz-card {
+  display: block;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  background-color: rgba(12, 12, 15, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    border-color: rgba(255, 75, 38, 0.4);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-soft);
+  }
+
+  &__title {
+    margin-bottom: 0.35rem;
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  &__description {
+    margin-bottom: 0.5rem;
+    color: var(--color-text-secondary);
+    font-size: 0.92rem;
+  }
+
+  &__meta {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+  }
+}
+
+.dropdown-menu {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+}
+
+.dropdown-item {
+  color: var(--color-text-primary);
+
+  &:hover,
+  &:focus {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--color-text-primary);
   }
 }
 

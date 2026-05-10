@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import multer from 'multer';
-import path from 'node:path';
 import type { Request, Response, NextFunction } from 'express';
 import { authenticate } from '../middleware/auth';
 import { DocumentController } from '../controllers/document.controller';
@@ -10,41 +9,23 @@ const documentRouter = Router();
 const documentController = new DocumentController();
 
 /**
- * Returns a sanitized filename base to avoid problematic characters.
- */
-function sanitizeFileName(name: string): string {
-  return name
-    .replace(/[^a-zA-Z0-9-_]/g, '-') // replace special chars/spaces
-    .replace(/-+/g, '-') // collapse repeated dashes
-    .replace(/^-|-$/g, ''); // trim leading/trailing dashes
-}
-
-/**
- * Multer storage configuration for local document uploads.
- * Files are stored in the "uploads/" directory with a unique filename.
- */
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const extension = path.extname(file.originalname);
-    const originalBaseName = path.basename(file.originalname, extension);
-
-    // sanitize and limit filename length
-    const sanitizedBaseName = sanitizeFileName(originalBaseName).slice(0, 50) || 'document';
-
-    cb(null, `${sanitizedBaseName}-${uniqueSuffix}${extension}`);
-  },
-});
-
-/**
- * Multer upload middleware with local storage, file size limit,
- * and optional file type validation.
+ * Multer upload middleware configuration.
+ *
+ * Storage strategy:
+ * - Uses memoryStorage so uploaded files are kept in memory as Buffer objects
+ * - This is required because files are forwarded to MinIO in the service layer
+ *   instead of being stored on the local filesystem
+ *
+ * Validation:
+ * - Maximum file size: 10 MB
+ * - Allowed file formats:
+ *   - PDF
+ *   - Word (.doc, .docx)
+ *   - PowerPoint (.ppt, .pptx)
+ *   - Plain text (.txt)
  */
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 10 * 1024 * 1024, // 10 MB
   },
@@ -53,6 +34,8 @@ const upload = multer({
       'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       'text/plain',
     ];
 
@@ -66,8 +49,19 @@ const upload = multer({
 });
 
 /**
- * Handles multer-specific upload errors and forwards valid requests
- * to the document controller.
+ * Wraps the multer upload middleware and translates upload-related errors
+ * into consistent HTTP responses.
+ *
+ * Handled cases:
+ * - file too large
+ * - unsupported file type
+ * - malformed upload request
+ *
+ * If no upload error occurs, the request is forwarded to the controller.
+ *
+ * @param req Express request
+ * @param res Express response
+ * @param next Express next middleware callback
  */
 function handleDocumentUpload(req: Request, res: Response, next: NextFunction): void {
   upload.single('file')(req, res, (error) => {
@@ -99,7 +93,7 @@ function handleDocumentUpload(req: Request, res: Response, next: NextFunction): 
  *     tags:
  *       - Documents
  *     summary: Upload a document
- *     description: Upload a document and assign it to a course.
+ *     description: Uploads a document for a course. The file is validated by multer, stored in MinIO object storage, and its metadata is saved in the database.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -114,13 +108,18 @@ function handleDocumentUpload(req: Request, res: Response, next: NextFunction): 
  *                 format: binary
  *               courseId:
  *                 type: string
+ *             required:
+ *               - file
+ *               - courseId
  *     responses:
  *       201:
  *         description: Document uploaded successfully.
  *       400:
- *         description: Missing file, invalid file type or oversized file.
+ *         description: Missing file, invalid file type, malformed request, or oversized file.
  *       401:
  *         description: Unauthorized.
+ *       404:
+ *         description: Course not found.
  */
 documentRouter.post('/', sensitiveLimiter, authenticate, handleDocumentUpload, (req, res) =>
   documentController.upload(req, res)
@@ -133,7 +132,7 @@ documentRouter.post('/', sensitiveLimiter, authenticate, handleDocumentUpload, (
  *     tags:
  *       - Documents
  *     summary: List documents for a course
- *     description: Returns all uploaded documents for a course owned by the authenticated user.
+ *     description: Returns all uploaded document metadata for a course owned by the authenticated user. Results are sorted by newest first.
  *     security:
  *       - bearerAuth: []
  *     parameters:

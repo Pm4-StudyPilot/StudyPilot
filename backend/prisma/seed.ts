@@ -329,6 +329,29 @@ async function main() {
             },
           ],
         },
+        {
+          title: 'Quiz 2: Writing Techniques',
+          description: 'Test your knowledge of literary devices and writing styles.',
+          isOrderRandom: true,
+          questions: [
+            {
+              title: 'What is "foreshadowing" in literature?',
+              description: 'Consider how authors hint at future events.',
+              type: 'SINGLE_CHOICE' as const,
+              position: 0,
+              answers: [
+                { content: 'A technique for developing characters', isCorrect: false, position: 0 },
+                { content: 'A method of structuring a plot', isCorrect: false, position: 1 },
+                {
+                  content: 'A literary device that hints at future events',
+                  isCorrect: true,
+                  position: 2,
+                },
+                { content: 'A style of descriptive writing', isCorrect: false, position: 3 },
+              ],
+            },
+          ],
+        },
       ],
     },
   ];
