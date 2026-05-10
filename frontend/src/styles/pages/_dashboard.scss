@@ -326,6 +326,11 @@
     color: var(--color-text-secondary);
     font-size: 0.98rem;
   }
+
+  &__title-link {
+    color: var(--color-text-primary);
+    text-decoration: none;
+  }
 }
 
 .dashboard-pill {
