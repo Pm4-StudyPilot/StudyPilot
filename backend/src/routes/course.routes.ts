@@ -52,8 +52,10 @@ const courseShareController = new CourseShareController();
  *       401:
  *         description: Unauthorized.
  */
-courseRouter.get('/', authenticate, (req, res) => courseController.list(req, res));
-courseRouter.post('/', authenticate, (req, res) => courseController.create(req, res));
+courseRouter.get('/', authenticate, generalLimiter, (req, res) => courseController.list(req, res));
+courseRouter.post('/', authenticate, generalLimiter, (req, res) =>
+  courseController.create(req, res)
+);
 
 /**
  * @openapi
@@ -132,9 +134,15 @@ courseRouter.post('/', authenticate, (req, res) => courseController.create(req, 
  *       404:
  *         description: Course not found.
  */
-courseRouter.get('/:id', authenticate, (req, res) => courseController.getById(req, res));
-courseRouter.patch('/:id', authenticate, (req, res) => courseController.update(req, res));
-courseRouter.delete('/:id', authenticate, (req, res) => courseController.remove(req, res));
+courseRouter.get('/:id', authenticate, generalLimiter, (req, res) =>
+  courseController.getById(req, res)
+);
+courseRouter.patch('/:id', authenticate, generalLimiter, (req, res) =>
+  courseController.update(req, res)
+);
+courseRouter.delete('/:id', authenticate, generalLimiter, (req, res) =>
+  courseController.remove(req, res)
+);
 
 /**
  * @openapi
