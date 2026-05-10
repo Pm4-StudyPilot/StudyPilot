@@ -5,16 +5,22 @@ import type { PrismaClient } from '../generated/prisma/client';
 export class TaskService {
   constructor(private readonly db: PrismaClient = prisma) {}
 
-  async create(
-    data: CreateTaskRequest,
-    courseId: string,
-    ownerId: string
-  ): Promise<TaskDto | null> {
-    const course = await this.db.course.findFirst({ where: { id: courseId, ownerId } });
+  async create(data: CreateTaskRequest, courseId: string, userId: string): Promise<TaskDto | null> {
+    // Verify user has access to the course (owner or shared)
+    const course = await this.db.course.findUnique({ where: { id: courseId } });
     if (!course) return null;
 
+    // Check if user is owner or has shared access
+    const hasAccess =
+      course.ownerId === userId ||
+      (await this.db.courseShare.findFirst({
+        where: { courseId, sharedWithUserId: userId },
+      })) !== null;
+
+    if (!hasAccess) return null;
+
     const maxResult = await this.db.task.aggregate({
-      where: { courseId },
+      where: { courseId, userId },
       _max: { position: true },
     });
     const nextPosition = (maxResult._max.position ?? -1) + 1;
@@ -28,35 +34,36 @@ export class TaskService {
         status: 'OPEN',
         position: nextPosition,
         courseId,
+        userId,
       },
     }) as Promise<TaskDto>;
   }
 
-  async listByCourse(courseId: string, ownerId: string): Promise<TaskDto[]> {
+  async listByCourse(courseId: string, userId: string): Promise<TaskDto[]> {
     return this.db.task.findMany({
       where: {
         courseId,
-        course: { ownerId },
+        userId,
       },
       orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
     }) as Promise<TaskDto[]>;
   }
 
-  async findByIdForOwner(id: string, ownerId: string): Promise<TaskDto | null> {
+  async findByIdForUser(id: string, userId: string): Promise<TaskDto | null> {
     return this.db.task.findFirst({
       where: {
         id,
-        course: { ownerId },
+        userId,
       },
     }) as Promise<TaskDto | null>;
   }
 
-  async updateForOwner(
+  async updateForUser(
     id: string,
-    ownerId: string,
+    userId: string,
     data: UpdateTaskRequest
   ): Promise<TaskDto | null> {
-    const existing = await this.findByIdForOwner(id, ownerId);
+    const existing = await this.findByIdForUser(id, userId);
     if (!existing) return null;
 
     const updateData: Record<string, unknown> = {};
@@ -72,8 +79,8 @@ export class TaskService {
     }) as Promise<TaskDto>;
   }
 
-  async setCompleted(id: string, ownerId: string, completed: boolean): Promise<TaskDto | null> {
-    const existing = await this.findByIdForOwner(id, ownerId);
+  async setCompleted(id: string, userId: string, completed: boolean): Promise<TaskDto | null> {
+    const existing = await this.findByIdForUser(id, userId);
     if (!existing) return null;
 
     return this.db.task.update({
@@ -82,12 +89,21 @@ export class TaskService {
     }) as Promise<TaskDto>;
   }
 
-  async reorderTasks(courseId: string, ownerId: string, taskIds: string[]): Promise<boolean> {
-    const course = await this.db.course.findFirst({ where: { id: courseId, ownerId } });
+  async reorderTasks(courseId: string, userId: string, taskIds: string[]): Promise<boolean> {
+    // Verify user has access to course
+    const course = await this.db.course.findUnique({ where: { id: courseId } });
     if (!course) return false;
 
+    const hasAccess =
+      course.ownerId === userId ||
+      (await this.db.courseShare.findFirst({
+        where: { courseId, sharedWithUserId: userId },
+      })) !== null;
+
+    if (!hasAccess) return false;
+
     const existingTasks = await this.db.task.findMany({
-      where: { courseId },
+      where: { courseId, userId },
       select: { id: true },
     });
 
@@ -103,13 +119,30 @@ export class TaskService {
     return true;
   }
 
-  async deleteForOwner(id: string, ownerId: string): Promise<boolean> {
+  async deleteForUser(id: string, userId: string): Promise<boolean> {
     const result = await this.db.task.deleteMany({
       where: {
         id,
-        course: { ownerId },
+        userId,
       },
     });
     return result.count > 0;
+  }
+
+  // Backward compatibility aliases
+  async findByIdForOwner(id: string, userId: string): Promise<TaskDto | null> {
+    return this.findByIdForUser(id, userId);
+  }
+
+  async updateForOwner(
+    id: string,
+    userId: string,
+    data: UpdateTaskRequest
+  ): Promise<TaskDto | null> {
+    return this.updateForUser(id, userId, data);
+  }
+
+  async deleteForOwner(id: string, userId: string): Promise<boolean> {
+    return this.deleteForUser(id, userId);
   }
 }
