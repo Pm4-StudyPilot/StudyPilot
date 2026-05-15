@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import DashboardLayout from '../components/shared/layout/DashboardLayout';
+import SearchBar from '../components/shared/SearchBar';
 import DocumentUploadForm from '../components/courses/DocumentUploadForm';
 import CourseDocumentsList from '../components/courses/CourseDocumentsList';
 import CourseFeed, { CourseFeedItem } from '../components/courses/CourseFeed';
