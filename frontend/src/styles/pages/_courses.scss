@@ -493,43 +493,6 @@
   }
 }
 
-.quiz-card {
-  display: block;
-  padding: 1rem;
-  margin-bottom: 0.75rem;
-  background-color: var(--color-item);
-  border: 1px solid var(--color-divider);
-  border-radius: 1rem;
-  transition:
-    border-color 0.15s ease,
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
-
-  &:hover {
-    border-color: var(--color-primary);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-soft);
-  }
-
-  &__title {
-    margin-bottom: 0.35rem;
-    color: var(--color-text-primary);
-    font-size: 1rem;
-    font-weight: 700;
-  }
-
-  &__description {
-    margin-bottom: 0.5rem;
-    color: var(--color-text-secondary);
-    font-size: 0.92rem;
-  }
-
-  &__meta {
-    color: var(--color-text-muted);
-    font-size: 0.85rem;
-  }
-}
-
 .dropdown-menu {
   background-color: var(--color-card-bg);
   border: 1px solid var(--color-border);
