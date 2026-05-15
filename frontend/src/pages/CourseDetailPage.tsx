@@ -109,17 +109,17 @@ export default function CourseDetailPage() {
         </Link>
 
         {loading && (
-          <div className="dashboard-state dashboard-state--loading">
+          <div className="dashboard-state panel dashboard-state--loading">
             <div className="spinner-border text-secondary" role="status">
               <span className="visually-hidden">Loading...</span>
             </div>
           </div>
         )}
 
-        {error && <div className="dashboard-state dashboard-state--error">{error}</div>}
+        {error && <div className="dashboard-state panel dashboard-state--error">{error}</div>}
 
         {!loading && !error && !course && (
-          <div className="dashboard-state">
+          <div className="dashboard-state panel">
             <h2>Course not found</h2>
             <p>The backend did not return a course for this route.</p>
           </div>
@@ -181,7 +181,7 @@ export default function CourseDetailPage() {
                       <h2>Tasks</h2>
                     </div>
                     <button
-                      className="course-detail__add-button btn btn-primary"
+                      className="course-detail__add-button btn btn-primary bold"
                       onClick={() => setCreateModalOpen(true)}
                       aria-label="Add task"
                     >
@@ -190,7 +190,7 @@ export default function CourseDetailPage() {
                   </div>
 
                   {tasksLoading && (
-                    <div className="dashboard-state dashboard-state--loading course-detail__section-card p-4">
+                    <div className="dashboard-state panel dashboard-state--loading course-detail__section-card p-4">
                       <div className="spinner-border text-secondary" role="status">
                         <span className="visually-hidden">Loading tasks...</span>
                       </div>
@@ -198,7 +198,7 @@ export default function CourseDetailPage() {
                   )}
 
                   {!tasksLoading && tasksError && (
-                    <div className="dashboard-state dashboard-state--error course-detail__section-card">
+                    <div className="dashboard-state panel dashboard-state--error course-detail__section-card">
                       {tasksError}
                     </div>
                   )}

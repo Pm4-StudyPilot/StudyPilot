@@ -585,7 +585,7 @@ export default function HomePage() {
           )}
 
           {loading && (
-            <div className="dashboard-state dashboard-state--loading">
+            <div className="dashboard-state panel dashboard-state--loading">
               <div className="spinner-border" role="status">
                 <span className="visually-hidden">Loading dashboard...</span>
               </div>
@@ -593,7 +593,7 @@ export default function HomePage() {
           )}
 
           {!loading && error && (
-            <div className="dashboard-state dashboard-state--error">{error}</div>
+            <div className="dashboard-state panel dashboard-state--error">{error}</div>
           )}
 
           {!loading && !error && featuredCourse && (
@@ -609,7 +609,7 @@ export default function HomePage() {
           )}
 
           {!loading && !error && dashboardCourses.length === 0 && (
-            <div className="dashboard-state">
+            <div className="dashboard-state panel">
               <h2>No courses yet</h2>
               <p>
                 The backend returned no courses for this user, so the dashboard has nothing to
