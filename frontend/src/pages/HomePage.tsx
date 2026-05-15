@@ -284,7 +284,7 @@ function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
       : 'No quizzes available';
 
   return (
-    <article className="dashboard-featured-card">
+    <article className="dashboard-featured-card card">
       <div className="dashboard-featured-card__content">
         <div className="dashboard-featured-card__eyebrow">
           <span className="dashboard-pill">
@@ -407,7 +407,7 @@ function DashboardRail({
 
   return (
     <aside className="dashboard-rail">
-      <section className="dashboard-rail__panel">
+      <section className="dashboard-rail__panel card dark">
         <div className="dashboard-rail__header">
           <h2>
             {currentDate.toLocaleDateString('en-US', {
@@ -448,7 +448,7 @@ function DashboardRail({
         </div>
       </section>
 
-      <section className="dashboard-rail__panel">
+      <section className="dashboard-rail__panel card dark">
         <h2 className="dashboard-rail__section-title">Upcoming Deadlines</h2>
         {deadlines.length > 0 ? (
           <div className="dashboard-deadlines">
@@ -479,11 +479,11 @@ function DashboardRail({
       </section>
 
       <div className="dashboard-stats">
-        <div className="dashboard-stat-card">
+        <div className="dashboard-stat-card card light">
           <strong>{dueThisWeek}</strong>
           <span>Due this week</span>
         </div>
-        <div className="dashboard-stat-card dashboard-stat-card--highlight">
+        <div className="dashboard-stat-card card light dashboard-stat-card--highlight">
           <strong>{averageProgress}%</strong>
           <span>Avg progress</span>
         </div>

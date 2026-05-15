@@ -173,47 +173,56 @@ export default function CourseDetailPage() {
             </div>
 
             <div className="course-detail__body">
-              <section className="course-detail__tasks-column">
-                <div className="course-detail__section-header">
-                  <div className="course-detail__section-title">
-                    <span className="course-detail__section-accent course-detail__section-accent--primary" />
-                    <h2>Tasks</h2>
-                  </div>
-                  <button
-                    className="course-detail__add-button btn btn-primary"
-                    onClick={() => setCreateModalOpen(true)}
-                    aria-label="Add task"
-                  >
-                    <i className="fa-solid fa-plus" />
-                  </button>
-                </div>
-
-                {tasksLoading && (
-                  <div className="dashboard-state dashboard-state--loading course-detail__section-card">
-                    <div className="spinner-border text-secondary" role="status">
-                      <span className="visually-hidden">Loading tasks...</span>
+              <div className="course-detail__body-column">
+                <section className="course-detail__tasks-column">
+                  <div className="course-detail__section-header">
+                    <div className="course-detail__section-title">
+                      <span className="course-detail__section-accent course-detail__section-accent--primary" />
+                      <h2>Tasks</h2>
                     </div>
+                    <button
+                      className="course-detail__add-button btn btn-primary"
+                      onClick={() => setCreateModalOpen(true)}
+                      aria-label="Add task"
+                    >
+                      <i className="fa-solid fa-plus" />
+                    </button>
                   </div>
-                )}
 
-                {!tasksLoading && tasksError && (
-                  <div className="dashboard-state dashboard-state--error course-detail__section-card">
-                    {tasksError}
-                  </div>
-                )}
+                  {tasksLoading && (
+                    <div className="dashboard-state dashboard-state--loading course-detail__section-card p-4">
+                      <div className="spinner-border text-secondary" role="status">
+                        <span className="visually-hidden">Loading tasks...</span>
+                      </div>
+                    </div>
+                  )}
 
-                {!tasksLoading && !tasksError && (
-                  <div className="course-detail__section-card">
-                    <TaskList
-                      courseId={id!}
-                      tasks={tasks}
-                      onTaskUpdated={handleTaskUpdated}
-                      onTaskDeleted={handleTaskDeleted}
-                      onTasksReordered={handleTasksReordered}
-                    />
+                  {!tasksLoading && tasksError && (
+                    <div className="dashboard-state dashboard-state--error course-detail__section-card">
+                      {tasksError}
+                    </div>
+                  )}
+
+                  {!tasksLoading && !tasksError && (
+                    <div className="panel course-detail__section-card p-4">
+                      <TaskList
+                        courseId={id!}
+                        tasks={tasks}
+                        onTaskUpdated={handleTaskUpdated}
+                        onTaskDeleted={handleTaskDeleted}
+                        onTasksReordered={handleTasksReordered}
+                      />
+                    </div>
+                  )}
+                </section>
+                <div className="course-detail__materials">
+                  <div className="course-detail__section-title">
+                    <span className="course-detail__section-accent course-detail__section-accent--tertiary" />
+                    <h2>Course Materials</h2>
                   </div>
-                )}
-              </section>
+                  <CourseFeed items={courseFeedItems} />
+                </div>
+              </div>
 
               <aside className="course-detail__documents-column">
                 <div className="course-detail__section-title">
@@ -223,7 +232,7 @@ export default function CourseDetailPage() {
 
                 <CourseDocumentsList courseId={course.id} refreshKey={documentsRefreshKey} />
 
-                <div className="course-detail__upload-form">
+                <div className="panel course-detail__upload-form p-4">
                   <div className="course-detail__upload-header">
                     <h3 className="course-detail__upload-title">Upload Document</h3>
                     <p className="course-detail__upload-subtitle mb-0">
@@ -232,14 +241,6 @@ export default function CourseDetailPage() {
                     </p>
                   </div>
                   <DocumentUploadForm courseId={course.id} onUploadSuccess={handleUploadSuccess} />
-                </div>
-
-                <div className="course-detail__materials">
-                  <div className="course-detail__section-title">
-                    <span className="course-detail__section-accent course-detail__section-accent--tertiary" />
-                    <h2>Course Materials</h2>
-                  </div>
-                  <CourseFeed items={courseFeedItems} />
                 </div>
               </aside>
             </div>

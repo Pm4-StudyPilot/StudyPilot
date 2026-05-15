@@ -9,7 +9,7 @@ type DashboardLayoutProps = {
 };
 
 function navItemClass(isActive: boolean) {
-  return `dashboard-nav__item${isActive ? ' dashboard-nav__item--active' : ''}`;
+  return `panel muted hover dashboard-nav__item${isActive ? ' active' : ''}`;
 }
 
 export default function DashboardLayout({ activeNav, children }: DashboardLayoutProps) {
@@ -54,7 +54,7 @@ export default function DashboardLayout({ activeNav, children }: DashboardLayout
         <div className="dashboard-sidebar__footer">
           <button
             type="button"
-            className="dashboard-nav__item dashboard-nav__item--logout"
+            className="panel muted hover dashboard-nav__item dashboard-nav__item--logout"
             onClick={handleLogout}
           >
             <i className="fa-solid fa-arrow-right-from-bracket" />
@@ -66,7 +66,7 @@ export default function DashboardLayout({ activeNav, children }: DashboardLayout
 
       <main className="dashboard-main">
         <header className="dashboard-topbar">
-          <label className="dashboard-search" htmlFor="dashboard-search">
+          <label className="panel muted active dashboard-search" htmlFor="dashboard-search">
             <i className="fa-solid fa-magnifying-glass" />
             <input
               id="dashboard-search"

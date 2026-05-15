@@ -84,7 +84,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
 
   return (
     <>
-      <div className="course-card rounded mb-2">
+      <div className="course-card panel mb-2">
         <div className="d-flex align-items-center justify-content-between p-3">
           <div className="d-flex align-items-center gap-3">
             <ProgressRing

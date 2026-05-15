@@ -17,7 +17,7 @@
 
   &__eyebrow {
     margin-bottom: 0.45rem;
-    color: #ff7c5e;
+    color: var(--color-primary);
     font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.14em;
@@ -38,10 +38,6 @@
 }
 
 .settings-card {
-  border: 1px solid var(--color-border);
-  background: linear-gradient(180deg, rgba(35, 35, 41, 0.98), rgba(32, 32, 37, 0.94));
-  box-shadow: var(--shadow-soft);
-
   &__title {
     margin-bottom: 0.35rem;
     font-size: 1.3rem;
@@ -60,24 +56,16 @@
   justify-content: center;
   min-height: 100vh;
   padding: 2rem 1rem;
-  background:
-    radial-gradient(circle at top left, rgba(255, 75, 38, 0.08), transparent 28%),
-    linear-gradient(180deg, #0d0d0f 0%, #0b0b0d 100%);
+  background: var(--background-moody);
 }
 
 .auth-card {
-  &--themed {
-    border: 1px solid var(--color-border);
-    background: linear-gradient(180deg, rgba(35, 35, 41, 0.98), rgba(32, 32, 37, 0.94));
-    box-shadow: var(--shadow-soft);
-  }
-
   &__brand-wrap {
     margin-bottom: 0.25rem;
   }
 
   &__brand {
-    color: #ff7c5e;
+    color: var(--color-primary);
     font-size: 2rem;
     font-weight: 800;
     letter-spacing: -0.03em;
@@ -85,7 +73,7 @@
 
   &__eyebrow {
     margin-bottom: 0.45rem;
-    color: #ff7c5e;
+    color: var(--color-primary);
     font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.16em;
@@ -128,20 +116,20 @@
   }
 
   &--valid {
-    color: #aee7b3;
+    color: var(--color-success);
 
     .auth-check__icon {
-      background-color: rgba(76, 175, 80, 0.2);
-      color: #b7f2bd;
+      background-color: var(--background-success);
+      color: var(--color-success);
     }
   }
 
   &--invalid {
-    color: #ff9c89;
+    color: var(--color-error);
 
     .auth-check__icon {
-      background-color: rgba(255, 75, 38, 0.18);
-      color: #ffb3a3;
+      background-color: var(--color-primary-accent);
+      color: var(--color-error);
     }
   }
 }

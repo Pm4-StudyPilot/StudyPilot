@@ -186,7 +186,7 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
   const hasError = status === 'error';
 
   return (
-    <div className="course-detail__documents">
+    <div className="panel course-detail__documents p-4">
       <div className="course-detail__documents-header">
         <p className="course-detail__documents-eyebrow">Backend documents</p>
         <p className="course-detail__documents-count mb-0">
@@ -245,7 +245,7 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
       {hasError && <div className="alert alert-danger mb-0">{error}</div>}
 
       {!isLoading && !hasError && documents.length === 0 && (
-        <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
+        <div className="panel  course-detail__placeholder p-4 text-secondary text-center">
           No documents uploaded yet.
         </div>
       )}
