@@ -330,6 +330,10 @@
   &__title-link {
     color: var(--color-text-primary);
     text-decoration: none;
+
+    &:hover {
+      color: white;
+    }
   }
 }
 
