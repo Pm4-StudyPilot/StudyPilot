@@ -4,6 +4,13 @@ import { CourseDto } from '../../types/dto';
 import CourseCard from './CourseCard';
 import CreateCourseModal from './CreateCourseModal';
 
+type CourseListProps = {
+  /**
+   * Current search term used to filter courses by name.
+   */
+  searchTerm?: string;
+};
+
 /**
  * CourseList
  *
@@ -12,18 +19,20 @@ import CreateCourseModal from './CreateCourseModal';
  * Responsibilities:
  * - Fetch the list of courses from the backend on mount
  * - Render a CourseCard for each course
- * - Show loading, error, and empty states
+ * - Filter courses by the provided search term
+ * - Show loading, error, empty, and no-search-results states
  * - Open the CreateCourseModal and prepend the new course to the list on success
  * - Update the course in the list when it is edited
  *
  * Workflow:
  * 1. GET /courses is called on mount
- * 2. Courses are rendered as a list of CourseCard components
- * 3. The "+" button opens the CreateCourseModal
- * 4. On successful creation the new course is prepended without refetching
- * 5. On successful edit the matching course is replaced in the list without refetching
+ * 2. Courses are filtered by the search term if provided
+ * 3. Courses are rendered as a list of CourseCard components
+ * 4. The "+" button opens the CreateCourseModal
+ * 5. On successful creation the new course is prepended without refetching
+ * 6. On successful edit the matching course is replaced in the list without refetching
  */
-export default function CourseList() {
+export default function CourseList({ searchTerm = '' }: CourseListProps) {
   const [courses, setCourses] = useState<CourseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -67,6 +76,12 @@ export default function CourseList() {
     setCourses((prev) => prev.filter((c) => c.id !== id));
   }
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
+  const filteredCourses = normalizedSearch
+    ? courses.filter((course) => course.name.toLowerCase().includes(normalizedSearch))
+    : courses;
+
   return (
     <>
       <div className="course-panel rounded p-4">
@@ -83,7 +98,9 @@ export default function CourseList() {
         <p className="course-list__subtitle text-secondary mb-4">
           {loading
             ? '\u00a0'
-            : `${courses.length} course${courses.length !== 1 ? 's' : ''} enrolled`}
+            : `${filteredCourses.length} of ${courses.length} course${
+                courses.length !== 1 ? 's' : ''
+              } shown`}
         </p>
 
         {loading && (
@@ -100,9 +117,15 @@ export default function CourseList() {
           <p className="course-list__empty text-secondary text-center py-4 mb-0">No courses yet.</p>
         )}
 
+        {!loading && !error && courses.length > 0 && filteredCourses.length === 0 && (
+          <p className="course-list__empty text-secondary text-center py-4 mb-0">
+            No courses match your search.
+          </p>
+        )}
+
         {!loading &&
           !error &&
-          courses.map((course) => (
+          filteredCourses.map((course) => (
             <CourseCard
               key={course.id}
               course={course}
