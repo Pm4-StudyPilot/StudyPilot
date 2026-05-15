@@ -216,6 +216,11 @@
     display: grid;
     grid-template-columns: minmax(0, 1.18fr) 420px;
     gap: 1.75rem;
+    &-column {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
   }
 
   &__tasks-column,
@@ -234,7 +239,7 @@
   &__section-title {
     display: flex;
     align-items: center;
-    gap: 0.9rem;
+    gap: 1rem;
     margin-bottom: 1rem;
 
     h2 {
@@ -512,43 +517,6 @@
     background-color: rgba(12, 12, 15, 0.58);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 1rem;
-  }
-}
-
-.quiz-card {
-  display: block;
-  padding: 1rem;
-  margin-bottom: 0.75rem;
-  background-color: rgba(12, 12, 15, 0.58);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 1rem;
-  transition:
-    border-color 0.15s ease,
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
-
-  &:hover {
-    border-color: rgba(255, 75, 38, 0.4);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-soft);
-  }
-
-  &__title {
-    margin-bottom: 0.35rem;
-    color: var(--color-text-primary);
-    font-size: 1rem;
-    font-weight: 700;
-  }
-
-  &__description {
-    margin-bottom: 0.5rem;
-    color: var(--color-text-secondary);
-    font-size: 0.92rem;
-  }
-
-  &__meta {
-    color: var(--color-text-muted);
-    font-size: 0.85rem;
   }
 }
 

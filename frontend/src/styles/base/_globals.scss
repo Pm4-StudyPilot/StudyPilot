@@ -92,3 +92,12 @@ hr {
 .btn-close {
   filter: invert(1) grayscale(1);
 }
+/*
+.btn-primary {
+  @include button-variant(#422928, #422928, #ff886b, lighten(#422928, 5%), lighten(#422928, 5%), #ff886b);
+}
+.btn-outline-secondary {
+  @include button-variant(rgba(0,0,0,0), #8b8691, #8b8691, darken(#8b8691, 40%), #8b8691, #8b8691);
+}
+
+*/
