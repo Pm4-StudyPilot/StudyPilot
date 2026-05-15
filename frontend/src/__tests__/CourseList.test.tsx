@@ -26,6 +26,7 @@ vi.mock('../services/api', () => ({
  * - enrolled count reflects the number of courses returned
  * - empty state is shown when no courses are returned
  * - error message is shown when the request fails
+ * - courses are filtered by the provided search term
  */
 describe('CourseList', () => {
   beforeEach(() => {
@@ -94,7 +95,7 @@ describe('CourseList', () => {
     await waitFor(() => {
       expect(screen.getByText('Machine Learning')).toBeInTheDocument();
       expect(screen.getByText('Algorithms & Data Structures')).toBeInTheDocument();
-      expect(screen.getByText('2 courses enrolled')).toBeInTheDocument();
+      expect(screen.getByText('2 of 2 courses shown')).toBeInTheDocument();
     });
   });
 
@@ -119,7 +120,7 @@ describe('CourseList', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/no courses yet/i)).toBeInTheDocument();
-      expect(screen.getByText('0 courses enrolled')).toBeInTheDocument();
+      expect(screen.getByText('0 of 0 courses shown')).toBeInTheDocument();
     });
   });
 
@@ -144,5 +145,48 @@ describe('CourseList', () => {
     await waitFor(() => {
       expect(screen.getByText(/failed to load courses/i)).toBeInTheDocument();
     });
+  });
+
+  /**
+   * Test case: Course search
+   *
+   * Scenario:
+   * A search term is provided to the CourseList component.
+   *
+   * Expected behavior:
+   * - Only courses matching the search term are rendered
+   * - Non-matching courses are not rendered
+   * - The shown count reflects the filtered result count
+   */
+  it('filters courses by the provided search term', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([
+      {
+        id: 'c1',
+        name: 'Machine Learning',
+        ownerId: 'u1',
+        createdAt: '2026-03-26T12:00:00.000Z',
+        updatedAt: '2026-03-26T12:00:00.000Z',
+      },
+      {
+        id: 'c2',
+        name: 'Algorithms & Data Structures',
+        ownerId: 'u1',
+        createdAt: '2026-03-25T12:00:00.000Z',
+        updatedAt: '2026-03-25T12:00:00.000Z',
+      },
+    ]);
+
+    render(
+      <MemoryRouter>
+        <CourseList searchTerm="machine" />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Machine Learning')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Algorithms & Data Structures')).not.toBeInTheDocument();
+    expect(screen.getByText('1 of 2 courses shown')).toBeInTheDocument();
   });
 });

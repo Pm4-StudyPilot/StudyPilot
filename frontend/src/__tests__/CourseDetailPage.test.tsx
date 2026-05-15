@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import CourseDetailPage from '../pages/CourseDetailPage';
@@ -47,6 +47,7 @@ function renderWithRoute(id: string) {
  * - course details are rendered after successful fetch
  * - error message is shown when the request fails
  * - not found message is shown when course is null
+ * - tasks can be filtered by title in the tasks tab
  */
 describe('CourseDetailPage', () => {
   beforeEach(() => {
@@ -116,5 +117,73 @@ describe('CourseDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/failed to load course/i)).toBeInTheDocument();
     });
+  });
+
+  /**
+   * Test case: Task search
+   *
+   * Scenario:
+   * The user opens the Tasks tab and enters a search term.
+   *
+   * Expected behavior:
+   * - Only tasks matching the search term are rendered
+   * - Non-matching tasks are not rendered
+   */
+  it('filters tasks by title in the tasks tab', async () => {
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({
+        id: 'c1',
+        name: 'Machine Learning Fundamentals',
+        ownerId: 'u1',
+        createdAt: '2026-03-26T12:00:00.000Z',
+        updatedAt: '2026-03-26T12:00:00.000Z',
+      })
+      .mockResolvedValueOnce([
+        {
+          id: 't1',
+          title: 'Read chapter 1',
+          description: null,
+          status: 'OPEN',
+          priority: 'MEDIUM',
+          dueDate: null,
+          position: 0,
+          courseId: 'c1',
+          createdAt: '2026-03-26T12:00:00.000Z',
+          updatedAt: '2026-03-26T12:00:00.000Z',
+        },
+        {
+          id: 't2',
+          title: 'Submit assignment',
+          description: null,
+          status: 'OPEN',
+          priority: 'HIGH',
+          dueDate: null,
+          position: 1,
+          courseId: 'c1',
+          createdAt: '2026-03-26T12:00:00.000Z',
+          updatedAt: '2026-03-26T12:00:00.000Z',
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    renderWithRoute('c1');
+
+    await waitFor(() => {
+      expect(screen.getByText('Machine Learning Fundamentals')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /tasks/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Read chapter 1')).toBeInTheDocument();
+      expect(screen.getByText('Submit assignment')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('Search tasks...'), {
+      target: { value: 'submit' },
+    });
+
+    expect(screen.queryByText('Read chapter 1')).not.toBeInTheDocument();
+    expect(screen.getByText('Submit assignment')).toBeInTheDocument();
   });
 });
