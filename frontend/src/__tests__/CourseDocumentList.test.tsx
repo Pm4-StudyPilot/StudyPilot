@@ -75,7 +75,7 @@ describe('CourseDocumentsList', () => {
 
     render(<CourseDocumentsList courseId="course-1" refreshKey={0} />);
 
-    expect(screen.getByText('Loading documents...')).toBeInTheDocument();
+    expect(screen.getAllByText('Loading documents...')).toHaveLength(2);
   });
 
   /**
