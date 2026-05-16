@@ -14,6 +14,13 @@ type DashboardAssignment = {
   status: 'urgent' | 'done';
 };
 
+type DashboardSearchMatch = {
+  id: string;
+  title: string;
+  meta: string;
+  type: 'task' | 'document' | 'quiz';
+};
+
 type DocumentDto = {
   id: string;
   filename: string;
@@ -189,6 +196,54 @@ function buildCourseSupportMeta(data: DashboardCourseData) {
 }
 
 /**
+ * Builds visible search result items for the featured dashboard card.
+ *
+ * The dashboard search can match tasks, documents, and quizzes.
+ * These matches are shown instead of the normal assignment preview
+ * while a search term is active.
+ */
+function getDashboardMatches(
+  data: DashboardCourseData,
+  searchTerm: string
+): DashboardSearchMatch[] {
+  const normalized = searchTerm.trim().toLowerCase();
+  if (!normalized) return [];
+
+  const taskMatches = data.tasks
+    .filter((task) => task.title.toLowerCase().includes(normalized))
+    .map((task) => ({
+      id: task.id,
+      title: task.title,
+      meta: 'Task',
+      type: 'task' as const,
+    }));
+
+  const documentMatches = data.documents
+    .filter(
+      (document) =>
+        document.filename.toLowerCase().includes(normalized) ||
+        document.fileType?.toLowerCase().includes(normalized)
+    )
+    .map((document) => ({
+      id: document.id,
+      title: document.filename,
+      meta: 'Document',
+      type: 'document' as const,
+    }));
+
+  const quizMatches = data.quizzes
+    .filter((quiz) => quiz.title.toLowerCase().includes(normalized))
+    .map((quiz) => ({
+      id: quiz.id,
+      title: quiz.title,
+      meta: 'Quiz',
+      type: 'quiz' as const,
+    }));
+
+  return [...taskMatches, ...documentMatches, ...quizMatches].slice(0, 2);
+}
+
+/**
  * Builds upcoming deadline entries from all dashboard course tasks.
  */
 function buildDeadlineItems(
@@ -264,7 +319,7 @@ async function loadDashboardCourseData(courses: CourseDto[]) {
     courses.map(async (course) => {
       const [tasksResult, documentsResult, quizzesResult] = await Promise.allSettled([
         api.get<TaskDto[]>(`/courses/${course.id}/tasks`),
-        api.get<DocumentDto[]>(`/documents/course/${course.id}`),
+        api.get<DocumentDto[]>(`/documents/course/${course.id}?sort=createdAt:desc`),
         api.get<QuizDto[]>(`/courses/${course.id}/quizzes`),
       ]);
 
@@ -301,7 +356,13 @@ async function loadDashboardCourseData(courses: CourseDto[]) {
 /**
  * Renders the large highlighted course card on the dashboard.
  */
-function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
+function FeaturedCourseCard({
+  data,
+  searchTerm = '',
+}: {
+  data: DashboardCourseData;
+  searchTerm?: string;
+}) {
   const progress = data.course.taskProgress ?? {
     totalTasks: 0,
     completedTasks: 0,
@@ -310,14 +371,19 @@ function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
     completionPercentage: 0,
   };
 
-  const assignments = buildFeaturedAssignments(data.tasks);
+  const searchMatches = getDashboardMatches(data, searchTerm);
+  const assignments =
+    searchMatches.length > 0 ? searchMatches : buildFeaturedAssignments(data.tasks);
+
   const quizSummary =
     data.quizzes.length > 0
       ? `${data.quizzes.length} quiz${data.quizzes.length !== 1 ? 'zes' : ''} available`
       : 'No quizzes available';
 
+  const sectionLabel = searchTerm.trim() ? 'Search Results' : 'Recent Assignments';
+
   return (
-    <article className="dashboard-featured-card">
+    <Link to={`/courses/${data.course.id}`} className="dashboard-featured-card">
       <div className="dashboard-featured-card__content">
         <div className="dashboard-featured-card__eyebrow">
           <span className="dashboard-pill">
@@ -325,25 +391,23 @@ function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
           </span>
           <span>{quizSummary}</span>
         </div>
+
         <h2 className="dashboard-featured-card__title">{data.course.name}</h2>
 
-        <div className="dashboard-featured-card__section-label">Recent Assignments</div>
+        <div className="dashboard-featured-card__section-label">{sectionLabel}</div>
+
         {assignments.length > 0 ? (
           <div className="dashboard-featured-card__assignments">
             {assignments.map((assignment) => (
               <div
                 key={assignment.id}
-                className={`dashboard-assignment dashboard-assignment--${assignment.status}`}
+                className="dashboard-assignment dashboard-assignment--urgent"
               >
                 <div>
                   <div className="dashboard-assignment__title">{assignment.title}</div>
                   <div className="dashboard-assignment__meta">{assignment.meta}</div>
                 </div>
-                <i
-                  className={`fa-solid ${
-                    assignment.status === 'done' ? 'fa-circle-check' : 'fa-angle-right'
-                  }`}
-                />
+                <i className="fa-solid fa-angle-right" />
               </div>
             ))}
           </div>
@@ -360,6 +424,7 @@ function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
         <div className="dashboard-featured-card__chip">
           <i className="fa-solid fa-microchip" />
         </div>
+
         <div className="dashboard-featured-card__ring-wrap">
           <ProgressRing
             openTasks={progress.openTasks}
@@ -376,11 +441,12 @@ function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
             <span>overall</span>
           </div>
         </div>
+
         <p className="dashboard-featured-card__summary">
           {progress.completedTasks} / {progress.totalTasks || 0} tasks completed
         </p>
       </div>
-    </article>
+    </Link>
   );
 }
 
@@ -705,7 +771,7 @@ export default function HomePage() {
 
           {!loading && !error && featuredCourse && (
             <>
-              <FeaturedCourseCard data={featuredCourse} />
+              <FeaturedCourseCard data={featuredCourse} searchTerm={dashboardSearchTerm} />
 
               <div className="dashboard-course-grid">
                 {compactCourses.map((entry, index) => (
