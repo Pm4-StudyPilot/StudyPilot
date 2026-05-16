@@ -53,6 +53,26 @@ export class CourseService {
     };
   }
 
+  /**
+   * Check if user has access to a course
+   * Access granted if: user is owner OR course is shared with user
+   */
+  private async hasAccess(courseId: string, userId: string): Promise<boolean> {
+    const course = await this.db.course.findUnique({
+      where: { id: courseId },
+      select: { ownerId: true },
+    });
+
+    if (!course) return false;
+    if (course.ownerId === userId) return true;
+
+    const share = await this.db.courseShare.findFirst({
+      where: { courseId, sharedWithUserId: userId },
+    });
+
+    return !!share;
+  }
+
   async create(name: string, ownerId: string): Promise<CourseDto> {
     const course = await this.db.course.create({
       data: {
@@ -65,22 +85,42 @@ export class CourseService {
     return this.toCourseDto(course);
   }
 
-  async listByOwner(ownerId: string): Promise<CourseDto[]> {
-    const courses = await this.db.course.findMany({
-      where: { ownerId },
+  async listByUser(userId: string): Promise<CourseDto[]> {
+    // Get courses owned by user
+    const ownedCourses = await this.db.course.findMany({
+      where: { ownerId: userId },
       orderBy: { createdAt: 'desc' },
       select: COURSE_OVERVIEW_SELECT,
     });
 
-    return courses.map((course) => this.toCourseDto(course));
+    // Get courses shared with user
+    const sharedCourses = await this.db.course.findMany({
+      where: {
+        courseShares: {
+          some: {
+            sharedWithUserId: userId,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: COURSE_OVERVIEW_SELECT,
+    });
+
+    // Combine and sort by createdAt
+    const allCourses = [...ownedCourses, ...sharedCourses];
+    allCourses.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    return allCourses.map((course) => this.toCourseDto(course));
   }
 
-  async findByIdForOwner(id: string, ownerId: string): Promise<CourseDto | null> {
-    const course = await this.db.course.findFirst({
-      where: {
-        id,
-        ownerId,
-      },
+  async findByIdForUser(id: string, userId: string): Promise<CourseDto | null> {
+    // Check if user has access
+    if (!(await this.hasAccess(id, userId))) {
+      return null;
+    }
+
+    const course = await this.db.course.findUnique({
+      where: { id },
       select: COURSE_OVERVIEW_SELECT,
     });
 
@@ -88,7 +128,11 @@ export class CourseService {
   }
 
   async updateForOwner(id: string, ownerId: string, name: string): Promise<CourseDto | null> {
-    const existing = await this.findByIdForOwner(id, ownerId);
+    // Only owner can update
+    const existing = await this.db.course.findFirst({
+      where: { id, ownerId },
+    });
+
     if (!existing) {
       return null;
     }
@@ -103,6 +147,7 @@ export class CourseService {
   }
 
   async deleteForOwner(id: string, ownerId: string): Promise<boolean> {
+    // Only owner can delete
     const result = await this.db.course.deleteMany({
       where: {
         id,
@@ -111,5 +156,14 @@ export class CourseService {
     });
 
     return result.count > 0;
+  }
+
+  // Backward compatibility aliases
+  async listByOwner(userId: string): Promise<CourseDto[]> {
+    return this.listByUser(userId);
+  }
+
+  async findByIdForOwner(id: string, userId: string): Promise<CourseDto | null> {
+    return this.findByIdForUser(id, userId);
   }
 }
