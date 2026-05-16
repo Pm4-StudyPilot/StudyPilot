@@ -19,9 +19,6 @@
 
 // CourseCard
 .course-card {
-  background-color: var(--color-card-bg);
-  border: 1px solid var(--color-border);
-
   &__toggle {
     background-color: transparent;
     color: inherit;
