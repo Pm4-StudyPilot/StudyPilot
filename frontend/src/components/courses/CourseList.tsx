@@ -7,6 +7,9 @@ import CreateCourseModal from './CreateCourseModal';
 type CourseListProps = {
   /**
    * Current search term used to filter courses by name.
+   *
+   * The value is controlled by the parent component, usually through
+   * the shared SearchBar component.
    */
   searchTerm?: string;
 };
@@ -23,14 +26,22 @@ type CourseListProps = {
  * - Show loading, error, empty, and no-search-results states
  * - Open the CreateCourseModal and prepend the new course to the list on success
  * - Update the course in the list when it is edited
+ * - Remove the course from the list when it is deleted
+ *
+ * Search behavior:
+ * - Search is controlled by the parent component
+ * - Filtering is case-insensitive
+ * - Only course names are searched
+ * - The backend result is not refetched when the search term changes
  *
  * Workflow:
  * 1. GET /courses is called on mount
- * 2. Courses are filtered by the search term if provided
+ * 2. Courses are filtered locally by the search term if provided
  * 3. Courses are rendered as a list of CourseCard components
  * 4. The "+" button opens the CreateCourseModal
  * 5. On successful creation the new course is prepended without refetching
  * 6. On successful edit the matching course is replaced in the list without refetching
+ * 7. On successful deletion the matching course is removed without refetching
  */
 export default function CourseList({ searchTerm = '' }: CourseListProps) {
   const [courses, setCourses] = useState<CourseDto[]>([]);
@@ -76,8 +87,16 @@ export default function CourseList({ searchTerm = '' }: CourseListProps) {
     setCourses((prev) => prev.filter((c) => c.id !== id));
   }
 
+  /**
+   * Normalized search term used for case-insensitive course filtering.
+   */
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
+  /**
+   * Filters courses by name using the current search term.
+   *
+   * If no search term is provided, all courses are returned.
+   */
   const filteredCourses = normalizedSearch
     ? courses.filter((course) => course.name.toLowerCase().includes(normalizedSearch))
     : courses;
@@ -95,6 +114,7 @@ export default function CourseList({ searchTerm = '' }: CourseListProps) {
             <i className="fa-solid fa-plus" />
           </button>
         </div>
+
         <p className="course-list__subtitle text-secondary mb-4">
           {loading
             ? '\u00a0'

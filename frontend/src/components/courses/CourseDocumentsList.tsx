@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import SearchBar from '../shared/SearchBar';
 import { getSortIcon } from '../../utils/sort';
 import { api } from '../../services/api';
 
+// Props for the CourseDocumentsList component.
 type CourseDocumentsListProps = {
   courseId: string;
   refreshKey: number;
+  searchTerm?: string;
 };
 
+// Represents a document returned by the backend API.
 type DocumentDto = {
   id: string;
   filename: string;
@@ -16,13 +18,25 @@ type DocumentDto = {
   createdAt: string;
 };
 
+// Available sort directions for document sorting.
 type SortDirection = 'asc' | 'desc';
 
+/**
+ * Generic helper type for backend-compatible sort query strings.
+ *
+ * Example:
+ * - "filename:asc"
+ * - "createdAt:desc"
+ */
 type SortKey<
   T,
   Suffixes extends string = SortDirection,
 > = `${Extract<keyof T, string>}:${Suffixes}`;
 
+/**
+ * Defines all sortable document fields supported
+ * by the backend sorting API.
+ */
 type DocumentSortableFields = {
   createdAt: string;
   filename: string;
@@ -30,9 +44,13 @@ type DocumentSortableFields = {
   fileSize: number | null;
 };
 
+// Available sortable document fields.
 type DocumentSortField = keyof DocumentSortableFields;
+
+// Current backend-compatible sort query value.
 type DocumentSortOption = SortKey<DocumentSortableFields>;
 
+// Default sort direction per sortable field.
 const defaultSortDirection: Record<DocumentSortField, SortDirection> = {
   createdAt: 'desc',
   fileSize: 'desc',
@@ -124,9 +142,12 @@ function buildSortOption(field: DocumentSortField, direction: SortDirection): Do
  * - filename and icon on the left
  * - type, upload date, and file size on the right
  */
-export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocumentsListProps) {
+export default function CourseDocumentsList({
+  courseId,
+  refreshKey,
+  searchTerm = '',
+}: CourseDocumentsListProps) {
   const [documents, setDocuments] = useState<DocumentDto[]>([]);
-  const [documentSearchTerm, setDocumentSearchTerm] = useState('');
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState('');
   const [sortField, setSortField] = useState<DocumentSortField>('createdAt');
@@ -135,9 +156,10 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
   const sort = buildSortOption(sortField, sortDirection);
 
   /**
-   * Normalized search term used for case-insensitive document filtering.
+   * Normalized search term used for
+   * case-insensitive document filtering.
    */
-  const normalizedDocumentSearch = documentSearchTerm.trim().toLowerCase();
+  const normalizedDocumentSearch = searchTerm.trim().toLowerCase();
 
   /**
    * Filters documents by filename using the current search term.
@@ -179,6 +201,12 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
     return <i className={`fa-solid ${icon} ms-1`} aria-hidden="true" />;
   }
 
+  /**
+   * Fetches documents whenever:
+   * - the course changes
+   * - a document upload refresh is triggered
+   * - the sort configuration changes
+   */
   useEffect(() => {
     let isCancelled = false;
 
@@ -201,28 +229,29 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
     };
   }, [courseId, refreshKey, sort]);
 
+  // Indicates whether document data is currently loading.
   const isLoading = status === 'loading';
+
+  // Indicates whether the document request failed.
   const hasError = status === 'error';
 
+  /**
+   * Renders the document list including:
+   * - sorting controls
+   * - loading and error states
+   * - filtered document results
+   */
   return (
-  <div className="course-detail__documents rounded p-3 h-100">
-    <div className="course-detail__documents-header">
-      <h3 className="text-white h5 mb-3">Uploaded documents</h3>
+    <div className="course-detail__documents rounded p-3 h-100">
+      <div className="course-detail__documents-header">
+        <h3 className="text-white h5 mb-3">Uploaded documents</h3>
 
-      <SearchBar
-        id="document-search"
-        value={documentSearchTerm}
-        onChange={setDocumentSearchTerm}
-        placeholder="Search documents..."
-        className="mb-3"
-      />
-
-      <p className="course-detail__documents-count mb-0">
-        {isLoading
-          ? 'Loading documents...'
-          : `${documents.length} file${documents.length !== 1 ? 's' : ''}`}
-      </p>
-    </div>
+        <p className="course-detail__documents-count mb-0">
+          {isLoading
+            ? 'Loading documents...'
+            : `${filteredDocuments.length} of ${documents.length} file${documents.length !== 1 ? 's' : ''} shown`}
+        </p>
+      </div>
 
       <div className="d-flex align-items-center gap-2 flex-wrap mb-3">
         <span className="text-secondary small">Sort by:</span>
@@ -278,18 +307,16 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
         </div>
       )}
 
-      {!isLoading &&
-        !hasError &&
-        documents.length > 0 &&
-        filteredDocuments.length === 0 && (
-          <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
-            No documents match your search.
-          </div>
+      {!isLoading && !hasError && documents.length > 0 && filteredDocuments.length === 0 && (
+        <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
+          No documents match your search.
+        </div>
       )}
 
       {!isLoading && !hasError && filteredDocuments.length > 0 && (
         <div className="d-flex flex-column gap-2">
           {filteredDocuments.map((document) => {
+            // Human-readable upload date for the current document.
             const formattedDate = new Date(document.createdAt).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'short',
