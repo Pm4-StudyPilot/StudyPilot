@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter } from 'react-router-dom';
 import CourseList from '../components/courses/CourseList';
@@ -9,7 +9,7 @@ import { api } from '../services/api';
  * Mock API service.
  *
  * Prevents real HTTP requests and allows controlled responses
- * for course listing requests.
+ * for course list and searchable course content requests.
  */
 vi.mock('../services/api', () => ({
   api: {
@@ -20,20 +20,135 @@ vi.mock('../services/api', () => ({
   },
 }));
 
+const courseFixtures = [
+  {
+    id: 'c1',
+    name: 'Machine Learning',
+    ownerId: 'u1',
+    createdAt: '2026-03-26T12:00:00.000Z',
+    updatedAt: '2026-03-26T12:00:00.000Z',
+  },
+  {
+    id: 'c2',
+    name: 'Physics Engines',
+    ownerId: 'u1',
+    createdAt: '2026-03-25T12:00:00.000Z',
+    updatedAt: '2026-03-25T12:00:00.000Z',
+  },
+];
+
+/**
+ * Mocks all API calls used by CourseList.
+ */
+function mockCourseListApi(courses = courseFixtures) {
+  vi.mocked(api.get).mockImplementation((url: string) => {
+    if (url === '/courses') {
+      return Promise.resolve(courses);
+    }
+
+    if (url === '/courses/c1/tasks') {
+      return Promise.resolve([
+        {
+          id: 't1',
+          title: 'Train model',
+          description: null,
+          status: 'OPEN',
+          priority: 'MEDIUM',
+          dueDate: null,
+          position: 0,
+          courseId: 'c1',
+          createdAt: '2026-03-26T12:00:00.000Z',
+          updatedAt: '2026-03-26T12:00:00.000Z',
+        },
+      ]);
+    }
+
+    if (url === '/courses/c2/tasks') {
+      return Promise.resolve([
+        {
+          id: 't2',
+          title: 'Collision analysis',
+          description: null,
+          status: 'OPEN',
+          priority: 'HIGH',
+          dueDate: null,
+          position: 0,
+          courseId: 'c2',
+          createdAt: '2026-03-25T12:00:00.000Z',
+          updatedAt: '2026-03-25T12:00:00.000Z',
+        },
+      ]);
+    }
+
+    if (url.startsWith('/documents/course/c1')) {
+      return Promise.resolve([
+        {
+          id: 'd1',
+          filename: 'ML Notes.pdf',
+          fileType: 'application/pdf',
+          fileSize: 1024,
+          createdAt: '2026-03-26T12:00:00.000Z',
+        },
+      ]);
+    }
+
+    if (url.startsWith('/documents/course/c2')) {
+      return Promise.resolve([
+        {
+          id: 'd2',
+          filename: 'Agile Estimating and Planning.pdf',
+          fileType: 'application/pdf',
+          fileSize: 2048,
+          createdAt: '2026-03-25T12:00:00.000Z',
+        },
+      ]);
+    }
+
+    if (url === '/courses/c1/quizzes') {
+      return Promise.resolve([
+        {
+          id: 'q1',
+          title: 'Neural Networks Quiz',
+          description: null,
+          isOrderRandom: false,
+          courseId: 'c1',
+          createdAt: '2026-03-26T12:00:00.000Z',
+          updatedAt: '2026-03-26T12:00:00.000Z',
+        },
+      ]);
+    }
+
+    if (url === '/courses/c2/quizzes') {
+      return Promise.resolve([
+        {
+          id: 'q2',
+          title: 'Energy Conservation Quiz',
+          description: null,
+          isOrderRandom: false,
+          courseId: 'c2',
+          createdAt: '2026-03-25T12:00:00.000Z',
+          updatedAt: '2026-03-25T12:00:00.000Z',
+        },
+      ]);
+    }
+
+    return Promise.resolve([]);
+  });
+}
+
 /**
  * CourseList component tests.
  *
  * Covered scenarios:
  * - loading spinner is shown while fetching
- * - list of courses is rendered after successful fetch
- * - enrolled count reflects the number of courses returned
- * - empty state is shown when no courses are returned
- * - error message is shown when the request fails
+ * - courses are rendered after successful fetch
+ * - empty state is shown when no courses exist
+ * - error state is shown when fetching fails
  * - fallback error message is shown for non-error rejections
- * - courses are filtered by the provided search term
- * - no-search-results message is shown when no courses match the search term
- * - created courses are prepended to the list
- * - updated courses replace the matching list item
+ * - courses are filtered by course name, task title, document filename, or quiz title
+ * - no-search-results message is shown when no content matches the search term
+ * - newly created courses are prepended to the list
+ * - updated courses are replaced in the list
  * - deleted courses are removed from the list
  */
 describe('CourseList', () => {
@@ -49,7 +164,7 @@ describe('CourseList', () => {
    * Test case: Loading state
    *
    * Scenario:
-   * The API call is pending.
+   * The course API request is pending.
    *
    * Expected behavior:
    * - A loading spinner is visible
@@ -67,32 +182,17 @@ describe('CourseList', () => {
   });
 
   /**
-   * Test case: Successful fetch with courses
+   * Test case: Successful fetch
    *
    * Scenario:
-   * The API returns a list of courses.
+   * The API returns courses.
    *
    * Expected behavior:
-   * - Each course name is rendered
-   * - The enrolled count reflects the number of courses
+   * - Returned courses are rendered
+   * - The shown count reflects the number of courses returned
    */
   it('renders courses after a successful fetch', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce([
-      {
-        id: 'c1',
-        name: 'Machine Learning',
-        ownerId: 'u1',
-        createdAt: '2026-03-26T12:00:00.000Z',
-        updatedAt: '2026-03-26T12:00:00.000Z',
-      },
-      {
-        id: 'c2',
-        name: 'Algorithms & Data Structures',
-        ownerId: 'u1',
-        createdAt: '2026-03-25T12:00:00.000Z',
-        updatedAt: '2026-03-25T12:00:00.000Z',
-      },
-    ]);
+    mockCourseListApi();
 
     render(
       <MemoryRouter>
@@ -102,23 +202,23 @@ describe('CourseList', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Machine Learning')).toBeInTheDocument();
-      expect(screen.getByText('Algorithms & Data Structures')).toBeInTheDocument();
-      expect(screen.getByText('2 of 2 courses shown')).toBeInTheDocument();
+      expect(screen.getByText('Physics Engines')).toBeInTheDocument();
     });
+
+    expect(screen.getByText('2 of 2 courses shown')).toBeInTheDocument();
   });
 
   /**
    * Test case: Empty state
    *
    * Scenario:
-   * The API returns an empty array.
+   * The API returns an empty course list.
    *
    * Expected behavior:
-   * - "No courses yet." message is displayed
-   * - Enrolled count shows 0
+   * - The empty state is displayed
    */
   it('shows the empty state when no courses are returned', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce([]);
+    mockCourseListApi([]);
 
     render(
       <MemoryRouter>
@@ -127,16 +227,17 @@ describe('CourseList', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/no courses yet/i)).toBeInTheDocument();
-      expect(screen.getByText('0 of 0 courses shown')).toBeInTheDocument();
+      expect(screen.getByText('No courses yet.')).toBeInTheDocument();
     });
+
+    expect(screen.getByText('0 of 0 courses shown')).toBeInTheDocument();
   });
 
   /**
    * Test case: Error state
    *
    * Scenario:
-   * The API request fails with an error.
+   * The course API request fails with an Error.
    *
    * Expected behavior:
    * - The error message is displayed
@@ -151,7 +252,7 @@ describe('CourseList', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/failed to load courses/i)).toBeInTheDocument();
+      expect(screen.getByText('Failed to load courses')).toBeInTheDocument();
     });
   });
 
@@ -159,10 +260,10 @@ describe('CourseList', () => {
    * Test case: Non-error rejection
    *
    * Scenario:
-   * The API request rejects with a non-Error value.
+   * The course API request rejects with a non-Error value.
    *
    * Expected behavior:
-   * - The fallback error message is displayed
+   * - A fallback error message is displayed
    */
   it('shows fallback error message when the fetch rejects with a non-error value', async () => {
     vi.mocked(api.get).mockRejectedValueOnce('Unexpected failure');
@@ -179,33 +280,16 @@ describe('CourseList', () => {
   });
 
   /**
-   * Test case: Course search
+   * Test case: Search by course name
    *
    * Scenario:
-   * A search term is provided to the CourseList component.
+   * A search term matches a course name.
    *
    * Expected behavior:
-   * - Only courses matching the search term are rendered
-   * - Non-matching courses are not rendered
-   * - The shown count reflects the filtered result count
+   * - Only the matching course is rendered
    */
-  it('filters courses by the provided search term', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce([
-      {
-        id: 'c1',
-        name: 'Machine Learning',
-        ownerId: 'u1',
-        createdAt: '2026-03-26T12:00:00.000Z',
-        updatedAt: '2026-03-26T12:00:00.000Z',
-      },
-      {
-        id: 'c2',
-        name: 'Algorithms & Data Structures',
-        ownerId: 'u1',
-        createdAt: '2026-03-25T12:00:00.000Z',
-        updatedAt: '2026-03-25T12:00:00.000Z',
-      },
-    ]);
+  it('filters courses by course name', async () => {
+    mockCourseListApi();
 
     render(
       <MemoryRouter>
@@ -217,30 +301,100 @@ describe('CourseList', () => {
       expect(screen.getByText('Machine Learning')).toBeInTheDocument();
     });
 
-    expect(screen.queryByText('Algorithms & Data Structures')).not.toBeInTheDocument();
+    expect(screen.queryByText('Physics Engines')).not.toBeInTheDocument();
     expect(screen.getByText('1 of 2 courses shown')).toBeInTheDocument();
   });
 
   /**
-   * Test case: No course search results
+   * Test case: Search by task title
    *
    * Scenario:
-   * A search term is provided that does not match any course name.
+   * A search term matches a task title belonging to a course.
+   *
+   * Expected behavior:
+   * - The related course is rendered
+   */
+  it('filters courses by task title', async () => {
+    mockCourseListApi();
+
+    render(
+      <MemoryRouter>
+        <CourseList searchTerm="collision" />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Physics Engines')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Machine Learning')).not.toBeInTheDocument();
+    expect(screen.getByText('1 of 2 courses shown')).toBeInTheDocument();
+  });
+
+  /**
+   * Test case: Search by document filename
+   *
+   * Scenario:
+   * A search term matches a document filename belonging to a course.
+   *
+   * Expected behavior:
+   * - The related course is rendered
+   */
+  it('filters courses by document filename', async () => {
+    mockCourseListApi();
+
+    render(
+      <MemoryRouter>
+        <CourseList searchTerm="agile" />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Physics Engines')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Machine Learning')).not.toBeInTheDocument();
+    expect(screen.getByText('1 of 2 courses shown')).toBeInTheDocument();
+  });
+
+  /**
+   * Test case: Search by quiz title
+   *
+   * Scenario:
+   * A search term matches a quiz title belonging to a course.
+   *
+   * Expected behavior:
+   * - The related course is rendered
+   */
+  it('filters courses by quiz title', async () => {
+    mockCourseListApi();
+
+    render(
+      <MemoryRouter>
+        <CourseList searchTerm="neural" />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Machine Learning')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Physics Engines')).not.toBeInTheDocument();
+    expect(screen.getByText('1 of 2 courses shown')).toBeInTheDocument();
+  });
+
+  /**
+   * Test case: No search results
+   *
+   * Scenario:
+   * A search term does not match any course or related content.
    *
    * Expected behavior:
    * - No course cards are rendered
    * - A no-search-results message is displayed
    */
   it('shows no-search-results message when no courses match the search term', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce([
-      {
-        id: 'c1',
-        name: 'Machine Learning',
-        ownerId: 'u1',
-        createdAt: '2026-03-26T12:00:00.000Z',
-        updatedAt: '2026-03-26T12:00:00.000Z',
-      },
-    ]);
+    mockCourseListApi();
 
     render(
       <MemoryRouter>
@@ -253,33 +407,25 @@ describe('CourseList', () => {
     });
 
     expect(screen.queryByText('Machine Learning')).not.toBeInTheDocument();
-    expect(screen.getByText('0 of 1 course shown')).toBeInTheDocument();
+    expect(screen.queryByText('Physics Engines')).not.toBeInTheDocument();
+    expect(screen.getByText('0 of 2 courses shown')).toBeInTheDocument();
   });
 
   /**
-   * Test case: Create course callback
+   * Test case: Create course
    *
    * Scenario:
-   * A course is created successfully through the create course modal.
+   * The user creates a new course through the modal.
    *
    * Expected behavior:
-   * - The created course is prepended to the course list
-   * - The shown count is updated
+   * - The newly created course is prepended to the list
    */
   it('prepends a newly created course to the list', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce([
-      {
-        id: 'c1',
-        name: 'Machine Learning',
-        ownerId: 'u1',
-        createdAt: '2026-03-26T12:00:00.000Z',
-        updatedAt: '2026-03-26T12:00:00.000Z',
-      },
-    ]);
+    mockCourseListApi();
 
     vi.mocked(api.post).mockResolvedValueOnce({
-      id: 'c2',
-      name: 'Physics Engines',
+      id: 'c3',
+      name: 'Computer Vision',
       ownerId: 'u1',
       createdAt: '2026-03-27T12:00:00.000Z',
       updatedAt: '2026-03-27T12:00:00.000Z',
@@ -297,42 +443,32 @@ describe('CourseList', () => {
 
     fireEvent.click(screen.getByLabelText('Add course'));
     fireEvent.change(screen.getByLabelText(/course name/i), {
-      target: { value: 'Physics Engines' },
+      target: { value: 'Computer Vision' },
     });
     fireEvent.click(screen.getByRole('button', { name: /create/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Physics Engines')).toBeInTheDocument();
-      expect(screen.getByText('2 of 2 courses shown')).toBeInTheDocument();
+      expect(screen.getByText('Computer Vision')).toBeInTheDocument();
     });
+
+    expect(screen.getByText('3 of 3 courses shown')).toBeInTheDocument();
   });
 
   /**
-   * Test case: Update course callback
+   * Test case: Update course
    *
    * Scenario:
-   * A course is updated successfully through the edit course modal.
+   * The user edits a course.
    *
    * Expected behavior:
-   * - The matching course item is replaced with the updated course
+   * - The matching course is updated in the list
    */
   it('updates a course in the list after editing', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce([
-      {
-        id: 'c1',
-        name: 'Machine Learning',
-        ownerId: 'u1',
-        createdAt: '2026-03-26T12:00:00.000Z',
-        updatedAt: '2026-03-26T12:00:00.000Z',
-      },
-    ]);
+    mockCourseListApi();
 
     vi.mocked(api.patch).mockResolvedValueOnce({
-      id: 'c1',
+      ...courseFixtures[0],
       name: 'Advanced Machine Learning',
-      ownerId: 'u1',
-      createdAt: '2026-03-26T12:00:00.000Z',
-      updatedAt: '2026-03-27T12:00:00.000Z',
     });
 
     render(
@@ -345,7 +481,7 @@ describe('CourseList', () => {
       expect(screen.getByText('Machine Learning')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByLabelText(/edit course/i));
+    fireEvent.click(screen.getAllByLabelText(/edit course/i)[0]);
     fireEvent.change(screen.getByLabelText(/course name/i), {
       target: { value: 'Advanced Machine Learning' },
     });
@@ -359,25 +495,16 @@ describe('CourseList', () => {
   });
 
   /**
-   * Test case: Delete course callback
+   * Test case: Delete course
    *
    * Scenario:
-   * A course is deleted successfully through the delete course modal.
+   * The user deletes a course.
    *
    * Expected behavior:
-   * - The deleted course is removed from the list
-   * - The empty state is shown when no courses remain
+   * - The matching course is removed from the list
    */
   it('removes a course from the list after deletion', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce([
-      {
-        id: 'c1',
-        name: 'Machine Learning',
-        ownerId: 'u1',
-        createdAt: '2026-03-26T12:00:00.000Z',
-        updatedAt: '2026-03-26T12:00:00.000Z',
-      },
-    ]);
+    mockCourseListApi();
 
     vi.mocked(api.delete).mockResolvedValueOnce(undefined);
 
@@ -391,12 +518,13 @@ describe('CourseList', () => {
       expect(screen.getByText('Machine Learning')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByLabelText(/delete course/i));
+    fireEvent.click(screen.getAllByLabelText(/delete course/i)[0]);
     fireEvent.click(screen.getByRole('button', { name: /^delete$/i }));
 
     await waitFor(() => {
       expect(screen.queryByText('Machine Learning')).not.toBeInTheDocument();
-      expect(screen.getByText('No courses yet.')).toBeInTheDocument();
     });
+
+    expect(screen.getByText('1 of 1 course shown')).toBeInTheDocument();
   });
 });

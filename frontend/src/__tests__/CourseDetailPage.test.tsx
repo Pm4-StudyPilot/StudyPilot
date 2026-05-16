@@ -20,7 +20,7 @@ vi.mock('../services/api', () => ({
 /**
  * Mock AuthContext.
  *
- * CourseDetailPage uses Navbar which depends on useAuth.
+ * CourseDetailPage uses DashboardLayout which depends on useAuth.
  */
 vi.mock('../context/useAuth', () => ({
   useAuth: () => ({
@@ -29,6 +29,80 @@ vi.mock('../context/useAuth', () => ({
   }),
 }));
 
+const courseFixture = {
+  id: 'c1',
+  name: 'Machine Learning Fundamentals',
+  ownerId: 'u1',
+  createdAt: '2026-03-26T12:00:00.000Z',
+  updatedAt: '2026-03-26T12:00:00.000Z',
+  taskProgress: {
+    totalTasks: 2,
+    completedTasks: 1,
+    openTasks: 1,
+    inProgressTasks: 0,
+    completionPercentage: 50,
+  },
+};
+
+const taskFixtures = [
+  {
+    id: 't1',
+    title: 'Read chapter 1',
+    description: null,
+    status: 'OPEN',
+    priority: 'MEDIUM',
+    dueDate: null,
+    position: 0,
+    courseId: 'c1',
+    createdAt: '2026-03-26T12:00:00.000Z',
+    updatedAt: '2026-03-26T12:00:00.000Z',
+  },
+  {
+    id: 't2',
+    title: 'Submit assignment',
+    description: null,
+    status: 'OPEN',
+    priority: 'HIGH',
+    dueDate: null,
+    position: 1,
+    courseId: 'c1',
+    createdAt: '2026-03-26T12:00:00.000Z',
+    updatedAt: '2026-03-26T12:00:00.000Z',
+  },
+];
+
+const quizFixtures = [
+  {
+    id: 'q1',
+    title: 'Neural Networks Quiz',
+    description: null,
+    isOrderRandom: false,
+    courseId: 'c1',
+    createdAt: '2026-03-26T12:00:00.000Z',
+    updatedAt: '2026-03-26T12:00:00.000Z',
+  },
+];
+
+const documentFixtures = [
+  {
+    id: 'doc-1',
+    filename: 'Lecture Notes.pdf',
+    fileType: 'application/pdf',
+    fileSize: 1024,
+    createdAt: '2026-03-26T12:00:00.000Z',
+  },
+  {
+    id: 'doc-2',
+    filename: 'Project Brief.pdf',
+    fileType: 'application/pdf',
+    fileSize: 2048,
+    createdAt: '2026-03-27T12:00:00.000Z',
+  },
+];
+
+/**
+ * Renders CourseDetailPage with a course route parameter.
+ */
 function renderWithRoute(id: string) {
   return render(
     <MemoryRouter initialEntries={[`/courses/${id}`]}>
@@ -40,19 +114,51 @@ function renderWithRoute(id: string) {
 }
 
 /**
+ * Mocks all API calls used by CourseDetailPage and its child components.
+ */
+function mockCourseDetailApi({
+  course = courseFixture,
+  tasks = taskFixtures,
+  quizzes = quizFixtures,
+  documents = documentFixtures,
+}: {
+  course?: typeof courseFixture | null;
+  tasks?: typeof taskFixtures;
+  quizzes?: typeof quizFixtures;
+  documents?: typeof documentFixtures;
+} = {}) {
+  vi.mocked(api.get).mockImplementation((url: string) => {
+    if (url === '/courses/c1') {
+      return Promise.resolve(course);
+    }
+
+    if (url === '/courses/c1/tasks') {
+      return Promise.resolve(tasks);
+    }
+
+    if (url === '/courses/c1/quizzes') {
+      return Promise.resolve(quizzes);
+    }
+
+    if (url.startsWith('/documents/course/c1')) {
+      return Promise.resolve(documents);
+    }
+
+    return Promise.resolve([]);
+  });
+}
+
+/**
  * CourseDetailPage component tests.
  *
  * Covered scenarios:
  * - loading spinner is shown while fetching
  * - course details are rendered after successful fetch
- * - formatted course creation date is rendered
- * - error message is shown when the request fails
+ * - documents are rendered in the course document section
+ * - error message is shown when the course request fails
  * - fallback error message is shown for non-error rejections
  * - not found message is shown when course is null
- * - documents tab is rendered by default
- * - tasks tab can show an empty state
- * - tasks can be filtered by title in the tasks tab
- * - no-search-results message is shown when no tasks match the search term
+ * - course-level search filters tasks, course materials, and documents
  */
 describe('CourseDetailPage', () => {
   beforeEach(() => {
@@ -67,7 +173,7 @@ describe('CourseDetailPage', () => {
    * Test case: Loading state
    *
    * Scenario:
-   * The API call is pending.
+   * The course API call is pending.
    *
    * Expected behavior:
    * - A loading spinner is visible
@@ -88,54 +194,38 @@ describe('CourseDetailPage', () => {
    *
    * Expected behavior:
    * - The course name is rendered
-   * - The formatted creation date is rendered
+   * - The formatted creation date is rendered in the course metadata
    */
-  it('renders the course name and creation date after a successful fetch', async () => {
-    vi.mocked(api.get)
-      .mockResolvedValueOnce({
-        id: 'c1',
-        name: 'Machine Learning Fundamentals',
-        ownerId: 'u1',
-        createdAt: '2026-03-26T12:00:00.000Z',
-        updatedAt: '2026-03-26T12:00:00.000Z',
-      })
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
+  it('renders the course name and creation metadata after a successful fetch', async () => {
+    mockCourseDetailApi();
 
     renderWithRoute('c1');
 
     await waitFor(() => {
       expect(screen.getByText('Machine Learning Fundamentals')).toBeInTheDocument();
-      expect(screen.getByText('Added March 26, 2026')).toBeInTheDocument();
+      expect(screen.getByText(/Created March 26, 2026/i)).toBeInTheDocument();
     });
   });
 
   /**
-   * Test case: Documents tab default
+   * Test case: Documents section
    *
    * Scenario:
-   * The course details load successfully.
+   * The course details and documents load successfully.
    *
    * Expected behavior:
-   * - The Documents tab is active by default
-   * - The document upload section is rendered
+   * - The course documents section is rendered
+   * - Returned document filenames are rendered
    */
-  it('renders the documents tab by default', async () => {
-    vi.mocked(api.get)
-      .mockResolvedValueOnce({
-        id: 'c1',
-        name: 'Machine Learning Fundamentals',
-        ownerId: 'u1',
-        createdAt: '2026-03-26T12:00:00.000Z',
-        updatedAt: '2026-03-26T12:00:00.000Z',
-      })
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
+  it('renders course documents by default', async () => {
+    mockCourseDetailApi();
 
     renderWithRoute('c1');
 
     await waitFor(() => {
-      expect(screen.getByText('Upload document')).toBeInTheDocument();
+      expect(screen.getByText('Course Documents')).toBeInTheDocument();
+      expect(screen.getByText('Lecture Notes.pdf')).toBeInTheDocument();
+      expect(screen.getByText('Project Brief.pdf')).toBeInTheDocument();
     });
   });
 
@@ -143,13 +233,19 @@ describe('CourseDetailPage', () => {
    * Test case: Error state
    *
    * Scenario:
-   * The API request fails with an Error.
+   * The course API request fails with an Error.
    *
    * Expected behavior:
    * - The error message is displayed
    */
-  it('shows an error message when the fetch fails', async () => {
-    vi.mocked(api.get).mockRejectedValueOnce(new Error('Failed to load course'));
+  it('shows an error message when the course fetch fails', async () => {
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/courses/c1') {
+        return Promise.reject(new Error('Failed to load course'));
+      }
+
+      return Promise.resolve([]);
+    });
 
     renderWithRoute('c1');
 
@@ -168,7 +264,13 @@ describe('CourseDetailPage', () => {
    * - The fallback error message is displayed
    */
   it('shows fallback error message when the course fetch rejects with a non-error value', async () => {
-    vi.mocked(api.get).mockRejectedValueOnce('Unexpected failure');
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/courses/c1') {
+        return Promise.reject('Unexpected failure');
+      }
+
+      return Promise.resolve([]);
+    });
 
     renderWithRoute('c1');
 
@@ -187,170 +289,58 @@ describe('CourseDetailPage', () => {
    * - The not found message is displayed
    */
   it('shows not found message when course is null', async () => {
-    vi.mocked(api.get)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
+    mockCourseDetailApi({ course: null });
 
     renderWithRoute('c1');
 
     await waitFor(() => {
-      expect(screen.getByText('Course not found.')).toBeInTheDocument();
+      expect(screen.getByText('Course not found')).toBeInTheDocument();
+      expect(screen.getByText(/backend did not return a course/i)).toBeInTheDocument();
     });
   });
 
   /**
-   * Test case: Empty tasks state
+   * Test case: Course search
    *
    * Scenario:
-   * The user opens the Tasks tab and the course has no tasks.
+   * The user enters a search term in the dashboard topbar.
    *
    * Expected behavior:
-   * - The empty tasks message is displayed
+   * - Tasks are filtered by title
+   * - Course materials are filtered by quiz title
+   * - Documents are filtered by filename
    */
-  it('shows empty state in the tasks tab when no tasks exist', async () => {
-    vi.mocked(api.get)
-      .mockResolvedValueOnce({
-        id: 'c1',
-        name: 'Machine Learning Fundamentals',
-        ownerId: 'u1',
-        createdAt: '2026-03-26T12:00:00.000Z',
-        updatedAt: '2026-03-26T12:00:00.000Z',
-      })
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
+  it('filters tasks, course materials, and documents through the course search input', async () => {
+    mockCourseDetailApi();
 
     renderWithRoute('c1');
-
-    await waitFor(() => {
-      expect(screen.getByText('Machine Learning Fundamentals')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /tasks/i }));
-
-    expect(screen.getAllByText('No tasks yet. Add one to get started.')).toHaveLength(2);
-  });
-
-  /**
-   * Test case: Task search
-   *
-   * Scenario:
-   * The user opens the Tasks tab and enters a search term.
-   *
-   * Expected behavior:
-   * - Only tasks matching the search term are rendered
-   * - Non-matching tasks are not rendered
-   */
-  it('filters tasks by title in the tasks tab', async () => {
-    vi.mocked(api.get)
-      .mockResolvedValueOnce({
-        id: 'c1',
-        name: 'Machine Learning Fundamentals',
-        ownerId: 'u1',
-        createdAt: '2026-03-26T12:00:00.000Z',
-        updatedAt: '2026-03-26T12:00:00.000Z',
-      })
-      .mockResolvedValueOnce([
-        {
-          id: 't1',
-          title: 'Read chapter 1',
-          description: null,
-          status: 'OPEN',
-          priority: 'MEDIUM',
-          dueDate: null,
-          position: 0,
-          courseId: 'c1',
-          createdAt: '2026-03-26T12:00:00.000Z',
-          updatedAt: '2026-03-26T12:00:00.000Z',
-        },
-        {
-          id: 't2',
-          title: 'Submit assignment',
-          description: null,
-          status: 'OPEN',
-          priority: 'HIGH',
-          dueDate: null,
-          position: 1,
-          courseId: 'c1',
-          createdAt: '2026-03-26T12:00:00.000Z',
-          updatedAt: '2026-03-26T12:00:00.000Z',
-        },
-      ])
-      .mockResolvedValueOnce([]);
-
-    renderWithRoute('c1');
-
-    await waitFor(() => {
-      expect(screen.getByText('Machine Learning Fundamentals')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /tasks/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Read chapter 1')).toBeInTheDocument();
       expect(screen.getByText('Submit assignment')).toBeInTheDocument();
+      expect(screen.getByText('Neural Networks Quiz')).toBeInTheDocument();
+      expect(screen.getByText('Lecture Notes.pdf')).toBeInTheDocument();
+      expect(screen.getByText('Project Brief.pdf')).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByPlaceholderText('Search tasks...'), {
+    fireEvent.change(screen.getByPlaceholderText('Search in this course...'), {
       target: { value: 'submit' },
     });
 
     expect(screen.queryByText('Read chapter 1')).not.toBeInTheDocument();
     expect(screen.getByText('Submit assignment')).toBeInTheDocument();
-  });
 
-  /**
-   * Test case: No task search results
-   *
-   * Scenario:
-   * The user enters a search term that does not match any task title.
-   *
-   * Expected behavior:
-   * - No task rows are rendered
-   * - A no-search-results message is displayed
-   */
-  it('shows no-search-results message when no tasks match the search term', async () => {
-    vi.mocked(api.get)
-      .mockResolvedValueOnce({
-        id: 'c1',
-        name: 'Machine Learning Fundamentals',
-        ownerId: 'u1',
-        createdAt: '2026-03-26T12:00:00.000Z',
-        updatedAt: '2026-03-26T12:00:00.000Z',
-      })
-      .mockResolvedValueOnce([
-        {
-          id: 't1',
-          title: 'Read chapter 1',
-          description: null,
-          status: 'OPEN',
-          priority: 'MEDIUM',
-          dueDate: null,
-          position: 0,
-          courseId: 'c1',
-          createdAt: '2026-03-26T12:00:00.000Z',
-          updatedAt: '2026-03-26T12:00:00.000Z',
-        },
-      ])
-      .mockResolvedValueOnce([]);
-
-    renderWithRoute('c1');
-
-    await waitFor(() => {
-      expect(screen.getByText('Machine Learning Fundamentals')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText('Search in this course...'), {
+      target: { value: 'neural' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /tasks/i }));
+    expect(screen.getByText('Neural Networks Quiz')).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(screen.getByText('Read chapter 1')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText('Search in this course...'), {
+      target: { value: 'brief' },
     });
 
-    fireEvent.change(screen.getByPlaceholderText('Search tasks...'), {
-      target: { value: 'nonexistent' },
-    });
-
-    expect(screen.queryByText('Read chapter 1')).not.toBeInTheDocument();
-    expect(screen.getByText('No tasks match your search.')).toBeInTheDocument();
+    expect(screen.queryByText('Lecture Notes.pdf')).not.toBeInTheDocument();
+    expect(screen.getByText('Project Brief.pdf')).toBeInTheDocument();
   });
 });

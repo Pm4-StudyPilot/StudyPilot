@@ -81,7 +81,7 @@ describe('CourseDocumentsList', () => {
 
     render(<CourseDocumentsList courseId="course-1" refreshKey={0} />);
 
-    expect(screen.getByText('Loading documents...')).toBeInTheDocument();
+    expect(screen.getAllByText('Loading documents...')).toHaveLength(2);
   });
 
   /**
@@ -286,84 +286,6 @@ describe('CourseDocumentsList', () => {
   });
 
   /**
-   * Test case: Document search
-   *
-   * Scenario:
-   * The user enters a search term in the document search bar.
-   *
-   * Expected behavior:
-   * - Only documents matching the filename search are rendered
-   * - Non-matching documents are not rendered
-   */
-  it('filters documents by filename', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce([
-      {
-        id: 'doc-1',
-        filename: '03 - Agile Estimating and Planning.pdf',
-        fileType: 'application/pdf',
-        fileSize: 5570000,
-        createdAt: '2026-04-20T10:00:00.000Z',
-      },
-      {
-        id: 'doc-2',
-        filename: '04 - DevOps.pdf',
-        fileType: 'application/pdf',
-        fileSize: 2480000,
-        createdAt: '2026-04-20T11:00:00.000Z',
-      },
-    ]);
-
-    render(<CourseDocumentsList courseId="course-1" refreshKey={0} />);
-
-    await waitFor(() => {
-      expect(screen.getByText('03 - Agile Estimating and Planning.pdf')).toBeInTheDocument();
-      expect(screen.getByText('04 - DevOps.pdf')).toBeInTheDocument();
-    });
-
-    fireEvent.change(screen.getByPlaceholderText('Search documents...'), {
-      target: { value: 'devops' },
-    });
-
-    expect(screen.queryByText('03 - Agile Estimating and Planning.pdf')).not.toBeInTheDocument();
-    expect(screen.getByText('04 - DevOps.pdf')).toBeInTheDocument();
-  });
-
-  /**
-   * Test case: No document search results
-   *
-   * Scenario:
-   * The user enters a search term that does not match any document filename.
-   *
-   * Expected behavior:
-   * - No document rows are rendered
-   * - A no-search-results message is displayed
-   */
-  it('shows no-search-results message when no documents match the search term', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce([
-      {
-        id: 'doc-1',
-        filename: '03 - Agile Estimating and Planning.pdf',
-        fileType: 'application/pdf',
-        fileSize: 5570000,
-        createdAt: '2026-04-20T10:00:00.000Z',
-      },
-    ]);
-
-    render(<CourseDocumentsList courseId="course-1" refreshKey={0} />);
-
-    await waitFor(() => {
-      expect(screen.getByText('03 - Agile Estimating and Planning.pdf')).toBeInTheDocument();
-    });
-
-    fireEvent.change(screen.getByPlaceholderText('Search documents...'), {
-      target: { value: 'nonexistent' },
-    });
-
-    expect(screen.queryByText('03 - Agile Estimating and Planning.pdf')).not.toBeInTheDocument();
-    expect(screen.getByText('No documents match your search.')).toBeInTheDocument();
-  });
-
-  /**
    * Test case: Small and unknown document metadata
    *
    * Scenario:
@@ -392,5 +314,75 @@ describe('CourseDocumentsList', () => {
 
     expect(screen.getByText('Type: application/custom')).toBeInTheDocument();
     expect(screen.getByText('Size: 0.5 KB')).toBeInTheDocument();
+  });
+
+  /**
+   * Test case: Document search
+   *
+   * Scenario:
+   * A search term is passed to the component.
+   *
+   * Expected behavior:
+   * - Only matching documents are rendered
+   * - Non-matching documents are not rendered
+   * - The shown count reflects the filtered result count
+   */
+  it('filters documents by filename through the searchTerm prop', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([
+      {
+        id: 'doc-1',
+        filename: '03 - Agile Estimating and Planning.pdf',
+        fileType: 'application/pdf',
+        fileSize: 5570000,
+        createdAt: '2026-04-20T10:00:00.000Z',
+      },
+      {
+        id: 'doc-2',
+        filename: '04 - DevOps.pdf',
+        fileType: 'application/pdf',
+        fileSize: 2480000,
+        createdAt: '2026-04-20T11:00:00.000Z',
+      },
+    ]);
+
+    render(<CourseDocumentsList courseId="course-1" refreshKey={0} searchTerm="devops" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('04 - DevOps.pdf')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('03 - Agile Estimating and Planning.pdf')).not.toBeInTheDocument();
+    expect(screen.getByText('1 of 2 files shown')).toBeInTheDocument();
+  });
+
+  /**
+   * Test case: No document search results
+   *
+   * Scenario:
+   * A search term is passed that does not match any document filename.
+   *
+   * Expected behavior:
+   * - No document rows are rendered
+   * - A no-search-results message is displayed
+   */
+  it('shows no-search-results message when no documents match the search term', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([
+      {
+        id: 'doc-1',
+        filename: '03 - Agile Estimating and Planning.pdf',
+        fileType: 'application/pdf',
+        fileSize: 5570000,
+        createdAt: '2026-04-20T10:00:00.000Z',
+      },
+    ]);
+
+    render(<CourseDocumentsList courseId="course-1" refreshKey={0} searchTerm="nonexistent" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('No documents match your search.')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('03 - Agile Estimating and Planning.pdf')).not.toBeInTheDocument();
+    expect(screen.getByText('0 of 1 file shown')).toBeInTheDocument();
   });
 });
