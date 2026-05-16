@@ -19,6 +19,9 @@
 
 // CourseCard
 .course-card {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+
   &__toggle {
     background-color: transparent;
     color: inherit;
@@ -210,6 +213,7 @@
     &-column {
       display: flex;
       flex-direction: column;
+      gap: 1rem;
     }
   }
 
@@ -229,7 +233,7 @@
   &__section-title {
     display: flex;
     align-items: center;
-    gap: 0.9rem;
+    gap: 1rem;
     margin-bottom: 1rem;
 
     h2 {

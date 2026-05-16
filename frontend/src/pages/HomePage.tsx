@@ -292,8 +292,11 @@ function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
           </span>
           <span>{quizSummary}</span>
         </div>
-        <h2 className="dashboard-featured-card__title">{data.course.name}</h2>
-
+        <h2 className="dashboard-featured-card__title">
+          <Link to={`/courses/${data.course.id}`} className="dashboard-featured-card__title-link">
+            {data.course.name}
+          </Link>
+        </h2>
         <div className="dashboard-featured-card__section-label">Recent Assignments</div>
         {assignments.length > 0 ? (
           <div className="dashboard-featured-card__assignments">
