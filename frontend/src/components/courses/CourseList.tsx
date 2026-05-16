@@ -3,6 +3,8 @@ import { api } from '../../services/api';
 import { CourseDto } from '../../types/dto';
 import CourseCard from './CourseCard';
 import CreateCourseModal from './CreateCourseModal';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * CourseList
@@ -77,7 +79,7 @@ export default function CourseList() {
             onClick={() => setModalOpen(true)}
             aria-label="Add course"
           >
-            <i className="fa-solid fa-plus" />
+            <FontAwesomeIcon icon={faPlus} />
           </button>
         </div>
         <p className="course-list__subtitle text-secondary mb-4">

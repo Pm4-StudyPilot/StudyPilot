@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
 import { getSortIcon } from '../../utils/sort';
 import { api } from '../../services/api';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faFile,
+  faFilePdf,
+  faFileWord,
+  faFilePowerpoint,
+  faFileText,
+  IconDefinition,
+} from '@fortawesome/free-solid-svg-icons';
 
 type CourseDocumentsListProps = {
   courseId: string;
@@ -76,19 +85,17 @@ function formatFileType(fileType?: string | null): string {
 /**
  * Returns a Font Awesome icon class for the given document MIME type.
  */
-function getFileIcon(fileType?: string | null): string {
-  const map: Record<string, string> = {
-    'application/pdf': 'fa-regular fa-file-pdf',
-    'application/msword': 'fa-regular fa-file-word',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-      'fa-regular fa-file-word',
-    'application/vnd.ms-powerpoint': 'fa-regular fa-file-powerpoint',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation':
-      'fa-regular fa-file-powerpoint',
-    'text/plain': 'fa-regular fa-file-lines',
+function getFileIcon(fileType?: string | null): IconDefinition {
+  const map: Record<string, IconDefinition> = {
+    'application/pdf': faFilePdf,
+    'application/msword': faFileWord,
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': faFileWord,
+    'application/vnd.ms-powerpoint': faFilePowerpoint,
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': faFilePowerpoint,
+    'text/plain': faFileText,
   };
 
-  return map[fileType ?? ''] || 'fa-regular fa-file';
+  return map[fileType ?? ''] || faFile;
 }
 
 /**
@@ -157,7 +164,7 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
 
     if (!icon) return null;
 
-    return <i className={`fa-solid ${icon} ms-1`} aria-hidden="true" />;
+    return <FontAwesomeIcon icon={icon} aria-hidden="true" className="ms-1" />;
   }
 
   useEffect(() => {
@@ -262,7 +269,7 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
             return (
               <div key={document.id} className="course-detail__document-item">
                 <div className="course-detail__document-icon">
-                  <i className={getFileIcon(document.fileType)} />
+                  <FontAwesomeIcon icon={getFileIcon(document.fileType)} />
                 </div>
                 <div className="course-detail__document-content">
                   <p className="course-detail__document-name mb-1">{document.filename}</p>

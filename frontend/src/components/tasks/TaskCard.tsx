@@ -1,5 +1,14 @@
 import { useState } from 'react';
 import { TaskDto } from '../../types/dto';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faGripVertical,
+  faCalendar,
+  faPenToSquare,
+  faTrash,
+  faChevronLeft,
+  faChevronDown,
+} from '@fortawesome/free-solid-svg-icons';
 
 interface TaskCardProps {
   task: TaskDto;
@@ -65,7 +74,7 @@ export default function TaskCard({
             className="task-card__drag-handle text-secondary"
             aria-label="drag handle"
           >
-            <i className="fa-solid fa-grip-vertical" />
+            <FontAwesomeIcon icon={faGripVertical} />
           </span>
         )}
 
@@ -74,8 +83,9 @@ export default function TaskCard({
           onClick={() => setExpanded((prev) => !prev)}
           aria-expanded={expanded}
         >
-          <i
-            className={`task-card__chevron fa-solid fa-chevron-${expanded ? 'down' : 'right'} me-2 text-secondary`}
+          <FontAwesomeIcon
+            icon={expanded ? faChevronDown : faChevronLeft}
+            className="task-card__chevron me-2 text-secondary"
           />
           <span className="fw-semibold">{task.title}</span>
         </button>
@@ -83,7 +93,7 @@ export default function TaskCard({
         <div className="d-flex align-items-center gap-2 ms-auto">
           {formattedDueDate && (
             <span className="task-card__due-date text-secondary">
-              <i className="fa-regular fa-calendar me-1" />
+              <FontAwesomeIcon icon={faCalendar} className="me-1" />
               {formattedDueDate}
             </span>
           )}
@@ -98,14 +108,14 @@ export default function TaskCard({
             onClick={() => onEdit(task)}
             aria-label="edit task"
           >
-            <i className="fa-solid fa-pen-to-square" />
+            <FontAwesomeIcon icon={faPenToSquare} />
           </button>
           <button
             className="btn btn-link p-0 text-secondary"
             onClick={() => onDelete(task)}
             aria-label="delete task"
           >
-            <i className="fa-solid fa-trash" />
+            <FontAwesomeIcon icon={faTrash} />
           </button>
         </div>
       </div>

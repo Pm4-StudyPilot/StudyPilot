@@ -2,6 +2,13 @@ import { useRef, useState, useEffect } from 'react';
 import { useAuth } from '../../../context/useAuth';
 import { useNavigate, Link } from 'react-router-dom';
 import Logo from '../Logo';
+import {
+  faChevronDown,
+  faChevronUp,
+  faKey,
+  faRightFromBracket,
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 function Avatar({ username, size }: { username: string; size: number }) {
   return (
@@ -54,8 +61,9 @@ export default function Navbar() {
             >
               <Avatar username={user.username} size={32} />
               <span className="navbar__username text-white">{user.username}</span>
-              <i
-                className={`navbar__chevron fa-solid fa-chevron-${open ? 'up' : 'down'} text-secondary`}
+              <FontAwesomeIcon
+                icon={open ? faChevronUp : faChevronDown}
+                className="navbar__chevron text-secondary`"
               />
             </button>
 
@@ -84,7 +92,7 @@ export default function Navbar() {
                   className="dropdown-item d-flex align-items-center gap-2 py-2"
                   onClick={() => setOpen(false)}
                 >
-                  <i className="navbar__item-icon fa-solid fa-key fa-fw text-muted" />
+                  <FontAwesomeIcon icon={faKey} className="navbar__item-icon" />
                   <span className="navbar__item-label">Account Settings</span>
                 </Link>
               </li>
@@ -98,7 +106,7 @@ export default function Navbar() {
                   className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger"
                   onClick={handleLogout}
                 >
-                  <i className="navbar__item-icon fa-solid fa-right-from-bracket fa-fw" />
+                  <FontAwesomeIcon icon={faRightFromBracket} className="navbar__item-icon" />
                   <span className="navbar__item-label">Logout</span>
                 </button>
               </li>

@@ -1,3 +1,4 @@
+import { faArrowUp, faArrowDown, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 /**
  * Returns a visual sort indicator for a given field.
  *
@@ -9,11 +10,11 @@
  * @param activeField Currently active sort field
  * @param direction Current sort direction
  */
-export function getSortIcon<T extends string>(
-  field: T,
-  activeField: T,
+export function getSortIcon(
+  field: string,
+  activeField: string,
   direction: 'asc' | 'desc'
-): string | null {
+): IconDefinition | null {
   if (field !== activeField) return null;
-  return direction === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down';
+  return direction === 'asc' ? faArrowUp : faArrowDown;
 }

@@ -5,6 +5,13 @@ import { api } from '../../services/api';
 import EditCourseModal from './EditCourseModal';
 import DeleteCourseModal from './DeleteCourseModal';
 import ProgressRing from '../shared/ProgressRing';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faChevronDown,
+  faPenToSquare,
+  faTrash,
+  faChevronUp,
+} from '@fortawesome/free-solid-svg-icons';
 
 type CourseCardProps = {
   course: CourseDto;
@@ -124,14 +131,14 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
               onClick={() => setEditOpen(true)}
               aria-label="Edit course"
             >
-              <i className="fa-solid fa-pen-to-square" />
+              <FontAwesomeIcon icon={faPenToSquare} />
             </button>
             <button
               className="btn btn-sm btn-link text-danger p-0"
               onClick={() => setDeleteOpen(true)}
               aria-label="Delete course"
             >
-              <i className="fa-solid fa-trash" />
+              <FontAwesomeIcon icon={faTrash} />
             </button>
             <button
               className="btn btn-sm btn-link text-secondary p-0"
@@ -139,8 +146,9 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
               aria-label="Toggle course"
               aria-expanded={expanded}
             >
-              <i
-                className={`course-card__chevron fa-solid fa-chevron-${expanded ? 'up' : 'down'}`}
+              <FontAwesomeIcon
+                icon={expanded ? faChevronUp : faChevronDown}
+                className="course-card__chevron"
               />
             </button>
           </div>

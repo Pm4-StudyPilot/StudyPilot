@@ -4,6 +4,14 @@ import ProgressRing from '../components/shared/ProgressRing';
 import { api } from '../services/api';
 import { CourseDto, TaskDto } from '../types/dto';
 import DashboardLayout from '../components/shared/layout/DashboardLayout';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faAngleRight,
+  faChevronLeft,
+  faChevronRight,
+  faCircleCheck,
+  faMicrochip,
+} from '@fortawesome/free-solid-svg-icons';
 
 type RingVariant = 'primary' | 'secondary' | 'tertiary' | 'quaternary';
 
@@ -309,10 +317,8 @@ function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
                   <div className="dashboard-assignment__title">{assignment.title}</div>
                   <div className="dashboard-assignment__meta">{assignment.meta}</div>
                 </div>
-                <i
-                  className={`fa-solid ${
-                    assignment.status === 'done' ? 'fa-circle-check' : 'fa-angle-right'
-                  }`}
+                <FontAwesomeIcon
+                  icon={assignment.status === 'done' ? faCircleCheck : faAngleRight}
                 />
               </div>
             ))}
@@ -328,7 +334,7 @@ function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
 
       <div className="dashboard-featured-card__progress">
         <div className="dashboard-featured-card__chip">
-          <i className="fa-solid fa-microchip" />
+          <FontAwesomeIcon icon={faMicrochip} />
         </div>
         <div className="dashboard-featured-card__ring-wrap">
           <ProgressRing
@@ -420,10 +426,10 @@ function DashboardRail({
           </h2>
           <div className="dashboard-rail__month-actions">
             <button type="button" aria-label="Previous month">
-              <i className="fa-solid fa-chevron-left" />
+              <FontAwesomeIcon icon={faChevronLeft} />
             </button>
             <button type="button" aria-label="Next month">
-              <i className="fa-solid fa-chevron-right" />
+              <FontAwesomeIcon icon={faChevronRight} />
             </button>
           </div>
         </div>

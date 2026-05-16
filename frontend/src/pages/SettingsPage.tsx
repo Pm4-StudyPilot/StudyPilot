@@ -9,6 +9,8 @@ import { useAuth } from '../context/useAuth';
 import { useForm } from '../hooks/useForm';
 import { UpdateProfileDto, UserDto } from '../types/dto';
 import { updateProfileSchema } from '../validation/schemas';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 
 export default function SettingsPage() {
   const { user, updateUser } = useAuth();
@@ -60,7 +62,7 @@ export default function SettingsPage() {
           to={location.state?.from || '/'}
           className="back-link text-secondary text-decoration-none d-inline-flex align-items-center gap-2"
         >
-          <i className="fa-solid fa-chevron-left" />
+          <FontAwesomeIcon icon={faChevronLeft} />
           Back
         </Link>
         <div className="settings-shell container">

@@ -9,6 +9,8 @@ import TaskList from '../components/tasks/TaskList';
 import ProgressRing from '../components/shared/ProgressRing';
 import { api } from '../services/api';
 import { CourseDto, QuizDto, TaskDto } from '../types/dto';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronLeft, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -104,7 +106,7 @@ export default function CourseDetailPage() {
           to="/courses"
           className="course-detail__back-link text-secondary text-decoration-none d-inline-flex align-items-center gap-2"
         >
-          <i className="fa-solid fa-chevron-left" />
+          <FontAwesomeIcon icon={faChevronLeft} />
           Back to Courses
         </Link>
 
@@ -185,7 +187,7 @@ export default function CourseDetailPage() {
                       onClick={() => setCreateModalOpen(true)}
                       aria-label="Add task"
                     >
-                      <i className="fa-solid fa-plus" />
+                      <FontAwesomeIcon icon={faPlus} />
                     </button>
                   </div>
 

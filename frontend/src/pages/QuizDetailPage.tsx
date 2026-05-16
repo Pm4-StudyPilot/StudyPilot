@@ -12,7 +12,7 @@ export default function QuizDetailPage() {
           to={courseId ? `/courses/${courseId}` : '/'}
           className="course-detail__back-link text-secondary text-decoration-none d-inline-flex align-items-center gap-2 mb-4"
         >
-          <i className="fa-solid fa-chevron-left" />
+          <FontAwesomeIcon icon={faChevronLeft} />
           Back to course
         </Link>
 

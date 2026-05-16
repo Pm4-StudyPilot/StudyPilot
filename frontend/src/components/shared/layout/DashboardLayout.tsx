@@ -2,6 +2,14 @@ import { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import Logo from '../Logo';
 import { useAuth } from '../../../context/useAuth';
+import {
+  faArrowRightFromBracket,
+  faBookOpen,
+  faGear,
+  faMagnifyingGlass,
+  faTableCellsLarge,
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 type DashboardLayoutProps = {
   activeNav: 'dashboard' | 'courses';
@@ -38,14 +46,14 @@ export default function DashboardLayout({ activeNav, children }: DashboardLayout
               end
               className={({ isActive }) => navItemClass(isActive || activeNav === 'dashboard')}
             >
-              <i className="fa-solid fa-table-cells-large" />
+              <FontAwesomeIcon icon={faTableCellsLarge} />
               <span>Dashboard</span>
             </NavLink>
             <NavLink
               to="/courses"
               className={({ isActive }) => navItemClass(isActive || activeNav === 'courses')}
             >
-              <i className="fa-solid fa-book-open" />
+              <FontAwesomeIcon icon={faBookOpen} />
               <span>Courses</span>
             </NavLink>
           </nav>
@@ -57,7 +65,7 @@ export default function DashboardLayout({ activeNav, children }: DashboardLayout
             className="dashboard-nav__item dashboard-nav__item--logout"
             onClick={handleLogout}
           >
-            <i className="fa-solid fa-arrow-right-from-bracket" />
+            <FontAwesomeIcon icon={faArrowRightFromBracket} />
             <span>Logout</span>
           </button>
           <div className="dashboard-sidebar__username">@{username}</div>
@@ -67,7 +75,7 @@ export default function DashboardLayout({ activeNav, children }: DashboardLayout
       <main className="dashboard-main">
         <header className="dashboard-topbar">
           <label className="dashboard-search" htmlFor="dashboard-search">
-            <i className="fa-solid fa-magnifying-glass" />
+            <FontAwesomeIcon icon={faMagnifyingGlass} />
             <input
               id="dashboard-search"
               type="search"
@@ -82,7 +90,7 @@ export default function DashboardLayout({ activeNav, children }: DashboardLayout
               aria-label="Settings"
               onClick={() => navigate('/settings', { state: { from: location.pathname } })}
             >
-              <i className="fa-solid fa-gear" />
+              <FontAwesomeIcon icon={faGear} />
             </button>
             <div className="dashboard-topbar__divider" />
             <div className="dashboard-avatar" aria-label="Profile">

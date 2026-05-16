@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import { QuizDto } from '../../types/dto';
+import { faCalendar } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 interface QuizCardProps {
   quiz: QuizDto;
@@ -26,7 +28,7 @@ export default function QuizCard({ quiz }: QuizCardProps) {
             </p>
             <div className="d-flex flex-wrap gap-2 align-items-center">
               <span className="quiz-card__meta">
-                <i className="fa-regular fa-calendar me-1" />
+                <FontAwesomeIcon icon={faCalendar} className="me-1" />
                 Added {formattedDate}
               </span>
             </div>
