@@ -19,7 +19,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Suspense fallback={<div className="panel loading">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="panel loading">
+          <div className="spinner"></div>
+        </div>
+      }
+    >
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
