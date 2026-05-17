@@ -153,4 +153,52 @@ documentRouter.get('/course/:courseId', generalLimiter, authenticate, (req, res)
   documentController.listByCourse(req, res)
 );
 
+/**
+ * @openapi
+ * /documents/{id}:
+ *   get:
+ *     tags:
+ *       - Documents
+ *     summary: Download or open a document
+ *     description: |
+ *       Streams the binary content of a stored document back to the client.
+ *       Access is granted to the course owner and to users the course has been
+ *       shared with. Use the `disposition` query parameter to control whether
+ *       browsers should try to open the file inline (e.g. PDFs) or force a download.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Document id
+ *       - in: query
+ *         name: disposition
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [inline, attachment]
+ *           default: inline
+ *         description: Whether to open inline or force a download
+ *     responses:
+ *       200:
+ *         description: Document content streamed successfully.
+ *         content:
+ *           application/octet-stream:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       401:
+ *         description: Unauthorized.
+ *       403:
+ *         description: User has no access to the document's course.
+ *       404:
+ *         description: Document not found.
+ */
+documentRouter.get('/:id', generalLimiter, authenticate, (req, res) =>
+  documentController.download(req, res)
+);
+
 export { documentRouter };
