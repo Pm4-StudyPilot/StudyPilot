@@ -27,6 +27,12 @@ type MockDocumentDownloadRecord = {
   courseId: string;
 };
 
+type MockDocumentDeleteRecord = {
+  bucket: string;
+  objectKey: string;
+  course: { ownerId: string };
+};
+
 /**
  * Mock functions for Prisma and MinIO dependencies.
  */
@@ -44,11 +50,17 @@ const mockDocumentCreate = mock(
 );
 
 const mockDocumentFindMany = mock(async (): Promise<MockDocumentRecord[]> => []);
-const mockDocumentFindUnique = mock(async (): Promise<MockDocumentDownloadRecord | null> => null);
+// findUnique is used by both download and delete code paths; the per-test
+// mockResolvedValueOnce() determines which record shape is returned.
+const mockDocumentFindUnique = mock(
+  async (): Promise<MockDocumentDownloadRecord | MockDocumentDeleteRecord | null> => null
+);
+const mockDocumentDelete = mock(async (): Promise<void> => undefined);
 
 const mockEnsureBucket = mock(async (): Promise<void> => undefined);
 const mockStorageUpload = mock(async (): Promise<void> => undefined);
 const mockStorageDownload = mock(async (): Promise<Readable> => Readable.from([]));
+const mockStorageDelete = mock(async (): Promise<void> => undefined);
 /**
  * Mock Prisma database module.
  */
@@ -61,6 +73,7 @@ mock.module('../config/database', () => ({
       create: mockDocumentCreate,
       findMany: mockDocumentFindMany,
       findUnique: mockDocumentFindUnique,
+      delete: mockDocumentDelete,
     },
   },
 }));
@@ -73,6 +86,7 @@ mock.module('../config/minio', () => ({
     ensureBucket: mockEnsureBucket,
     upload: mockStorageUpload,
     download: mockStorageDownload,
+    delete: mockStorageDelete,
   },
 }));
 
@@ -95,9 +109,11 @@ describe('DocumentService', () => {
     mockDocumentCreate.mockClear();
     mockDocumentFindMany.mockClear();
     mockDocumentFindUnique.mockClear();
+    mockDocumentDelete.mockClear();
     mockEnsureBucket.mockClear();
     mockStorageUpload.mockClear();
     mockStorageDownload.mockClear();
+    mockStorageDelete.mockClear();
   });
 
   /**
@@ -652,6 +668,90 @@ describe('DocumentService', () => {
 
       expect(checkAccess).toHaveBeenCalledWith('course-1', 'user-x');
       expect(mockStorageDownload).not.toHaveBeenCalled();
+    });
+  });
+
+  /**
+   * Test cases for deleteForOwner()
+   *
+   * Access model: only the parent course's owner can delete a document.
+   * Workflow: DB delete first, then storage delete (best-effort).
+   */
+  describe('deleteForOwner', () => {
+    it('should delete the DB record and storage object when the user owns the course', async () => {
+      mockDocumentFindUnique.mockResolvedValueOnce({
+        bucket: 'documents',
+        objectKey: 'courses/course-1/Slides-123.pdf',
+        course: { ownerId: 'user-1' },
+      });
+
+      const service = new DocumentService();
+
+      await service.deleteForOwner('doc-1', 'user-1');
+
+      expect(mockDocumentFindUnique).toHaveBeenCalledWith({
+        where: { id: 'doc-1' },
+        select: {
+          bucket: true,
+          objectKey: true,
+          course: {
+            select: { ownerId: true },
+          },
+        },
+      });
+
+      expect(mockDocumentDelete).toHaveBeenCalledWith({
+        where: { id: 'doc-1' },
+      });
+      expect(mockStorageDelete).toHaveBeenCalledWith(
+        'documents',
+        'courses/course-1/Slides-123.pdf'
+      );
+    });
+
+    it('should throw DOCUMENT_NOT_FOUND when the document does not exist', async () => {
+      mockDocumentFindUnique.mockResolvedValueOnce(null);
+
+      const service = new DocumentService();
+
+      await expect(service.deleteForOwner('doc-missing', 'user-1')).rejects.toThrow(
+        'DOCUMENT_NOT_FOUND'
+      );
+
+      expect(mockDocumentDelete).not.toHaveBeenCalled();
+      expect(mockStorageDelete).not.toHaveBeenCalled();
+    });
+
+    it('should throw DOCUMENT_FORBIDDEN when the user is not the course owner', async () => {
+      mockDocumentFindUnique.mockResolvedValueOnce({
+        bucket: 'documents',
+        objectKey: 'courses/course-1/Slides.pdf',
+        course: { ownerId: 'someone-else' },
+      });
+
+      const service = new DocumentService();
+
+      await expect(service.deleteForOwner('doc-1', 'user-1')).rejects.toThrow('DOCUMENT_FORBIDDEN');
+
+      expect(mockDocumentDelete).not.toHaveBeenCalled();
+      expect(mockStorageDelete).not.toHaveBeenCalled();
+    });
+
+    it('should not fail the request when the storage delete fails', async () => {
+      mockDocumentFindUnique.mockResolvedValueOnce({
+        bucket: 'documents',
+        objectKey: 'courses/course-1/Slides.pdf',
+        course: { ownerId: 'user-1' },
+      });
+      mockStorageDelete.mockRejectedValueOnce(new Error('S3 outage'));
+
+      const service = new DocumentService();
+
+      // Should resolve without throwing — the user-visible state is already correct
+      await service.deleteForOwner('doc-1', 'user-1');
+
+      expect(mockDocumentDelete).toHaveBeenCalledWith({ where: { id: 'doc-1' } });
+      expect(mockStorageDelete).toHaveBeenCalledTimes(1);
     });
   });
 });
