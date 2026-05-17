@@ -392,11 +392,7 @@ function FeaturedCourseCard({
           <span>{quizSummary}</span>
         </div>
 
-        <h2 className="dashboard-featured-card__title">
-          <Link to={`/courses/${data.course.id}`} className="dashboard-featured-card__title-link">
-            {data.course.name}
-          </Link>
-        </h2>
+        <h2 className="dashboard-featured-card__title">{data.course.name}</h2>
 
         <div className="dashboard-featured-card__section-label">{sectionLabel}</div>
 
