@@ -49,7 +49,7 @@ export default function ChangePasswordPage() {
   return (
     <>
       <Navbar />
-      <div className="settings-shell settings-shell--narrow container">
+      <div className="settings-shell settings-shell--narrow container mt-5">
         <div className="settings-page-header settings-page-header--compact">
           <p className="settings-page-header__eyebrow">Security</p>
           <h1>Change Password</h1>

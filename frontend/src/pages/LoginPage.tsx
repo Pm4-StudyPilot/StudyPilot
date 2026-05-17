@@ -88,7 +88,7 @@ export default function LoginPage() {
 
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="auth-card auth-card--narrow card shadow">
+      <div className="auth-card auth-card--narrow card">
         <div className="card-body p-4">
           <h2 className="text-center mb-4">
             <Logo />

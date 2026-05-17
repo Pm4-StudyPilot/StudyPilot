@@ -21,10 +21,10 @@ import { useAuth } from '../../../context/useAuth';
 type DashboardLayoutProps = {
   activeNav: 'dashboard' | 'courses';
   children: ReactNode;
-  showSearch?: boolean;
-  searchValue?: string;
-  onSearchChange?: (value: string) => void;
-  searchPlaceholder?: string;
+  showSearch: boolean;
+  searchValue: string;
+  onSearchChange: (event: string) => void;
+  searchPlaceholder: string;
 };
 
 /**
@@ -97,7 +97,7 @@ export default function DashboardLayout({
         <div className="dashboard-sidebar__footer">
           <button
             type="button"
-            className="dashboard-nav__item dashboard-nav__item--logout"
+            className="panel muted hover dashboard-nav__item dashboard-nav__item--logout"
             onClick={handleLogout}
           >
             <i className="fa-solid fa-arrow-right-from-bracket" />
@@ -110,7 +110,7 @@ export default function DashboardLayout({
       <main className="dashboard-main">
         <header className="dashboard-topbar">
           {showSearch && (
-            <label className="dashboard-search" htmlFor="dashboard-search">
+            <label className="panel muted active dashboard-search" htmlFor="dashboard-search">
               <i className="fa-solid fa-magnifying-glass" />
               <input
                 id="dashboard-search"

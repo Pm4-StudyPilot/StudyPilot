@@ -1,6 +1,6 @@
 .task-card {
   background: var(--color-surface);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border);
 
   &__drag-handle {
     cursor: grab;
@@ -18,7 +18,7 @@
   }
 
   &__description {
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid var(--color-divider);
     font-size: var(--font-size-base);
   }
 }

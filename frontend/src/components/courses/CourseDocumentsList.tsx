@@ -242,7 +242,7 @@ export default function CourseDocumentsList({
    * - filtered document results
    */
   return (
-    <div className="course-detail__documents">
+    <div className="panel course-detail__documents p-4">
       <div className="course-detail__documents-header">
         <h3 className="text-white h5 mb-3">Uploaded documents</h3>
 
@@ -302,7 +302,7 @@ export default function CourseDocumentsList({
       {hasError && <div className="alert alert-danger mb-0">{error}</div>}
 
       {!isLoading && !hasError && documents.length === 0 && (
-        <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
+        <div className="panel  course-detail__placeholder p-4 text-secondary text-center">
           No documents uploaded yet.
         </div>
       )}

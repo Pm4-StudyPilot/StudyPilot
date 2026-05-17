@@ -383,7 +383,7 @@ function FeaturedCourseCard({
   const sectionLabel = searchTerm.trim() ? 'Search Results' : 'Recent Assignments';
 
   return (
-    <Link to={`/courses/${data.course.id}`} className="dashboard-featured-card">
+    <Link to={`/courses/${data.course.id}`} className="dashboard-featured-card card">
       <div className="dashboard-featured-card__content">
         <div className="dashboard-featured-card__eyebrow">
           <span className="dashboard-pill">
@@ -516,7 +516,7 @@ function DashboardRail({
 
   return (
     <aside className="dashboard-rail">
-      <section className="dashboard-rail__panel">
+      <section className="dashboard-rail__panel card dark">
         <div className="dashboard-rail__header">
           <h2>
             {currentDate.toLocaleDateString('en-US', {
@@ -557,7 +557,7 @@ function DashboardRail({
         </div>
       </section>
 
-      <section className="dashboard-rail__panel">
+      <section className="dashboard-rail__panel card dark">
         <h2 className="dashboard-rail__section-title">Upcoming Deadlines</h2>
         {deadlines.length > 0 ? (
           <div className="dashboard-deadlines">
@@ -588,11 +588,11 @@ function DashboardRail({
       </section>
 
       <div className="dashboard-stats">
-        <div className="dashboard-stat-card">
+        <div className="dashboard-stat-card card light">
           <strong>{dueThisWeek}</strong>
           <span>Due this week</span>
         </div>
-        <div className="dashboard-stat-card dashboard-stat-card--highlight">
+        <div className="dashboard-stat-card card light dashboard-stat-card--highlight">
           <strong>{averageProgress}%</strong>
           <span>Avg progress</span>
         </div>
@@ -762,7 +762,7 @@ export default function HomePage() {
           )}
 
           {loading && (
-            <div className="dashboard-state dashboard-state--loading">
+            <div className="dashboard-state panel dashboard-state--loading">
               <div className="spinner-border" role="status">
                 <span className="visually-hidden">Loading dashboard...</span>
               </div>
@@ -770,7 +770,7 @@ export default function HomePage() {
           )}
 
           {!loading && error && (
-            <div className="dashboard-state dashboard-state--error">{error}</div>
+            <div className="dashboard-state panel dashboard-state--error">{error}</div>
           )}
 
           {!loading && !error && featuredCourse && (
@@ -796,7 +796,7 @@ export default function HomePage() {
             )}
 
           {!loading && !error && dashboardCourses.length === 0 && (
-            <div className="dashboard-state">
+            <div className="dashboard-state panel">
               <h2>No courses yet</h2>
               <p>
                 The backend returned no courses for this user, so the dashboard has nothing to

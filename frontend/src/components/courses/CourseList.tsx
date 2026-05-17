@@ -215,11 +215,11 @@ export default function CourseList({ searchTerm = '' }: CourseListProps) {
 
   return (
     <>
-      <div className="course-panel rounded p-4">
+      <div className="panel background">
         <div className="d-flex align-items-center justify-content-between mb-1">
           <h2 className="course-list__title text-white fw-bold mb-0">My Courses</h2>
           <button
-            className="btn btn-sm btn-outline-secondary"
+            className="btn btn-sm btn-primary bold"
             onClick={() => setModalOpen(true)}
             aria-label="Add course"
           >
