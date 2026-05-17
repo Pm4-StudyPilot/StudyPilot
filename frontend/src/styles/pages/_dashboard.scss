@@ -208,6 +208,9 @@
   grid-template-columns: minmax(0, 1.25fr) 290px;
   gap: 2rem;
   padding: 2rem;
+  &:hover {
+    color: inherit;
+  }
 
   &__content {
     min-width: 0;

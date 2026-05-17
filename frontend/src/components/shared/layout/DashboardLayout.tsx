@@ -21,6 +21,10 @@ import { useAuth } from '../../../context/useAuth';
 type DashboardLayoutProps = {
   activeNav: 'dashboard' | 'courses';
   children: ReactNode;
+  showSearch: boolean;
+  searchValue: string;
+  onSearchChange: (event: string) => void;
+  searchPlaceholder: string;
 };
 
 /**
