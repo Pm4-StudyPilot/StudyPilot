@@ -1,10 +1,12 @@
 import { prisma } from '../config/database';
 import { CourseDto, CourseTaskProgressDto } from '../types';
 import type { PrismaClient } from '../generated/prisma/client';
+import { resolveCourseColor } from '../utils/courseColor';
 
 const COURSE_OVERVIEW_SELECT = {
   id: true,
   name: true,
+  color: true,
   ownerId: true,
   createdAt: true,
   updatedAt: true,
@@ -18,6 +20,7 @@ const COURSE_OVERVIEW_SELECT = {
 type CourseOverviewRecord = {
   id: string;
   name: string;
+  color: string | null;
   ownerId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -49,14 +52,16 @@ export class CourseService {
 
     return {
       ...courseFields,
+      color: resolveCourseColor(course.color, `${course.id}:${course.name}`),
       taskProgress: this.buildTaskProgress(tasks),
     };
   }
 
-  async create(name: string, ownerId: string): Promise<CourseDto> {
+  async create(name: string, ownerId: string, color?: string | null): Promise<CourseDto> {
     const course = await this.db.course.create({
       data: {
         name,
+        color: resolveCourseColor(color, `${ownerId}:${name}`),
         ownerId,
       },
       select: COURSE_OVERVIEW_SELECT,
@@ -87,7 +92,12 @@ export class CourseService {
     return course ? this.toCourseDto(course) : null;
   }
 
-  async updateForOwner(id: string, ownerId: string, name: string): Promise<CourseDto | null> {
+  async updateForOwner(
+    id: string,
+    ownerId: string,
+    name: string,
+    color?: string | null
+  ): Promise<CourseDto | null> {
     const existing = await this.findByIdForOwner(id, ownerId);
     if (!existing) {
       return null;
@@ -95,7 +105,10 @@ export class CourseService {
 
     const course = await this.db.course.update({
       where: { id },
-      data: { name },
+      data: {
+        name,
+        ...(color !== undefined ? { color: resolveCourseColor(color, `${id}:${name}`) } : {}),
+      },
       select: COURSE_OVERVIEW_SELECT,
     });
 

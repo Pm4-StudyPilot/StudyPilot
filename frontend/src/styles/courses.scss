@@ -47,6 +47,15 @@
     font-size: 0.95rem;
   }
 
+  &__color-dot {
+    border-radius: 999px;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+    display: inline-block;
+    flex-shrink: 0;
+    height: 0.7rem;
+    width: 0.7rem;
+  }
+
   &__date {
     font-size: 0.78rem;
   }
@@ -55,8 +64,47 @@
     font-size: 0.75rem;
   }
 
+  &__tasks-panel {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 100%),
+      rgba(15, 16, 32, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  &__tasks-toolbar {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 0.9rem;
+  }
+
+  &__section-label {
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  &__section-caption {
+    font-size: 0.82rem;
+    line-height: 1.5;
+    max-width: 34ch;
+  }
+
   &__empty {
     font-size: 0.85rem;
+  }
+
+  &__empty-state {
+    background-color: rgba(20, 22, 36, 0.76);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+  }
+
+  &__view-link {
+    font-weight: 600;
+
+    &:hover {
+      color: #fff !important;
+    }
   }
 }
 
@@ -120,6 +168,32 @@
   }
 }
 
+.course-document-item {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0) 100%),
+    rgba(13, 15, 27, 0.5);
+
+  &__open {
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    flex-shrink: 0;
+    min-width: 5.5rem;
+
+    &:hover,
+    &:focus-visible {
+      background-color: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.28);
+      color: #fff;
+    }
+
+    &:disabled {
+      background-color: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.65);
+    }
+  }
+}
+
 .course-feed {
   right: 0;
   top: 100%;
@@ -135,5 +209,349 @@
   @extend .text-white;
   &:hover {
     background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.course-color-field {
+  &__swatches {
+    display: grid;
+    gap: 0.65rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  &__swatch {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.9rem;
+    height: 2.5rem;
+    transition:
+      transform 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.24);
+      transform: translateY(-1px);
+    }
+  }
+
+  &__swatch--selected {
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  &__custom {
+    align-items: center;
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  &__custom .form-control-color {
+    background-color: #1e2030;
+    border-color: #2e3050;
+    border-radius: 0.85rem;
+    cursor: pointer;
+    height: 2.7rem;
+    min-width: 3.5rem;
+    padding: 0.25rem;
+  }
+
+  &__value {
+    color: #fff;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.84rem;
+    letter-spacing: 0.04em;
+  }
+
+  &__hint {
+    color: #8f96bf;
+  }
+}
+
+// Deadline Calendar
+.deadline-calendar {
+  background:
+    linear-gradient(180deg, rgba(108, 99, 255, 0.12) 0%, rgba(108, 99, 255, 0) 28%),
+    #151726;
+  border: 1px solid #2e3050;
+  box-shadow: 0 22px 40px rgba(8, 10, 24, 0.35);
+
+  &__eyebrow {
+    color: #8f96bf;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+  }
+
+  &__summary,
+  &__detail-card,
+  &__surface {
+    background-color: rgba(30, 32, 48, 0.92);
+    border: 1px solid rgba(108, 99, 255, 0.14);
+  }
+
+  &__summary {
+    min-width: 180px;
+  }
+
+  &__weekdays,
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  &__month-frame {
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+  }
+
+  &__weekday {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  &__day {
+    align-items: flex-start;
+    background-color: rgba(15, 16, 32, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    justify-content: space-between;
+    min-height: 78px;
+    padding: 0.75rem 0.65rem;
+    text-align: left;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease,
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:hover {
+      border-color: rgba(108, 99, 255, 0.45);
+      background-color: rgba(34, 36, 55, 0.94);
+      transform: translateY(-1px);
+    }
+  }
+
+  &__day--outside {
+    color: rgba(173, 181, 189, 0.6);
+    background-color: rgba(18, 20, 32, 0.4);
+  }
+
+  &__day--selected {
+    border-color: rgba(108, 99, 255, 0.9);
+    box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.3);
+  }
+
+  &__day--today {
+    background-color: rgba(48, 54, 84, 0.94);
+  }
+
+  &__day--active {
+    border-color: rgba(120, 130, 214, 0.25);
+  }
+
+  &__day--overdue {
+    box-shadow: inset 0 0 0 1px rgba(220, 53, 69, 0.18);
+  }
+
+  &__day--today.deadline-calendar__day--active {
+    box-shadow: inset 0 0 0 1px rgba(13, 110, 253, 0.22);
+  }
+
+  &__day-number {
+    font-size: 0.96rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  &__day-footer {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.4rem;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  &__day-count {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0.28rem 0.5rem;
+  }
+
+  &__day-swatches {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.18rem;
+  }
+
+  &__day-course-dot,
+  &__course-dot {
+    border-radius: 999px;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  &__day-course-dot {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+    height: 0.5rem;
+    width: 0.5rem;
+  }
+
+  &__day-more {
+    color: #adb5bd;
+    font-size: 0.65rem;
+    font-weight: 700;
+  }
+
+  &__course-dot {
+    height: 0.42rem;
+    width: 0.42rem;
+  }
+
+  &__info-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+
+  &__summary-pill {
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+    color: #adb5bd;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.4rem 0.7rem;
+    white-space: nowrap;
+  }
+
+  &__empty-state {
+    background-color: rgba(15, 16, 32, 0.55);
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    font-size: 0.92rem;
+  }
+
+  &__task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  &__task-card {
+    background:
+      linear-gradient(180deg, rgba(108, 99, 255, 0.08) 0%, rgba(108, 99, 255, 0) 100%),
+      rgba(15, 16, 32, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  &__chip {
+    border-radius: 999px;
+    display: inline-flex;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    padding: 0.38rem 0.62rem;
+  }
+
+  &__chip--course {
+    align-items: center;
+    background-color: rgba(108, 99, 255, 0.12);
+    border: 1px solid rgba(108, 99, 255, 0.2);
+    color: #fff;
+    gap: 0.42rem;
+  }
+
+  &__chip--default {
+    background-color: rgba(173, 181, 189, 0.12);
+    border: 1px solid rgba(173, 181, 189, 0.18);
+    color: #ced4da;
+  }
+
+  &__chip--today {
+    background-color: rgba(13, 110, 253, 0.14);
+    border: 1px solid rgba(13, 110, 253, 0.22);
+    color: #86beff;
+  }
+
+  &__chip--soon {
+    background-color: rgba(240, 173, 78, 0.16);
+    border: 1px solid rgba(240, 173, 78, 0.25);
+    color: #ffd695;
+  }
+
+  &__chip--overdue {
+    background-color: rgba(220, 53, 69, 0.16);
+    border: 1px solid rgba(220, 53, 69, 0.25);
+    color: #ff9ea8;
+  }
+
+  &__task-title {
+    font-size: 0.98rem;
+    line-height: 1.4;
+  }
+
+  &__task-description,
+  &__task-date {
+    font-size: 0.84rem;
+    line-height: 1.5;
+  }
+
+  &__task-link {
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+
+    &:hover {
+      color: #fff;
+    }
+  }
+}
+
+@media (max-width: 767.98px) {
+  .deadline-calendar {
+    padding: 1rem !important;
+
+    &__weekdays,
+    &__grid {
+      gap: 0.4rem;
+      min-width: 32rem;
+    }
+
+    &__weekday {
+      font-size: 0.68rem;
+      letter-spacing: 0.04em;
+    }
+
+    &__day {
+      border-radius: 0.85rem;
+      min-height: 68px;
+      padding: 0.6rem 0.5rem;
+    }
+
+    &__day-number {
+      font-size: 0.88rem;
+    }
+
+    &__day-count {
+      font-size: 0.68rem;
+      padding: 0.24rem 0.4rem;
+    }
+  }
+
+  .course-color-field {
+    &__swatches {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
   }
 }

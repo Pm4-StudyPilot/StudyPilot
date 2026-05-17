@@ -1,71 +1,44 @@
-import { useEffect, useState } from 'react';
-import { api } from '../../services/api';
+import { useState } from 'react';
 import { CourseDto } from '../../types/dto';
 import CourseCard from './CourseCard';
 import CreateCourseModal from './CreateCourseModal';
 
+interface CourseListProps {
+  courses: CourseDto[];
+  loading: boolean;
+  error: string;
+  onCreated: (course: CourseDto) => void;
+  onUpdated: (course: CourseDto) => void;
+  onDeleted: (id: string) => void;
+}
+
 /**
  * CourseList
  *
- * Fetches and displays all courses belonging to the authenticated user.
+ * Displays the authenticated user's courses inside the dashboard.
  *
  * Responsibilities:
- * - Fetch the list of courses from the backend on mount
+ * - Render the current course list supplied by the dashboard page
  * - Render a CourseCard for each course
  * - Show loading, error, and empty states
- * - Open the CreateCourseModal and prepend the new course to the list on success
- * - Update the course in the list when it is edited
+ * - Open the CreateCourseModal and notify the parent when a course is created
+ * - Pass update and delete events back to the parent state owner
  *
  * Workflow:
- * 1. GET /courses is called on mount
+ * 1. HomePage loads the course data and passes it into this component
  * 2. Courses are rendered as a list of CourseCard components
  * 3. The "+" button opens the CreateCourseModal
- * 4. On successful creation the new course is prepended without refetching
- * 5. On successful edit the matching course is replaced in the list without refetching
+ * 4. Create, edit, and delete events are lifted back to HomePage
  */
-export default function CourseList() {
-  const [courses, setCourses] = useState<CourseDto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+export default function CourseList({
+  courses,
+  loading,
+  error,
+  onCreated,
+  onUpdated,
+  onDeleted,
+}: CourseListProps) {
   const [modalOpen, setModalOpen] = useState(false);
-
-  useEffect(() => {
-    api
-      .get<CourseDto[]>('/courses')
-      .then(setCourses)
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Failed to load courses');
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  /**
-   * Handles a newly created course.
-   *
-   * Prepends the course to the existing list and closes the modal.
-   */
-  function handleCreated(course: CourseDto) {
-    setCourses((prev) => [course, ...prev]);
-    setModalOpen(false);
-  }
-
-  /**
-   * Handles an updated course.
-   *
-   * Replaces the matching course in the list with the updated version.
-   */
-  function handleUpdated(updated: CourseDto) {
-    setCourses((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
-  }
-
-  /**
-   * Handles a deleted course.
-   *
-   * Removes the matching course from the list by id.
-   */
-  function handleDeleted(id: string) {
-    setCourses((prev) => prev.filter((c) => c.id !== id));
-  }
 
   return (
     <>
@@ -106,14 +79,20 @@ export default function CourseList() {
             <CourseCard
               key={course.id}
               course={course}
-              onUpdated={handleUpdated}
-              onDeleted={handleDeleted}
+              onUpdated={onUpdated}
+              onDeleted={onDeleted}
             />
           ))}
       </div>
 
       {modalOpen && (
-        <CreateCourseModal onClose={() => setModalOpen(false)} onCreated={handleCreated} />
+        <CreateCourseModal
+          onClose={() => setModalOpen(false)}
+          onCreated={(course) => {
+            onCreated(course);
+            setModalOpen(false);
+          }}
+        />
       )}
     </>
   );

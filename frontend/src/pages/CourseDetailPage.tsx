@@ -8,6 +8,7 @@ import TaskList from '../components/tasks/TaskList';
 import CourseFeed, { CourseFeedItem } from '../components/courses/CourseFeed';
 import { api } from '../services/api';
 import { CourseDto, QuizDto, TaskDto } from '../types/dto';
+import { withOpacity } from '../utils/courseColors';
 
 /**
  * CourseDetailPage
@@ -215,10 +216,23 @@ export default function CourseDetailPage() {
 
         {/* Main course content */}
         {!loading && !error && course && (
-          <div className="course-panel rounded p-4">
+          <div
+            className="course-panel rounded p-4"
+            style={{
+              borderColor: withOpacity(course.color, 0.24),
+              boxShadow: `inset 3px 0 0 ${course.color}`,
+            }}
+          >
             {/* Course header */}
             <div className="d-flex align-items-center justify-content-between mb-1">
-              <h2 className="text-white fw-bold mb-0">{course.name}</h2>
+              <div className="d-flex align-items-center gap-2">
+                <span
+                  className="course-card__color-dot"
+                  style={{ backgroundColor: course.color }}
+                  aria-hidden="true"
+                />
+                <h2 className="text-white fw-bold mb-0">{course.name}</h2>
+              </div>
             </div>
 
             <p className="course-detail__date text-secondary mb-4">Added {formattedDate}</p>

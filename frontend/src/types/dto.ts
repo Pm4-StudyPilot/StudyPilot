@@ -18,6 +18,7 @@ export interface UpdateProfileDto {
 export interface CourseDto {
   id: string;
   name: string;
+  color: string;
   ownerId: string;
   createdAt: string;
   updatedAt: string;
