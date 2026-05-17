@@ -34,7 +34,7 @@ type DashboardLayoutProps = {
  * matches the current page.
  */
 function navItemClass(isActive: boolean) {
-  return `dashboard-nav__item${isActive ? ' dashboard-nav__item--active' : ''}`;
+  return `panel hover muted dashboard-nav__item${isActive ? ' active' : ''}`;
 }
 
 /**
