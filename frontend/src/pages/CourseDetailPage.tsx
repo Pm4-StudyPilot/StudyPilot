@@ -203,15 +203,6 @@ export default function CourseDetailPage() {
                 </div>
 
                 <h1 className="course-detail__title">{course.name}</h1>
-
-                <div className="course-detail__support-note">
-                  <div className="course-detail__support-label">Backend data available</div>
-                  <p className="mb-0">
-                    This view shows real course, task progress, task list, quiz, and document data
-                    from the backend. Instructor and course description are still not exposed by the
-                    API.
-                  </p>
-                </div>
               </div>
 
               <aside className="course-detail__progress-card">

@@ -741,11 +741,6 @@ export default function HomePage() {
             <div>
               <p className="dashboard-page-header__eyebrow">Academic overview</p>
               <h1>My Courses</h1>
-              <p className="dashboard-page-header__subline">
-                {normalizedDashboardSearch
-                  ? `${filteredDashboardCourses.length} of ${dashboardCourses.length} courses shown`
-                  : `${dashboardCourses.length} courses loaded - Credits unavailable from backend`}
-              </p>
             </div>
           </header>
 
