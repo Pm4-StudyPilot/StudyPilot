@@ -201,4 +201,39 @@ documentRouter.get('/:id', generalLimiter, authenticate, (req, res) =>
   documentController.download(req, res)
 );
 
+/**
+ * @openapi
+ * /documents/{id}:
+ *   delete:
+ *     tags:
+ *       - Documents
+ *     summary: Delete a document
+ *     description: |
+ *       Permanently deletes a document. Removes the database record first,
+ *       then removes the underlying object from MinIO storage. Only the
+ *       owner of the parent course can delete a document — shared
+ *       collaborators have read access only.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Document id
+ *     responses:
+ *       204:
+ *         description: Document deleted successfully.
+ *       401:
+ *         description: Unauthorized.
+ *       403:
+ *         description: User is not the course owner.
+ *       404:
+ *         description: Document not found.
+ */
+documentRouter.delete('/:id', sensitiveLimiter, authenticate, (req, res) =>
+  documentController.deleteById(req, res)
+);
+
 export { documentRouter };
