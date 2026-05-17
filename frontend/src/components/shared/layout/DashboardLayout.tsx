@@ -19,7 +19,7 @@ import { useAuth } from '../../../context/useAuth';
  * allowing each page to define its own search behavior.
  */
 type DashboardLayoutProps = {
-  activeNav: 'dashboard' | 'courses';
+  activeNav: 'dashboard' | 'courses' | 'settings';
   children: ReactNode;
   showSearch?: boolean;
   searchValue?: string;
@@ -91,6 +91,14 @@ export default function DashboardLayout({
               <i className="fa-solid fa-book-open" />
               <span>Courses</span>
             </NavLink>
+
+            <NavLink
+              to="/settings"
+              className={({ isActive }) => navItemClass(isActive || activeNav === 'settings')}
+            >
+              <i className="fa-solid fa-gear" />
+              <span>Settings</span>
+            </NavLink>
           </nav>
         </div>
 
@@ -108,7 +116,7 @@ export default function DashboardLayout({
       </aside>
 
       <main className="dashboard-main">
-        <header className="dashboard-topbar">
+        <header className={`dashboard-topbar${!showSearch ? ' dashboard-topbar--no-search' : ''}`}>
           {showSearch && (
             <label className="dashboard-search" htmlFor="dashboard-search">
               <i className="fa-solid fa-magnifying-glass" />

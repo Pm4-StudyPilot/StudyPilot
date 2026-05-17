@@ -37,14 +37,34 @@
   }
 }
 
+.settings-card-stack {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 1080px;
+}
+
 .settings-card {
+  width: 100%;
+  overflow: hidden;
   border: 1px solid var(--color-border);
+  border-radius: 1.5rem;
+
   background: linear-gradient(180deg, rgba(35, 35, 41, 0.98), rgba(32, 32, 37, 0.94));
+
   box-shadow: var(--shadow-soft);
+
+  &__content {
+    padding: 1.75rem;
+  }
+
+  &__header {
+    margin-bottom: 1.5rem;
+  }
 
   &__title {
     margin-bottom: 0.35rem;
-    font-size: 1.3rem;
+    font-size: 1.5rem;
+    font-weight: 800;
     letter-spacing: -0.03em;
   }
 
@@ -68,7 +88,9 @@
 .auth-card {
   &--themed {
     border: 1px solid var(--color-border);
+
     background: linear-gradient(180deg, rgba(35, 35, 41, 0.98), rgba(32, 32, 37, 0.94));
+
     box-shadow: var(--shadow-soft);
   }
 

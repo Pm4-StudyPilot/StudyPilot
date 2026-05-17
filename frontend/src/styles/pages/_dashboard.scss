@@ -110,7 +110,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
+  min-height: 4.75rem;
   margin-bottom: 2.5rem;
+
+  &--no-search {
+    justify-content: flex-end;
+  }
 
   &__actions {
     display: flex;
