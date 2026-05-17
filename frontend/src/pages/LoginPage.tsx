@@ -87,13 +87,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="auth-card auth-card--narrow card shadow">
+    <main className="auth-shell">
+      <section className="auth-card auth-card--themed auth-card--narrow card">
         <div className="card-body p-4">
-          <h2 className="text-center mb-4">
+          <div className="auth-card__brand-wrap text-center">
             <Logo />
-          </h2>
-          <h5 className="text-center mb-3">Sign In</h5>
+          </div>
+
+          <p className="auth-card__eyebrow">Welcome back</p>
+          <h1 className="auth-card__title text-center mb-2">Sign In</h1>
+          <p className="auth-card__lead text-center mb-4">Log in to continue to StudyPilot.</p>
 
           {logoutMessage && (
             <div className="alert alert-success" role="alert">
@@ -102,7 +105,6 @@ export default function LoginPage() {
           )}
 
           <Form onSubmit={handleSubmit} error={error}>
-            {/* Identifier (Email or Username) */}
             <InputField
               label="Email or Username"
               type="text"
@@ -112,7 +114,6 @@ export default function LoginPage() {
               autoComplete="username"
             />
 
-            {/* Password */}
             <PasswordField
               label="Password"
               showToggle={true}
@@ -122,23 +123,24 @@ export default function LoginPage() {
               autoComplete="current-password"
             />
 
-            {/* Submit button */}
             <Button type="submit" className="w-100" loading={loading}>
               Login
             </Button>
           </Form>
 
-          {/* Navigation links */}
           <div className="text-center mt-3">
-            <Link to="/register">Need an account? Register</Link>
+            <Link to="/register" className="auth-card__muted-link">
+              Need an account? Register
+            </Link>
           </div>
+
           <div className="text-center mt-2">
-            <Link to="/forgot-password" className="auth-card__muted-link text-muted">
+            <Link to="/forgot-password" className="auth-card__muted-link">
               Forgot your password?
             </Link>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
