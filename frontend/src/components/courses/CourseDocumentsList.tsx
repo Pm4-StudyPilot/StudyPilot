@@ -242,7 +242,7 @@ export default function CourseDocumentsList({
    * - filtered document results
    */
   return (
-    <div className="course-detail__documents rounded p-3 h-100">
+    <div className="course-detail__documents">
       <div className="course-detail__documents-header">
         <h3 className="text-white h5 mb-3">Uploaded documents</h3>
 
