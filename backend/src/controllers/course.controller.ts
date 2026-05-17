@@ -9,7 +9,7 @@ export class CourseController {
   async list(req: Request, res: Response): Promise<void> {
     try {
       const authUser = req.user as AuthenticatedUser;
-      const courses = await courseService.listByOwner(authUser.id);
+      const courses = await courseService.listByUser(authUser.id);
       res.json(courses);
     } catch (error: unknown) {
       logger.error({ error }, '[CourseController#list]');
@@ -28,7 +28,7 @@ export class CourseController {
         return;
       }
 
-      const course = await courseService.findByIdForOwner(id, authUser.id);
+      const course = await courseService.findByIdForUser(id, authUser.id);
       if (!course) {
         res.status(404).json({ message: 'Course not found' });
         return;

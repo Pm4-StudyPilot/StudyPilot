@@ -25,6 +25,18 @@ vi.mock('../pages/ChangePasswordPage', () => ({
   default: () => <div data-testid="change-password-page">Change Password Page</div>,
 }));
 
+vi.mock('../pages/CourseDetailPage', () => ({
+  default: () => <div data-testid="course-detail-page">Course Detail Page</div>,
+}));
+
+vi.mock('../pages/CoursesPage', () => ({
+  default: () => <div data-testid="courses-page">Courses Page</div>,
+}));
+
+vi.mock('../pages/SettingsPage', () => ({
+  default: () => <div data-testid="settings-page">Settings Page</div>,
+}));
+
 describe('App', () => {
   it('renders login page on /login route', () => {
     render(

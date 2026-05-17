@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ProgressRing from '../components/shared/ProgressRing';
+import DashboardLayout from '../components/shared/layout/DashboardLayout';
 import { api } from '../services/api';
 import { CourseDto, TaskDto } from '../types/dto';
-import DashboardLayout from '../components/shared/layout/DashboardLayout';
 
 type RingVariant = 'primary' | 'secondary' | 'tertiary' | 'quaternary';
 
@@ -12,6 +12,13 @@ type DashboardAssignment = {
   title: string;
   meta: string;
   status: 'urgent' | 'done';
+};
+
+type DashboardSearchMatch = {
+  id: string;
+  title: string;
+  meta: string;
+  type: 'task' | 'document' | 'quiz';
 };
 
 type DocumentDto = {
@@ -55,10 +62,16 @@ type DeadlineItem = {
 const COURSE_VARIANTS: RingVariant[] = ['primary', 'secondary', 'tertiary', 'quaternary'];
 const WEEKDAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
+/**
+ * Returns a visual progress variant based on the course index.
+ */
 function getVariant(index: number): RingVariant {
   return COURSE_VARIANTS[index % COURSE_VARIANTS.length];
 }
 
+/**
+ * Builds the visible calendar days for the current dashboard month.
+ */
 function buildCalendarDays(currentDate: Date) {
   const firstOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const startOffset = (firstOfMonth.getDay() + 6) % 7;
@@ -80,6 +93,9 @@ function buildCalendarDays(currentDate: Date) {
   });
 }
 
+/**
+ * Formats a task due date as a readable time label.
+ */
 function formatDeadlineTime(value: string | null) {
   if (!value) return 'No due time';
 
@@ -89,6 +105,9 @@ function formatDeadlineTime(value: string | null) {
   });
 }
 
+/**
+ * Formats a task due date as a short month/day label.
+ */
 function formatShortDate(value: string | null) {
   if (!value) return 'No due date';
 
@@ -98,6 +117,9 @@ function formatShortDate(value: string | null) {
   });
 }
 
+/**
+ * Creates the small metadata line shown below a dashboard assignment.
+ */
 function createTaskMeta(task: TaskDto) {
   if (task.status === 'DONE') {
     return `Completed - ${task.priority.toLowerCase()} priority`;
@@ -110,6 +132,9 @@ function createTaskMeta(task: TaskDto) {
   return `${task.status.replace('_', ' ').toLowerCase()} - ${task.priority.toLowerCase()} priority`;
 }
 
+/**
+ * Selects the most relevant assignments for the featured course card.
+ */
 function buildFeaturedAssignments(tasks: TaskDto[]): DashboardAssignment[] {
   return [...tasks]
     .sort((a, b) => {
@@ -134,6 +159,9 @@ function buildFeaturedAssignments(tasks: TaskDto[]): DashboardAssignment[] {
     }));
 }
 
+/**
+ * Builds the support text shown on compact course cards.
+ */
 function buildCourseSupportMeta(data: DashboardCourseData) {
   const nextTask = [...data.tasks]
     .filter((task) => task.status !== 'DONE')
@@ -167,6 +195,57 @@ function buildCourseSupportMeta(data: DashboardCourseData) {
   return 'No tasks, quizzes, or documents available';
 }
 
+/**
+ * Builds visible search result items for the featured dashboard card.
+ *
+ * The dashboard search can match tasks, documents, and quizzes.
+ * These matches are shown instead of the normal assignment preview
+ * while a search term is active.
+ */
+function getDashboardMatches(
+  data: DashboardCourseData,
+  searchTerm: string
+): DashboardSearchMatch[] {
+  const normalized = searchTerm.trim().toLowerCase();
+  if (!normalized) return [];
+
+  const taskMatches = data.tasks
+    .filter((task) => task.title.toLowerCase().includes(normalized))
+    .map((task) => ({
+      id: task.id,
+      title: task.title,
+      meta: 'Task',
+      type: 'task' as const,
+    }));
+
+  const documentMatches = data.documents
+    .filter(
+      (document) =>
+        document.filename.toLowerCase().includes(normalized) ||
+        document.fileType?.toLowerCase().includes(normalized)
+    )
+    .map((document) => ({
+      id: document.id,
+      title: document.filename,
+      meta: 'Document',
+      type: 'document' as const,
+    }));
+
+  const quizMatches = data.quizzes
+    .filter((quiz) => quiz.title.toLowerCase().includes(normalized))
+    .map((quiz) => ({
+      id: quiz.id,
+      title: quiz.title,
+      meta: 'Quiz',
+      type: 'quiz' as const,
+    }));
+
+  return [...taskMatches, ...documentMatches, ...quizMatches].slice(0, 2);
+}
+
+/**
+ * Builds upcoming deadline entries from all dashboard course tasks.
+ */
 function buildDeadlineItems(
   courses: DashboardCourseData[],
   currentDate: Date
@@ -211,6 +290,9 @@ function buildDeadlineItems(
   };
 }
 
+/**
+ * Collects warning messages when supporting dashboard data could not be loaded.
+ */
 function collectDashboardWarnings(data: DashboardCourseData[]) {
   const warnings = new Set<string>();
 
@@ -229,12 +311,15 @@ function collectDashboardWarnings(data: DashboardCourseData[]) {
   return [...warnings];
 }
 
+/**
+ * Loads tasks, documents, and quizzes for every course displayed on the dashboard.
+ */
 async function loadDashboardCourseData(courses: CourseDto[]) {
   const results = await Promise.all(
     courses.map(async (course) => {
       const [tasksResult, documentsResult, quizzesResult] = await Promise.allSettled([
         api.get<TaskDto[]>(`/courses/${course.id}/tasks`),
-        api.get<DocumentDto[]>(`/documents/course/${course.id}`),
+        api.get<DocumentDto[]>(`/documents/course/${course.id}?sort=createdAt:desc`),
         api.get<QuizDto[]>(`/courses/${course.id}/quizzes`),
       ]);
 
@@ -268,7 +353,16 @@ async function loadDashboardCourseData(courses: CourseDto[]) {
   return results;
 }
 
-function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
+/**
+ * Renders the large highlighted course card on the dashboard.
+ */
+function FeaturedCourseCard({
+  data,
+  searchTerm = '',
+}: {
+  data: DashboardCourseData;
+  searchTerm?: string;
+}) {
   const progress = data.course.taskProgress ?? {
     totalTasks: 0,
     completedTasks: 0,
@@ -277,14 +371,19 @@ function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
     completionPercentage: 0,
   };
 
-  const assignments = buildFeaturedAssignments(data.tasks);
+  const searchMatches = getDashboardMatches(data, searchTerm);
+  const assignments =
+    searchMatches.length > 0 ? searchMatches : buildFeaturedAssignments(data.tasks);
+
   const quizSummary =
     data.quizzes.length > 0
       ? `${data.quizzes.length} quiz${data.quizzes.length !== 1 ? 'zes' : ''} available`
       : 'No quizzes available';
 
+  const sectionLabel = searchTerm.trim() ? 'Search Results' : 'Recent Assignments';
+
   return (
-    <article className="dashboard-featured-card">
+    <Link to={`/courses/${data.course.id}`} className="dashboard-featured-card">
       <div className="dashboard-featured-card__content">
         <div className="dashboard-featured-card__eyebrow">
           <span className="dashboard-pill">
@@ -292,28 +391,27 @@ function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
           </span>
           <span>{quizSummary}</span>
         </div>
+
         <h2 className="dashboard-featured-card__title">
           <Link to={`/courses/${data.course.id}`} className="dashboard-featured-card__title-link">
             {data.course.name}
           </Link>
         </h2>
-        <div className="dashboard-featured-card__section-label">Recent Assignments</div>
+
+        <div className="dashboard-featured-card__section-label">{sectionLabel}</div>
+
         {assignments.length > 0 ? (
           <div className="dashboard-featured-card__assignments">
             {assignments.map((assignment) => (
               <div
                 key={assignment.id}
-                className={`dashboard-assignment dashboard-assignment--${assignment.status}`}
+                className="dashboard-assignment dashboard-assignment--urgent"
               >
                 <div>
                   <div className="dashboard-assignment__title">{assignment.title}</div>
                   <div className="dashboard-assignment__meta">{assignment.meta}</div>
                 </div>
-                <i
-                  className={`fa-solid ${
-                    assignment.status === 'done' ? 'fa-circle-check' : 'fa-angle-right'
-                  }`}
-                />
+                <i className="fa-solid fa-angle-right" />
               </div>
             ))}
           </div>
@@ -330,6 +428,7 @@ function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
         <div className="dashboard-featured-card__chip">
           <i className="fa-solid fa-microchip" />
         </div>
+
         <div className="dashboard-featured-card__ring-wrap">
           <ProgressRing
             openTasks={progress.openTasks}
@@ -346,14 +445,18 @@ function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
             <span>overall</span>
           </div>
         </div>
+
         <p className="dashboard-featured-card__summary">
           {progress.completedTasks} / {progress.totalTasks || 0} tasks completed
         </p>
       </div>
-    </article>
+    </Link>
   );
 }
 
+/**
+ * Renders a compact course card for the dashboard course grid.
+ */
 function CompactCourseCard({ data, index }: { data: DashboardCourseData; index: number }) {
   const progress = data.course.taskProgress ?? {
     totalTasks: 0,
@@ -393,6 +496,9 @@ function CompactCourseCard({ data, index }: { data: DashboardCourseData; index: 
   );
 }
 
+/**
+ * Renders the right dashboard rail with calendar, deadlines, and stats.
+ */
 function DashboardRail({
   currentDate,
   deadlines,
@@ -495,10 +601,21 @@ function DashboardRail({
   );
 }
 
+/**
+ * HomePage
+ *
+ * Displays the dashboard overview with course cards, upcoming deadlines,
+ * progress statistics, and a local dashboard search.
+ */
 export default function HomePage() {
   const [dashboardCourses, setDashboardCourses] = useState<DashboardCourseData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  /**
+   * Current dashboard search input value.
+   */
+  const [dashboardSearchTerm, setDashboardSearchTerm] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -528,9 +645,55 @@ export default function HomePage() {
     };
   }, []);
 
+  /**
+   * Current date used for calendar and deadline calculations.
+   */
   const currentDate = useMemo(() => new Date(), []);
-  const featuredCourse = dashboardCourses[0] ?? null;
-  const compactCourses = dashboardCourses.slice(1, 4);
+
+  /**
+   * Normalized dashboard search term used for case-insensitive filtering.
+   */
+  const normalizedDashboardSearch = dashboardSearchTerm.trim().toLowerCase();
+
+  /**
+   * Filters dashboard courses by course name, task title,
+   * quiz title, document filename, or document file type.
+   */
+  const filteredDashboardCourses = normalizedDashboardSearch
+    ? dashboardCourses.filter((entry) => {
+        const courseMatches = entry.course.name.toLowerCase().includes(normalizedDashboardSearch);
+
+        const taskMatches = entry.tasks.some((task) =>
+          task.title.toLowerCase().includes(normalizedDashboardSearch)
+        );
+
+        const quizMatches = entry.quizzes.some((quiz) =>
+          quiz.title.toLowerCase().includes(normalizedDashboardSearch)
+        );
+
+        const documentMatches = entry.documents.some(
+          (document) =>
+            document.filename.toLowerCase().includes(normalizedDashboardSearch) ||
+            document.fileType?.toLowerCase().includes(normalizedDashboardSearch)
+        );
+
+        return courseMatches || taskMatches || quizMatches || documentMatches;
+      })
+    : dashboardCourses;
+
+  /**
+   * First matching course shown as featured course.
+   */
+  const featuredCourse = filteredDashboardCourses[0] ?? null;
+
+  /**
+   * Additional matching courses shown in the compact course grid.
+   */
+  const compactCourses = filteredDashboardCourses.slice(1, 4);
+
+  /**
+   * Average progress based on all dashboard courses.
+   */
   const averageProgress =
     dashboardCourses.length > 0
       ? Math.round(
@@ -565,8 +728,17 @@ export default function HomePage() {
 
   const warnings = useMemo(() => collectDashboardWarnings(dashboardCourses), [dashboardCourses]);
 
+  /**
+   * Renders the dashboard page.
+   */
   return (
-    <DashboardLayout activeNav="dashboard">
+    <DashboardLayout
+      activeNav="dashboard"
+      showSearch
+      searchValue={dashboardSearchTerm}
+      onSearchChange={setDashboardSearchTerm}
+      searchPlaceholder="Search dashboard..."
+    >
       <div className="dashboard-grid">
         <section className="dashboard-content">
           <header className="dashboard-page-header">
@@ -574,7 +746,9 @@ export default function HomePage() {
               <p className="dashboard-page-header__eyebrow">Academic overview</p>
               <h1>My Courses</h1>
               <p className="dashboard-page-header__subline">
-                {dashboardCourses.length} courses loaded - Credits unavailable from backend
+                {normalizedDashboardSearch
+                  ? `${filteredDashboardCourses.length} of ${dashboardCourses.length} courses shown`
+                  : `${dashboardCourses.length} courses loaded - Credits unavailable from backend`}
               </p>
             </div>
           </header>
@@ -601,7 +775,7 @@ export default function HomePage() {
 
           {!loading && !error && featuredCourse && (
             <>
-              <FeaturedCourseCard data={featuredCourse} />
+              <FeaturedCourseCard data={featuredCourse} searchTerm={dashboardSearchTerm} />
 
               <div className="dashboard-course-grid">
                 {compactCourses.map((entry, index) => (
@@ -610,6 +784,16 @@ export default function HomePage() {
               </div>
             </>
           )}
+
+          {!loading &&
+            !error &&
+            dashboardCourses.length > 0 &&
+            filteredDashboardCourses.length === 0 && (
+              <div className="dashboard-state">
+                <h2>No dashboard results</h2>
+                <p>No courses, tasks, quizzes, or documents match your search.</p>
+              </div>
+            )}
 
           {!loading && !error && dashboardCourses.length === 0 && (
             <div className="dashboard-state">

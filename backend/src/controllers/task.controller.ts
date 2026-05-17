@@ -45,7 +45,7 @@ export class TaskController {
         return;
       }
 
-      const task = await taskService.findByIdForOwner(id, authUser.id);
+      const task = await taskService.findByIdForUser(id, authUser.id);
       if (!task) {
         res.status(404).json({ message: 'Task not found' });
         return;
@@ -140,7 +140,7 @@ export class TaskController {
         return;
       }
 
-      const updated = await taskService.updateForOwner(id, authUser.id, data);
+      const updated = await taskService.updateForUser(id, authUser.id, data);
       if (!updated) {
         res.status(404).json({ message: 'Task not found' });
         return;
@@ -231,7 +231,7 @@ export class TaskController {
         return;
       }
 
-      const deleted = await taskService.deleteForOwner(id, authUser.id);
+      const deleted = await taskService.deleteForUser(id, authUser.id);
       if (!deleted) {
         res.status(404).json({ message: 'Task not found' });
         return;
