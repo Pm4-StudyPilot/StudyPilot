@@ -88,7 +88,12 @@
 }
 
 .dashboard-main {
-  padding: 1.35rem 1.35rem 1.5rem 1.6rem;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  & > * {
+    padding: 1.35rem 1.35rem 1.5rem 1.6rem;
+  }
 }
 
 .dashboard-topbar {
@@ -96,7 +101,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  margin-bottom: 2.5rem;
 
   &__actions {
     display: flex;
@@ -171,6 +175,14 @@
 
 .dashboard-content {
   min-width: 0;
+}
+
+.dashboard-page-stack,
+.dashboard-grid {
+  overflow: scroll;
+  & > :first-child {
+    margin-top: 2rem;
+  }
 }
 
 .dashboard-page-stack {
