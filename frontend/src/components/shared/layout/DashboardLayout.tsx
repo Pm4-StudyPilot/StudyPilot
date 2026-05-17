@@ -1,22 +1,61 @@
 import { ReactNode } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import Logo from '../Logo';
 import { useAuth } from '../../../context/useAuth';
 
+/**
+ * DashboardLayout
+ *
+ * Shared application layout used across authenticated dashboard pages.
+ *
+ * Responsibilities:
+ * - Render the sidebar navigation
+ * - Render the top navigation bar
+ * - Handle logout navigation
+ * - Optionally display a reusable topbar search input
+ * - Render page-specific content inside the dashboard shell
+ *
+ * The search bar is controlled externally through props,
+ * allowing each page to define its own search behavior.
+ */
 type DashboardLayoutProps = {
   activeNav: 'dashboard' | 'courses';
   children: ReactNode;
 };
 
+/**
+ * Returns the CSS classes for a sidebar navigation item.
+ *
+ * Adds the active modifier class when the navigation item
+ * matches the current page.
+ */
 function navItemClass(isActive: boolean) {
-  return `panel muted hover dashboard-nav__item${isActive ? ' active' : ''}`;
+  return `dashboard-nav__item${isActive ? ' dashboard-nav__item--active' : ''}`;
 }
 
-export default function DashboardLayout({ activeNav, children }: DashboardLayoutProps) {
+/**
+ * Renders the shared dashboard shell with sidebar,
+ * top navigation, optional search input, and page content.
+ */
+export default function DashboardLayout({
+  activeNav,
+  children,
+  showSearch = false,
+  searchValue = '',
+  onSearchChange,
+  searchPlaceholder = 'Search for courses, notes, or deadlines...',
+}: DashboardLayoutProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const username = user?.username ?? 'A';
 
+  /**
+   * Logs out the current user and redirects to the login page.
+   *
+   * A temporary success message is stored in sessionStorage
+   * so it can be displayed after the redirect.
+   */
   function handleLogout() {
     sessionStorage.setItem('logoutMessage', 'Successfully logged out');
     logout();
@@ -66,14 +105,18 @@ export default function DashboardLayout({ activeNav, children }: DashboardLayout
 
       <main className="dashboard-main">
         <header className="dashboard-topbar">
-          <label className="panel muted active dashboard-search" htmlFor="dashboard-search">
-            <i className="fa-solid fa-magnifying-glass" />
-            <input
-              id="dashboard-search"
-              type="search"
-              placeholder="Search for courses, notes, or deadlines..."
-            />
-          </label>
+          {showSearch && (
+            <label className="panel muted active dashboard-search" htmlFor="dashboard-search">
+              <i className="fa-solid fa-magnifying-glass" />
+              <input
+                id="dashboard-search"
+                type="search"
+                value={searchValue}
+                placeholder={searchPlaceholder}
+                onChange={(event) => onSearchChange?.(event.target.value)}
+              />
+            </label>
+          )}
 
           <div className="dashboard-topbar__actions">
             <button
