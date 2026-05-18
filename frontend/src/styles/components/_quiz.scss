@@ -2,14 +2,9 @@
   display: block;
   padding: 1rem;
   margin-bottom: 0.75rem;
-  background-color: rgba(12, 12, 15, 0.58);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: var(--color-item);
+  border: 1px solid var(--color-divider);
   border-radius: 1rem;
-  transition: box-shadow 0.15s ease;
-
-  &:hover {
-    box-shadow: var(--shadow-soft);
-  }
 
   &__title {
     margin-bottom: 0.35rem;
