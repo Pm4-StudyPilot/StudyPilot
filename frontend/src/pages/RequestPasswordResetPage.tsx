@@ -56,8 +56,10 @@ export default function RequestPasswordResetPage() {
               <div className="alert alert-success" role="alert">
                 {success}
               </div>
-              <div className="text-center mt-3 auth-card__footer-link">
-                <Link to="/login">Back to Login</Link>
+              <div className="text-center mt-3">
+                <Link to="/login" className="auth-card__muted-link">
+                  Back to Login
+                </Link>
               </div>
             </>
           ) : (
@@ -75,8 +77,10 @@ export default function RequestPasswordResetPage() {
                   Send Reset Link
                 </Button>
               </Form>
-              <div className="text-center mt-3 auth-card__footer-link">
-                <Link to="/login">Back to Login</Link>
+              <div className="text-center mt-3">
+                <Link to="/login" className="auth-card__muted-link">
+                  Back to Login
+                </Link>
               </div>
             </>
           )}

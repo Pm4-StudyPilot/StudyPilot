@@ -9,8 +9,18 @@
     max-width: 480px;
   }
 
-  &__lead,
+  &__lead {
+    font-size: 14px;
+  }
+
   &__muted-link {
     font-size: 14px;
+    color: #ff835f;
+
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #f06d47;
+    }
   }
 }

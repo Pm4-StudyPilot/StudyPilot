@@ -19,7 +19,7 @@ import { useAuth } from '../../../context/useAuth';
  * allowing each page to define its own search behavior.
  */
 type DashboardLayoutProps = {
-  activeNav: 'dashboard' | 'courses';
+  activeNav: 'dashboard' | 'courses' | 'settings';
   children: ReactNode;
   showSearch: boolean;
   searchValue: string;
@@ -90,6 +90,14 @@ export default function DashboardLayout({
               <i className="fa-solid fa-book-open" />
               <span>Courses</span>
             </NavLink>
+
+            <NavLink
+              to="/settings"
+              className={({ isActive }) => navItemClass(isActive || activeNav === 'settings')}
+            >
+              <i className="fa-solid fa-gear" />
+              <span>Settings</span>
+            </NavLink>
           </nav>
         </div>
 
@@ -107,19 +115,27 @@ export default function DashboardLayout({
       </aside>
 
       <main className="dashboard-main">
-        <header className="dashboard-topbar">
-          {showSearch && (
-            <label className="panel muted active dashboard-search" htmlFor="dashboard-search">
-              <i className="fa-solid fa-magnifying-glass" />
-              <input
-                id="dashboard-search"
-                type="search"
-                value={searchValue}
-                placeholder={searchPlaceholder}
-                onChange={(event) => onSearchChange?.(event.target.value)}
-              />
-            </label>
-          )}
+        <header className={`dashboard-topbar${!showSearch ? ' dashboard-topbar--no-search' : ''}`}>
+          <label
+            className={`panel muted active dashboard-search${
+              !showSearch ? ' dashboard-search--placeholder' : ''
+            }`}
+            htmlFor="dashboard-search"
+            aria-hidden={!showSearch}
+          >
+            <i className="fa-solid fa-magnifying-glass" />
+
+            <input
+              id="dashboard-search"
+              type="search"
+              value={searchValue}
+              placeholder={searchPlaceholder}
+              onChange={(event) => onSearchChange?.(event.target.value)}
+              tabIndex={showSearch ? 0 : -1}
+              readOnly={!showSearch}
+            />
+          </label>
+          <div className="dashboard-search dashboard-search--placeholder" aria-hidden="true" />
 
           <div className="dashboard-topbar__actions">
             <button
