@@ -4,6 +4,23 @@ import type { Request, Response } from 'express';
 import { DocumentService } from '../services/document.service';
 
 /**
+ * Builds a Content-Disposition header value that is safe for filenames
+ * containing non-ASCII or special characters.
+ *
+ * Uses RFC 5987 encoding: both a sanitized ASCII fallback (`filename=`)
+ * and a UTF-8 encoded value (`filename*=`) so that older clients still
+ * receive a valid name and modern clients see the original.
+ *
+ * @param disposition "inline" or "attachment"
+ * @param filename Original filename as stored at upload time
+ */
+function buildContentDisposition(disposition: 'inline' | 'attachment', filename: string): string {
+  const fallback = filename.replace(/[^\x20-\x7e]/g, '_').replace(/"/g, "'");
+  const encoded = encodeURIComponent(filename);
+  return `${disposition}; filename="${fallback}"; filename*=UTF-8''${encoded}`;
+}
+
+/**
  * Controller responsible for handling document-related HTTP requests.
  * Acts as a bridge between incoming requests and the service layer.
  */
@@ -110,6 +127,84 @@ class DocumentController {
       }
 
       res.status(500).json({ message: 'Failed to fetch course documents.' });
+    }
+  }
+
+  /**
+   * Streams a stored document back to the client for opening or downloading.
+   *
+   * Workflow:
+   * 1. Validate document id and authenticated user
+   * 2. Ask the service for a download stream + metadata
+   * 3. Set Content-Type, Content-Length, and Content-Disposition headers
+   * 4. Pipe the storage stream to the response
+   *
+   * Query parameters:
+   * - disposition: "inline" (default) for opening in-browser, "attachment" to force download
+   *
+   * Error mapping:
+   * - 401: no authenticated user
+   * - 404: document not found
+   * - 403: user has no access to the document's course
+   * - 500: unexpected errors (including storage failures)
+   *
+   * @param req Express request with `id` in params and optional `disposition` in query
+   * @param res Express response, used as a writable stream for the file body
+   */
+  async download(req: Request, res: Response): Promise<void> {
+    try {
+      const rawId = req.params.id;
+      const id = Array.isArray(rawId) ? rawId[0] : rawId;
+      const userId = (req.user as { id: string } | undefined)?.id;
+
+      if (!id) {
+        res.status(400).json({ message: 'id is required.' });
+        return;
+      }
+
+      if (!userId) {
+        res.status(401).json({ message: 'Unauthorized.' });
+        return;
+      }
+
+      const rawDisposition = getSingleQueryParam(req.query.disposition);
+      const disposition: 'inline' | 'attachment' =
+        rawDisposition === 'attachment' ? 'attachment' : 'inline';
+
+      const { stream, filename, contentType, fileSize } =
+        await this.documentService.getDownloadable(id, userId);
+
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', buildContentDisposition(disposition, filename));
+
+      if (fileSize !== null) {
+        res.setHeader('Content-Length', fileSize.toString());
+      }
+
+      stream.on('error', (streamError: Error) => {
+        logger.error({ err: streamError, documentId: id }, 'Document stream error');
+        if (!res.headersSent) {
+          res.status(500).json({ message: 'Failed to stream document.' });
+          return;
+        }
+        res.destroy(streamError);
+      });
+
+      stream.pipe(res);
+    } catch (error) {
+      logger.error({ err: error }, 'Failed to download document');
+
+      if (error instanceof Error && error.message === 'DOCUMENT_NOT_FOUND') {
+        res.status(404).json({ message: 'Document not found.' });
+        return;
+      }
+
+      if (error instanceof Error && error.message === 'DOCUMENT_ACCESS_DENIED') {
+        res.status(403).json({ message: 'You do not have access to this document.' });
+        return;
+      }
+
+      res.status(500).json({ message: 'Failed to download document.' });
     }
   }
 }

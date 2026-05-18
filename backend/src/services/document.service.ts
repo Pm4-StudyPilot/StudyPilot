@@ -1,7 +1,9 @@
 import type { Express } from 'express';
+import type { Readable } from 'node:stream';
 import path from 'node:path';
 import { prisma } from '../config/database';
 import { storage } from '../config/minio';
+import { CourseShareService } from './course-share.service';
 
 /**
  * Input data required to upload a document.
@@ -163,7 +165,25 @@ function sanitizeFileName(name: string): string {
  * - separation of concerns: file storage vs metadata storage
  * - extensible query system (filter + sort via options object)
  */
+/**
+ * Result of resolving a document for download.
+ *
+ * Properties:
+ * - stream: Readable stream of the file content from object storage
+ * - filename: original filename stored at upload time, used for Content-Disposition
+ * - contentType: MIME type stored at upload time, used for Content-Type
+ * - fileSize: size in bytes if known, used for Content-Length
+ */
+type DownloadableDocument = {
+  stream: Readable;
+  filename: string;
+  contentType: string;
+  fileSize: number | null;
+};
+
 class DocumentService {
+  constructor(private readonly courseShareService: CourseShareService = new CourseShareService()) {}
+
   /**
    * Uploads a document to object storage and stores its metadata in the database.
    *
@@ -333,6 +353,68 @@ class DocumentService {
         courseId: true,
       },
     });
+  }
+
+  /**
+   * Resolves a document for download by the authenticated user.
+   *
+   * Workflow:
+   * 1. Look up the document by id (no owner filter yet — access is decided below)
+   * 2. Verify the user has access to the document's course
+   *    (owner of the course OR the course is shared with them)
+   * 3. Open a download stream from object storage
+   *
+   * Access model:
+   * - Mirrors CourseService.hasAccess: owner OR shared user.
+   * - This means collaborators on a shared course can download its documents,
+   *   which is the whole point of sharing.
+   *
+   * Error semantics:
+   * - DOCUMENT_NOT_FOUND: document id does not exist
+   * - DOCUMENT_ACCESS_DENIED: document exists but the user has no course access
+   *
+   * The caller is responsible for piping `stream` to the HTTP response and
+   * for setting the response headers using the returned metadata.
+   *
+   * @param documentId Document id
+   * @param userId Authenticated user id
+   *
+   * @returns Stream + metadata required to respond to a download request
+   *
+   * @throws Error('DOCUMENT_NOT_FOUND') if the document does not exist
+   * @throws Error('DOCUMENT_ACCESS_DENIED') if the user has no access to the course
+   */
+  async getDownloadable(documentId: string, userId: string): Promise<DownloadableDocument> {
+    const document = await prisma.document.findUnique({
+      where: { id: documentId },
+      select: {
+        filename: true,
+        bucket: true,
+        objectKey: true,
+        fileSize: true,
+        fileType: true,
+        courseId: true,
+      },
+    });
+
+    if (!document) {
+      throw new Error('DOCUMENT_NOT_FOUND');
+    }
+
+    const hasAccess = await this.courseShareService.checkAccess(document.courseId, userId);
+
+    if (!hasAccess) {
+      throw new Error('DOCUMENT_ACCESS_DENIED');
+    }
+
+    const stream = await storage.download(document.bucket, document.objectKey);
+
+    return {
+      stream,
+      filename: document.filename,
+      contentType: document.fileType ?? 'application/octet-stream',
+      fileSize: document.fileSize,
+    };
   }
 }
 

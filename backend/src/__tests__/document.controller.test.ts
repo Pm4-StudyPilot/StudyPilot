@@ -1,4 +1,5 @@
 import { describe, it, expect, mock } from 'bun:test';
+import { Readable, PassThrough } from 'node:stream';
 import type { Request, Response } from 'express';
 
 import { DocumentController } from '../controllers/document.controller';
@@ -36,6 +37,41 @@ function createController(mockDocumentService: Partial<DocumentService>) {
   (controller as unknown as { documentService: Partial<DocumentService> }).documentService =
     mockDocumentService;
   return controller;
+}
+
+/**
+ * Creates a mock Express response that is pipe-compatible.
+ *
+ * The download handler pipes a stream into the response, so we need an
+ * actual Writable target. We use a PassThrough and capture the bytes it
+ * receives, while still mocking setHeader/status/json so they can be
+ * asserted.
+ */
+function createPipeableResponse() {
+  const sink = new PassThrough();
+  const chunks: Buffer[] = [];
+  sink.on('data', (chunk: Buffer) => chunks.push(chunk));
+
+  const setHeader = mock(() => undefined);
+  const status = mock(() => res as unknown as Response);
+  const json = mock(() => res as unknown as Response);
+  const destroy = mock(() => undefined);
+
+  const res = Object.assign(sink, {
+    setHeader,
+    status,
+    json,
+    destroy,
+    headersSent: false,
+  }) as unknown as Response & {
+    setHeader: typeof setHeader;
+    status: typeof status;
+    json: typeof json;
+    destroy: typeof destroy;
+    headersSent: boolean;
+  };
+
+  return { res, chunks };
 }
 
 /**
@@ -500,5 +536,300 @@ describe('DocumentController.listByCourse', () => {
     });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(documents);
+  });
+});
+
+/**
+ * Test cases for DocumentController.download
+ */
+describe('DocumentController.download', () => {
+  /**
+   * Test case: Inline download (default disposition)
+   *
+   * Expected behavior:
+   * - Content-Type, Content-Length, and Content-Disposition headers are set
+   * - Stream is piped to the response and bytes are received
+   * - Disposition defaults to "inline" when no query param is provided
+   */
+  it('should stream the file inline with correct headers', async () => {
+    const fileBytes = Buffer.from('hello-pdf');
+    const stream = Readable.from([fileBytes]);
+
+    const mockDocumentService = {
+      upload: mock(),
+      listByCourse: mock(),
+      getDownloadable: mock(async () => ({
+        stream,
+        filename: 'Slides.pdf',
+        contentType: 'application/pdf',
+        fileSize: fileBytes.length,
+      })),
+    };
+
+    const controller = createController(mockDocumentService as unknown as DocumentService);
+
+    const req = {
+      params: { id: 'doc-1' },
+      query: {},
+      user: { id: 'user-1' },
+    } as unknown as Request;
+
+    const { res, chunks } = createPipeableResponse();
+
+    await controller.download(req, res);
+
+    // Wait for the pipe to finish so we can assert on the body.
+    await new Promise<void>((resolve) => res.on('finish', () => resolve()));
+
+    expect(mockDocumentService.getDownloadable).toHaveBeenCalledWith('doc-1', 'user-1');
+
+    expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/pdf');
+    expect(res.setHeader).toHaveBeenCalledWith('Content-Length', String(fileBytes.length));
+
+    const dispositionCall = (res.setHeader.mock.calls as unknown as Array<[string, string]>).find(
+      (call) => call[0] === 'Content-Disposition'
+    );
+    expect(dispositionCall).toBeDefined();
+    expect(String(dispositionCall?.[1])).toMatch(/^inline; filename="Slides\.pdf"/);
+
+    expect(Buffer.concat(chunks).toString()).toBe('hello-pdf');
+  });
+
+  /**
+   * Test case: Attachment download
+   *
+   * Expected behavior:
+   * - Content-Disposition uses "attachment" when query param is set
+   */
+  it('should force an attachment when disposition=attachment', async () => {
+    const stream = Readable.from([Buffer.from('x')]);
+
+    const mockDocumentService = {
+      upload: mock(),
+      listByCourse: mock(),
+      getDownloadable: mock(async () => ({
+        stream,
+        filename: 'Slides.pdf',
+        contentType: 'application/pdf',
+        fileSize: 1,
+      })),
+    };
+
+    const controller = createController(mockDocumentService as unknown as DocumentService);
+
+    const req = {
+      params: { id: 'doc-1' },
+      query: { disposition: 'attachment' },
+      user: { id: 'user-1' },
+    } as unknown as Request;
+
+    const { res } = createPipeableResponse();
+
+    await controller.download(req, res);
+    await new Promise<void>((resolve) => res.on('finish', () => resolve()));
+
+    const dispositionCall = (res.setHeader.mock.calls as unknown as Array<[string, string]>).find(
+      (call) => call[0] === 'Content-Disposition'
+    );
+    expect(String(dispositionCall?.[1])).toMatch(/^attachment; filename="Slides\.pdf"/);
+  });
+
+  /**
+   * Test case: Filename with non-ASCII characters
+   *
+   * Expected behavior:
+   * - Both filename and filename* parts of RFC 5987 are present
+   * - filename* is UTF-8 percent-encoded
+   */
+  it('should encode non-ASCII filenames per RFC 5987', async () => {
+    const stream = Readable.from([Buffer.from('x')]);
+
+    const mockDocumentService = {
+      upload: mock(),
+      listByCourse: mock(),
+      getDownloadable: mock(async () => ({
+        stream,
+        filename: 'Bücher Zusammenfassung.pdf',
+        contentType: 'application/pdf',
+        fileSize: 1,
+      })),
+    };
+
+    const controller = createController(mockDocumentService as unknown as DocumentService);
+
+    const req = {
+      params: { id: 'doc-1' },
+      query: {},
+      user: { id: 'user-1' },
+    } as unknown as Request;
+
+    const { res } = createPipeableResponse();
+
+    await controller.download(req, res);
+    await new Promise<void>((resolve) => res.on('finish', () => resolve()));
+
+    const dispositionCall = (res.setHeader.mock.calls as unknown as Array<[string, string]>).find(
+      (call) => call[0] === 'Content-Disposition'
+    );
+    const value = String(dispositionCall?.[1]);
+
+    expect(value).toContain('filename="B_cher Zusammenfassung.pdf"');
+    expect(value).toContain("filename*=UTF-8''B%C3%BCcher%20Zusammenfassung.pdf");
+  });
+
+  /**
+   * Test case: Missing id
+   *
+   * Expected behavior:
+   * - Returns 400 before touching the service
+   */
+  it('should return 400 if id is missing', async () => {
+    const mockDocumentService = {
+      upload: mock(),
+      listByCourse: mock(),
+      getDownloadable: mock(),
+    };
+
+    const controller = createController(mockDocumentService as unknown as DocumentService);
+
+    const req = {
+      params: {},
+      query: {},
+      user: { id: 'user-1' },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.download(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'id is required.' });
+    expect(mockDocumentService.getDownloadable).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Test case: Unauthenticated request
+   *
+   * Expected behavior:
+   * - Returns 401 before touching the service
+   */
+  it('should return 401 if user is not authenticated', async () => {
+    const mockDocumentService = {
+      upload: mock(),
+      listByCourse: mock(),
+      getDownloadable: mock(),
+    };
+
+    const controller = createController(mockDocumentService as unknown as DocumentService);
+
+    const req = {
+      params: { id: 'doc-1' },
+      query: {},
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.download(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Unauthorized.' });
+    expect(mockDocumentService.getDownloadable).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Test case: Document not found
+   *
+   * Expected behavior:
+   * - Service throws DOCUMENT_NOT_FOUND
+   * - Controller returns 404
+   */
+  it('should return 404 when the document does not exist', async () => {
+    const mockDocumentService = {
+      upload: mock(),
+      listByCourse: mock(),
+      getDownloadable: mock(async () => {
+        throw new Error('DOCUMENT_NOT_FOUND');
+      }),
+    };
+
+    const controller = createController(mockDocumentService as unknown as DocumentService);
+
+    const req = {
+      params: { id: 'doc-missing' },
+      query: {},
+      user: { id: 'user-1' },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.download(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Document not found.' });
+  });
+
+  /**
+   * Test case: Access denied
+   *
+   * Expected behavior:
+   * - Service throws DOCUMENT_ACCESS_DENIED
+   * - Controller returns 403
+   */
+  it('should return 403 when the user has no access to the course', async () => {
+    const mockDocumentService = {
+      upload: mock(),
+      listByCourse: mock(),
+      getDownloadable: mock(async () => {
+        throw new Error('DOCUMENT_ACCESS_DENIED');
+      }),
+    };
+
+    const controller = createController(mockDocumentService as unknown as DocumentService);
+
+    const req = {
+      params: { id: 'doc-1' },
+      query: {},
+      user: { id: 'user-x' },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.download(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'You do not have access to this document.',
+    });
+  });
+
+  /**
+   * Test case: Unexpected service error
+   *
+   * Expected behavior:
+   * - Generic 500 response with sanitized message
+   */
+  it('should return 500 for unexpected errors', async () => {
+    const mockDocumentService = {
+      upload: mock(),
+      listByCourse: mock(),
+      getDownloadable: mock(async () => {
+        throw new Error('Storage unreachable');
+      }),
+    };
+
+    const controller = createController(mockDocumentService as unknown as DocumentService);
+
+    const req = {
+      params: { id: 'doc-1' },
+      query: {},
+      user: { id: 'user-1' },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.download(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Failed to download document.' });
   });
 });

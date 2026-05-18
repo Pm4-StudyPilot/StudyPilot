@@ -13,6 +13,7 @@ import { api } from '../services/api';
 vi.mock('../services/api', () => ({
   api: {
     get: vi.fn(),
+    getBlob: vi.fn(),
   },
 }));
 
@@ -232,6 +233,161 @@ describe('CourseDocumentsList', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/failed to load documents/i)).toBeInTheDocument();
+    });
+  });
+
+  /**
+   * Test case: Open action calls the download endpoint with disposition=inline
+   *
+   * Scenario:
+   * The user clicks the Open button on a document row.
+   *
+   * Expected behavior:
+   * - api.getBlob is called with disposition=inline
+   * - window.open is called with the created object URL
+   */
+  it('opens a document inline when the Open button is clicked', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([
+      {
+        id: 'doc-1',
+        filename: 'Slides.pdf',
+        fileType: 'application/pdf',
+        fileSize: 1024,
+        createdAt: '2026-04-20T10:00:00.000Z',
+      },
+    ]);
+
+    const fakeBlob = new Blob(['pdf-bytes'], { type: 'application/pdf' });
+    vi.mocked(api.getBlob).mockResolvedValueOnce({ blob: fakeBlob });
+
+    const createObjectURL = vi.fn(() => 'blob:fake-url');
+    const revokeObjectURL = vi.fn();
+    const originalCreate = URL.createObjectURL;
+    const originalRevoke = URL.revokeObjectURL;
+    URL.createObjectURL = createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
+
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+    try {
+      render(<CourseDocumentsList courseId="course-1" refreshKey={0} />);
+
+      const openButton = await screen.findByRole('button', { name: /Open Slides\.pdf/i });
+      fireEvent.click(openButton);
+
+      await waitFor(() => {
+        expect(api.getBlob).toHaveBeenCalledWith('/documents/doc-1?disposition=inline');
+      });
+
+      expect(createObjectURL).toHaveBeenCalledWith(fakeBlob);
+      expect(openSpy).toHaveBeenCalledWith('blob:fake-url', '_blank', 'noopener,noreferrer');
+    } finally {
+      URL.createObjectURL = originalCreate;
+      URL.revokeObjectURL = originalRevoke;
+      openSpy.mockRestore();
+    }
+  });
+
+  /**
+   * Test case: Download action triggers a browser download
+   *
+   * Scenario:
+   * The user clicks the Download button on a document row.
+   *
+   * Expected behavior:
+   * - api.getBlob is called with disposition=attachment
+   * - A temporary <a> link is created, clicked, and removed
+   * - The link's download attribute uses the filename returned by the backend
+   */
+  it('downloads a document when the Download button is clicked', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([
+      {
+        id: 'doc-1',
+        filename: 'fallback.pdf',
+        fileType: 'application/pdf',
+        fileSize: 1024,
+        createdAt: '2026-04-20T10:00:00.000Z',
+      },
+    ]);
+
+    const fakeBlob = new Blob(['pdf-bytes'], { type: 'application/pdf' });
+    vi.mocked(api.getBlob).mockResolvedValueOnce({
+      blob: fakeBlob,
+      filename: 'Server Name.pdf',
+    });
+
+    const createObjectURL = vi.fn(() => 'blob:fake-url');
+    const revokeObjectURL = vi.fn();
+    const originalCreate = URL.createObjectURL;
+    const originalRevoke = URL.revokeObjectURL;
+    URL.createObjectURL = createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
+
+    const clickSpy = vi.fn();
+    const realCreateElement = document.createElement.bind(document);
+    const createElementSpy = vi
+      .spyOn(document, 'createElement')
+      .mockImplementation((tagName: string) => {
+        const element = realCreateElement(tagName);
+        if (tagName === 'a') {
+          element.click = clickSpy;
+        }
+        return element;
+      });
+
+    try {
+      render(<CourseDocumentsList courseId="course-1" refreshKey={0} />);
+
+      const downloadButton = await screen.findByRole('button', {
+        name: /Download fallback\.pdf/i,
+      });
+      fireEvent.click(downloadButton);
+
+      await waitFor(() => {
+        expect(api.getBlob).toHaveBeenCalledWith('/documents/doc-1?disposition=attachment');
+      });
+
+      expect(createObjectURL).toHaveBeenCalledWith(fakeBlob);
+      expect(clickSpy).toHaveBeenCalledTimes(1);
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:fake-url');
+    } finally {
+      URL.createObjectURL = originalCreate;
+      URL.revokeObjectURL = originalRevoke;
+      createElementSpy.mockRestore();
+    }
+  });
+
+  /**
+   * Test case: Open failure surfaces a user-visible error
+   *
+   * Scenario:
+   * The download endpoint returns an error (e.g. 403).
+   *
+   * Expected behavior:
+   * - The error message is displayed in an alert
+   */
+  it('shows an action error when opening a document fails', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([
+      {
+        id: 'doc-1',
+        filename: 'Slides.pdf',
+        fileType: 'application/pdf',
+        fileSize: 1024,
+        createdAt: '2026-04-20T10:00:00.000Z',
+      },
+    ]);
+
+    vi.mocked(api.getBlob).mockRejectedValueOnce(
+      new Error('You do not have access to this document.')
+    );
+
+    render(<CourseDocumentsList courseId="course-1" refreshKey={0} />);
+
+    const openButton = await screen.findByRole('button', { name: /Open Slides\.pdf/i });
+    fireEvent.click(openButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/do not have access/i)).toBeInTheDocument();
     });
   });
 });
