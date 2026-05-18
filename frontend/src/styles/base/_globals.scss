@@ -152,7 +152,13 @@ Bootstrap Overwrites
 
 .btn-primary {
   border: 1px solid var(--color-primary);
+  border-width: 1px;
+
+  padding: 0.5rem 1rem;
+  line-height: 1.5;
+
   background: linear-gradient(180deg, var(--color-primary), var(--color-primary-bold));
+
   color: var(--color-text-primary);
   font-weight: 700;
 
@@ -164,11 +170,13 @@ Bootstrap Overwrites
   &:hover,
   &:focus {
     border-color: color-mix(in srgb, var(--color-primary) 82%, white);
+
     background: linear-gradient(
       180deg,
       color-mix(in srgb, var(--color-primary) 88%, white),
       var(--color-primary)
     );
+
     color: var(--color-text-primary);
     transform: translateY(-1px);
   }

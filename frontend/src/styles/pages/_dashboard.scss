@@ -104,10 +104,6 @@
   min-height: 4.75rem;
   margin-bottom: 2.5rem;
 
-  &--no-search {
-    justify-content: flex-end;
-  }
-
   &__actions {
     display: flex;
     align-items: center;
@@ -146,6 +142,11 @@
   flex: 1;
   max-width: 840px;
   padding: 1rem 1.25rem;
+
+  &--placeholder {
+    visibility: hidden;
+    pointer-events: none;
+  }
 
   i {
     font-size: 1.2rem;

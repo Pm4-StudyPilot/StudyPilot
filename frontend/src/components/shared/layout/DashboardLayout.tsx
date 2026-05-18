@@ -117,18 +117,26 @@ export default function DashboardLayout({
 
       <main className="dashboard-main">
         <header className={`dashboard-topbar${!showSearch ? ' dashboard-topbar--no-search' : ''}`}>
-          {showSearch && (
-            <label className="panel muted active dashboard-search" htmlFor="dashboard-search">
-              <i className="fa-solid fa-magnifying-glass" />
-              <input
-                id="dashboard-search"
-                type="search"
-                value={searchValue}
-                placeholder={searchPlaceholder}
-                onChange={(event) => onSearchChange?.(event.target.value)}
-              />
-            </label>
-          )}
+          <label
+            className={`panel muted active dashboard-search${
+              !showSearch ? ' dashboard-search--placeholder' : ''
+            }`}
+            htmlFor="dashboard-search"
+            aria-hidden={!showSearch}
+          >
+            <i className="fa-solid fa-magnifying-glass" />
+
+            <input
+              id="dashboard-search"
+              type="search"
+              value={searchValue}
+              placeholder={searchPlaceholder}
+              onChange={(event) => onSearchChange?.(event.target.value)}
+              tabIndex={showSearch ? 0 : -1}
+              readOnly={!showSearch}
+            />
+          </label>
+          <div className="dashboard-search dashboard-search--placeholder" aria-hidden="true" />
 
           <div className="dashboard-topbar__actions">
             <button
