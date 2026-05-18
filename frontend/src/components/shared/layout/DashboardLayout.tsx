@@ -72,7 +72,6 @@ export default function DashboardLayout({
         <div>
           <div className="dashboard-brand">
             <Logo className="dashboard-brand__logo" />
-            <div className="dashboard-brand__meta">Term unavailable from backend</div>
           </div>
 
           <nav className="dashboard-nav">

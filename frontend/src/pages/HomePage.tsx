@@ -391,11 +391,9 @@ function FeaturedCourseCard({
           </span>
           <span>{quizSummary}</span>
         </div>
-
+        {/* TODO: Check with Nadine if the whole card being clickable is necessary for the search feature */}
         <h2 className="dashboard-featured-card__title">{data.course.name}</h2>
-
         <div className="dashboard-featured-card__section-label">{sectionLabel}</div>
-
         {assignments.length > 0 ? (
           <div className="dashboard-featured-card__assignments">
             {assignments.map((assignment) => (
@@ -741,11 +739,6 @@ export default function HomePage() {
             <div>
               <p className="dashboard-page-header__eyebrow">Academic overview</p>
               <h1>My Courses</h1>
-              <p className="dashboard-page-header__subline">
-                {normalizedDashboardSearch
-                  ? `${filteredDashboardCourses.length} of ${dashboardCourses.length} courses shown`
-                  : `${dashboardCourses.length} courses loaded - Credits unavailable from backend`}
-              </p>
             </div>
           </header>
 
