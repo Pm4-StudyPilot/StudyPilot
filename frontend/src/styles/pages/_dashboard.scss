@@ -179,7 +179,7 @@
 
 .dashboard-page-stack,
 .dashboard-grid {
-  overflow: scroll;
+  overflow-y: auto;
   & > :first-child {
     margin-top: 2rem;
   }
