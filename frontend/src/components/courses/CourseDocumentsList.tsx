@@ -152,6 +152,72 @@ export default function CourseDocumentsList({
   const [error, setError] = useState('');
   const [sortField, setSortField] = useState<DocumentSortField>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [actionError, setActionError] = useState('');
+  const [pendingActionDocId, setPendingActionDocId] = useState<string | null>(null);
+
+  /**
+   * Opens a document in a new browser tab.
+   *
+   * Workflow:
+   * 1. Fetch the document with disposition=inline so the browser knows
+   *    it can display PDFs/images directly when supported.
+   * 2. Wrap the response Blob in an object URL.
+   * 3. Open the object URL in a new tab.
+   * 4. Revoke the object URL after a short delay so the new tab has time
+   *    to take ownership of it.
+   *
+   * If the browser cannot natively display the MIME type, it will fall back
+   * to its standard download behavior — that is the expected and desired
+   * fallback.
+   */
+  async function handleOpen(doc: DocumentDto) {
+    setPendingActionDocId(doc.id);
+    setActionError('');
+    try {
+      const { blob } = await api.getBlob(`/documents/${doc.id}?disposition=inline`);
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to open document.');
+    } finally {
+      setPendingActionDocId(null);
+    }
+  }
+
+  /**
+   * Triggers a browser download for the selected document.
+   *
+   * Workflow:
+   * 1. Fetch the document with disposition=attachment.
+   * 2. Wrap the response Blob in an object URL.
+   * 3. Programmatically click a hidden <a download> to trigger the
+   *    browser's native download flow.
+   * 4. Revoke the object URL once the download has been initiated.
+   *
+   * Uses the filename returned by the backend (parsed from the
+   * Content-Disposition header) so the saved file matches the original
+   * upload name, falling back to the stored DTO filename otherwise.
+   */
+  async function handleDownload(doc: DocumentDto) {
+    setPendingActionDocId(doc.id);
+    setActionError('');
+    try {
+      const { blob, filename } = await api.getBlob(`/documents/${doc.id}?disposition=attachment`);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename ?? doc.filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to download document.');
+    } finally {
+      setPendingActionDocId(null);
+    }
+  }
 
   const sort = buildSortOption(sortField, sortDirection);
 
@@ -301,6 +367,12 @@ export default function CourseDocumentsList({
 
       {hasError && <div className="alert alert-danger mb-0">{error}</div>}
 
+      {actionError && (
+        <div className="alert alert-danger mb-3" role="alert">
+          {actionError}
+        </div>
+      )}
+
       {!isLoading && !hasError && documents.length === 0 && (
         <div className="panel  course-detail__placeholder p-4 text-secondary text-center">
           No documents uploaded yet.
@@ -315,26 +387,53 @@ export default function CourseDocumentsList({
 
       {!isLoading && !hasError && filteredDocuments.length > 0 && (
         <div className="d-flex flex-column gap-2">
-          {filteredDocuments.map((document) => {
-            // Human-readable upload date for the current document.
-            const formattedDate = new Date(document.createdAt).toLocaleDateString('en-US', {
+          {filteredDocuments.map((doc) => {
+            const formattedDate = new Date(doc.createdAt).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'short',
               day: 'numeric',
             });
 
+            const isPending = pendingActionDocId === doc.id;
+
             return (
-              <div key={document.id} className="course-detail__document-item">
-                <div className="course-detail__document-icon">
-                  <i className={getFileIcon(document.fileType)} />
+              <div
+                key={doc.id}
+                className="course-document-item rounded px-3 py-3 border border-secondary-subtle d-flex align-items-center justify-content-between gap-2"
+              >
+                <div className="d-flex align-items-center gap-2 min-w-0">
+                  <i className={`${getFileIcon(doc.fileType)} text-secondary`} />
+                  <span className="text-white fw-semibold text-truncate">{doc.filename}</span>
                 </div>
-                <div className="course-detail__document-content">
-                  <p className="course-detail__document-name mb-1">{document.filename}</p>
-                  <p className="course-detail__document-meta mb-0">
-                    <span>Type: {formatFileType(document.fileType)}</span> -{' '}
-                    <span>Size: {formatFileSize(document.fileSize)}</span> -{' '}
-                    <span>Uploaded {formattedDate}</span>
-                  </p>
+
+                <div className="d-flex align-items-center gap-3 flex-wrap justify-content-md-end">
+                  <span className="text-secondary small">Type: {formatFileType(doc.fileType)}</span>
+                  <span className="text-secondary small">Uploaded: {formattedDate}</span>
+                  <span className="text-secondary small">Size: {formatFileSize(doc.fileSize)}</span>
+
+                  <div className="d-flex align-items-center gap-2">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-primary"
+                      onClick={() => handleOpen(doc)}
+                      disabled={isPending}
+                      aria-label={`Open ${doc.filename}`}
+                    >
+                      <i className="fa-solid fa-up-right-from-square me-1" aria-hidden="true" />
+                      Open
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-primary"
+                      onClick={() => handleDownload(doc)}
+                      disabled={isPending}
+                      aria-label={`Download ${doc.filename}`}
+                    >
+                      <i className="fa-solid fa-download me-1" aria-hidden="true" />
+                      Download
+                    </button>
+                  </div>
                 </div>
               </div>
             );

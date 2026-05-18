@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
+import { Readable } from 'node:stream';
 
 type MockCourseRecord = {
   id: string;
@@ -15,6 +16,15 @@ type MockDocumentRecord = {
   bucket?: string;
   objectKey?: string;
   ownerId?: string;
+};
+
+type MockDocumentDownloadRecord = {
+  filename: string;
+  bucket: string;
+  objectKey: string;
+  fileSize: number | null;
+  fileType: string | null;
+  courseId: string;
 };
 
 /**
@@ -34,9 +44,11 @@ const mockDocumentCreate = mock(
 );
 
 const mockDocumentFindMany = mock(async (): Promise<MockDocumentRecord[]> => []);
+const mockDocumentFindUnique = mock(async (): Promise<MockDocumentDownloadRecord | null> => null);
 
 const mockEnsureBucket = mock(async (): Promise<void> => undefined);
 const mockStorageUpload = mock(async (): Promise<void> => undefined);
+const mockStorageDownload = mock(async (): Promise<Readable> => Readable.from([]));
 /**
  * Mock Prisma database module.
  */
@@ -48,6 +60,7 @@ mock.module('../config/database', () => ({
     document: {
       create: mockDocumentCreate,
       findMany: mockDocumentFindMany,
+      findUnique: mockDocumentFindUnique,
     },
   },
 }));
@@ -59,6 +72,7 @@ mock.module('../config/minio', () => ({
   storage: {
     ensureBucket: mockEnsureBucket,
     upload: mockStorageUpload,
+    download: mockStorageDownload,
   },
 }));
 
@@ -80,8 +94,10 @@ describe('DocumentService', () => {
     mockCourseFindFirst.mockClear();
     mockDocumentCreate.mockClear();
     mockDocumentFindMany.mockClear();
+    mockDocumentFindUnique.mockClear();
     mockEnsureBucket.mockClear();
     mockStorageUpload.mockClear();
+    mockStorageDownload.mockClear();
   });
 
   /**
@@ -526,6 +542,116 @@ describe('DocumentService', () => {
       await expect(service.listByCourse('course-1', 'user-1')).rejects.toThrow('Course not found.');
 
       expect(mockDocumentFindMany).not.toHaveBeenCalled();
+    });
+  });
+
+  /**
+   * Test cases for getDownloadable()
+   *
+   * The download flow uses CourseShareService.checkAccess to allow either
+   * the course owner or any user the course has been shared with. The
+   * service is injected so we can stub the access decision per test.
+   */
+  describe('getDownloadable', () => {
+    function buildService(hasAccess: boolean) {
+      const checkAccess = mock(async () => hasAccess);
+      const fakeShareService = { checkAccess } as unknown as ConstructorParameters<
+        typeof DocumentService
+      >[0];
+      const service = new DocumentService(fakeShareService);
+      return { service, checkAccess };
+    }
+
+    it('should return the stream and metadata when the user has access', async () => {
+      mockDocumentFindUnique.mockResolvedValueOnce({
+        filename: 'Slides.pdf',
+        bucket: 'documents',
+        objectKey: 'courses/course-1/Slides-123.pdf',
+        fileSize: 4096,
+        fileType: 'application/pdf',
+        courseId: 'course-1',
+      });
+
+      const fakeStream = Readable.from([Buffer.from('hello-pdf')]);
+      mockStorageDownload.mockResolvedValueOnce(fakeStream);
+
+      const { service, checkAccess } = buildService(true);
+
+      const result = await service.getDownloadable('doc-1', 'user-1');
+
+      expect(mockDocumentFindUnique).toHaveBeenCalledWith({
+        where: { id: 'doc-1' },
+        select: {
+          filename: true,
+          bucket: true,
+          objectKey: true,
+          fileSize: true,
+          fileType: true,
+          courseId: true,
+        },
+      });
+      expect(checkAccess).toHaveBeenCalledWith('course-1', 'user-1');
+      expect(mockStorageDownload).toHaveBeenCalledWith(
+        'documents',
+        'courses/course-1/Slides-123.pdf'
+      );
+
+      expect(result.stream).toBe(fakeStream);
+      expect(result.filename).toBe('Slides.pdf');
+      expect(result.contentType).toBe('application/pdf');
+      expect(result.fileSize).toBe(4096);
+    });
+
+    it('should fall back to application/octet-stream when fileType is missing', async () => {
+      mockDocumentFindUnique.mockResolvedValueOnce({
+        filename: 'mystery.bin',
+        bucket: 'documents',
+        objectKey: 'courses/course-1/mystery.bin',
+        fileSize: null,
+        fileType: null,
+        courseId: 'course-1',
+      });
+
+      mockStorageDownload.mockResolvedValueOnce(Readable.from([]));
+
+      const { service } = buildService(true);
+      const result = await service.getDownloadable('doc-1', 'user-1');
+
+      expect(result.contentType).toBe('application/octet-stream');
+      expect(result.fileSize).toBeNull();
+    });
+
+    it('should throw DOCUMENT_NOT_FOUND if the document does not exist', async () => {
+      mockDocumentFindUnique.mockResolvedValueOnce(null);
+
+      const { service, checkAccess } = buildService(true);
+
+      await expect(service.getDownloadable('doc-missing', 'user-1')).rejects.toThrow(
+        'DOCUMENT_NOT_FOUND'
+      );
+
+      expect(checkAccess).not.toHaveBeenCalled();
+      expect(mockStorageDownload).not.toHaveBeenCalled();
+    });
+
+    it('should throw DOCUMENT_ACCESS_DENIED if the user has no course access', async () => {
+      mockDocumentFindUnique.mockResolvedValueOnce({
+        filename: 'Slides.pdf',
+        bucket: 'documents',
+        objectKey: 'courses/course-1/Slides.pdf',
+        fileSize: 100,
+        fileType: 'application/pdf',
+        courseId: 'course-1',
+      });
+
+      const { service, checkAccess } = buildService(false);
+
+      await expect(service.getDownloadable('doc-1', 'user-x')).rejects.toThrow(
+        'DOCUMENT_ACCESS_DENIED'
+      );
+
+      expect(checkAccess).toHaveBeenCalledWith('course-1', 'user-x');
+      expect(mockStorageDownload).not.toHaveBeenCalled();
     });
   });
 });
