@@ -241,7 +241,9 @@ describe('HomePage', () => {
 
     expect(screen.queryByText('Machine Learning')).not.toBeInTheDocument();
     expect(screen.getByText('Physics Engines')).toBeInTheDocument();
-    expect(screen.getByText('1 of 2 courses shown')).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === '1 of 2 courses shown')
+    ).toBeInTheDocument();
   });
 
   /**

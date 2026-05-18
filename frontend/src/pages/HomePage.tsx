@@ -739,6 +739,12 @@ export default function HomePage() {
             <div>
               <p className="dashboard-page-header__eyebrow">Academic overview</p>
               <h1>My Courses</h1>
+              {!loading && !error && dashboardCourses.length > 0 && (
+                <p className="dashboard-page-header__eyebrow">
+                  {filteredDashboardCourses.length} of {dashboardCourses.length} course
+                  {dashboardCourses.length !== 1 ? 's' : ''} shown
+                </p>
+              )}
             </div>
           </header>
 
