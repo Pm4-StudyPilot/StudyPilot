@@ -139,6 +139,10 @@ jobs:
         working-directory: backend
         run: bun test --coverage --bail
 
+      - name: Verify seed script runs
+        working-directory: backend
+        run: bun run prisma/seed.ts
+
       - name: Upload backend coverage
         if: always()
         uses: actions/upload-artifact@v4

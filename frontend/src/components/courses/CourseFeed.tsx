@@ -67,16 +67,16 @@ export default function CourseFeed({ items }: CourseFeedProps) {
 
   if (items.length === 0) {
     return (
-      <div className="course-feed__empty rounded p-3 text-secondary text-center">
+      <div className="panel course-feed__empty rounded p-4 text-secondary text-center">
         No course materials yet. Add quizzes or other items to get started.
       </div>
     );
   }
 
   return (
-    <div className="course-feed rounded p-3">
-      <div className="d-flex align-items-center justify-content-between mb-3">
-        <h3 className="text-white fw-semibold mb-0">Course Materials</h3>
+    <div className="panel course-feed p-4">
+      <div className="course-feed__header">
+        <h3 className="course-feed__title">Course Materials</h3>
         <div className="dropdown position-relative" ref={dropdownRef}>
           <button
             className="btn btn-outline-secondary btn-sm dropdown-toggle text-white"

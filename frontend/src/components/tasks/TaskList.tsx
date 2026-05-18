@@ -168,9 +168,7 @@ export default function TaskList({
   return (
     <div className="task-list">
       <div className="d-flex align-items-center gap-2 mb-3">
-        <span className="text-secondary" style={{ fontSize: '0.85rem' }}>
-          Sort by:
-        </span>
+        <span className="task-list__label text-secondary">Sort by:</span>
         {(Object.keys(SORT_LABELS) as SortField[]).map((field) => (
           <button
             key={field}
@@ -183,10 +181,7 @@ export default function TaskList({
       </div>
 
       {sortField !== 'manual' && (
-        <div
-          className="alert alert-secondary py-1 px-3 mb-3 d-flex align-items-center justify-content-between"
-          style={{ fontSize: '0.85rem' }}
-        >
+        <div className="task-list__sorted-alert alert alert-secondary py-1 px-3 mb-3 d-flex align-items-center justify-content-between">
           <span>
             Sorted by <strong>{SORT_LABELS[sortField]}</strong>
           </span>
@@ -200,9 +195,7 @@ export default function TaskList({
       )}
 
       {reorderError && (
-        <div className="alert alert-danger py-2 mb-3" style={{ fontSize: '0.85rem' }}>
-          {reorderError}
-        </div>
+        <div className="task-list__error alert alert-danger py-2 mb-3">{reorderError}</div>
       )}
 
       {sortField === 'manual' ? (

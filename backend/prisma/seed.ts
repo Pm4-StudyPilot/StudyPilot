@@ -217,7 +217,8 @@ async function main() {
       if (!existingTask) {
         await prisma.task.create({
           data: {
-            courseId: course.id,
+            course: { connect: { id: course.id } },
+            user: { connect: { id: courseSeed.ownerId } },
             title: task.title,
             description: task.description,
             dueDate: task.dueDate,
@@ -380,7 +381,7 @@ async function main() {
       if (!existingQuiz) {
         await prisma.quiz.create({
           data: {
-            courseId: course.id,
+            course: { connect: { id: course.id } },
             title: quiz.title,
             description: quiz.description,
             isOrderRandom: quiz.isOrderRandom,

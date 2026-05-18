@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import { getSortIcon } from '../../utils/sort';
 import { api } from '../../services/api';
 
+// Props for the CourseDocumentsList component.
 type CourseDocumentsListProps = {
   courseId: string;
   refreshKey: number;
+  searchTerm?: string;
 };
 
+// Represents a document returned by the backend API.
 type DocumentDto = {
   id: string;
   filename: string;
@@ -15,13 +18,25 @@ type DocumentDto = {
   createdAt: string;
 };
 
+// Available sort directions for document sorting.
 type SortDirection = 'asc' | 'desc';
 
+/**
+ * Generic helper type for backend-compatible sort query strings.
+ *
+ * Example:
+ * - "filename:asc"
+ * - "createdAt:desc"
+ */
 type SortKey<
   T,
   Suffixes extends string = SortDirection,
 > = `${Extract<keyof T, string>}:${Suffixes}`;
 
+/**
+ * Defines all sortable document fields supported
+ * by the backend sorting API.
+ */
 type DocumentSortableFields = {
   createdAt: string;
   filename: string;
@@ -29,9 +44,13 @@ type DocumentSortableFields = {
   fileSize: number | null;
 };
 
+// Available sortable document fields.
 type DocumentSortField = keyof DocumentSortableFields;
+
+// Current backend-compatible sort query value.
 type DocumentSortOption = SortKey<DocumentSortableFields>;
 
+// Default sort direction per sortable field.
 const defaultSortDirection: Record<DocumentSortField, SortDirection> = {
   createdAt: 'desc',
   fileSize: 'desc',
@@ -115,6 +134,7 @@ function buildSortOption(field: DocumentSortField, direction: SortDirection): Do
  * - refresh the list when a new upload succeeds
  * - send the selected generic sort value to the backend
  * - allow toggling sort direction per field
+ * - filter documents by filename using the current search term
  * - handle loading, error, and empty states
  * - render each document in a compact row similar to the task list
  *
@@ -122,7 +142,11 @@ function buildSortOption(field: DocumentSortField, direction: SortDirection): Do
  * - filename and icon on the left
  * - type, upload date, and file size on the right
  */
-export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocumentsListProps) {
+export default function CourseDocumentsList({
+  courseId,
+  refreshKey,
+  searchTerm = '',
+}: CourseDocumentsListProps) {
   const [documents, setDocuments] = useState<DocumentDto[]>([]);
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState('');
@@ -198,6 +222,23 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
   const sort = buildSortOption(sortField, sortDirection);
 
   /**
+   * Normalized search term used for
+   * case-insensitive document filtering.
+   */
+  const normalizedDocumentSearch = searchTerm.trim().toLowerCase();
+
+  /**
+   * Filters documents by filename using the current search term.
+   *
+   * If no search term is provided, all documents are returned.
+   */
+  const filteredDocuments = normalizedDocumentSearch
+    ? documents.filter((document) =>
+        document.filename.toLowerCase().includes(normalizedDocumentSearch)
+      )
+    : documents;
+
+  /**
    * Handles clicks on sort buttons.
    *
    * Behavior:
@@ -226,6 +267,12 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
     return <i className={`fa-solid ${icon} ms-1`} aria-hidden="true" />;
   }
 
+  /**
+   * Fetches documents whenever:
+   * - the course changes
+   * - a document upload refresh is triggered
+   * - the sort configuration changes
+   */
   useEffect(() => {
     let isCancelled = false;
 
@@ -248,12 +295,29 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
     };
   }, [courseId, refreshKey, sort]);
 
+  // Indicates whether document data is currently loading.
   const isLoading = status === 'loading';
+
+  // Indicates whether the document request failed.
   const hasError = status === 'error';
 
+  /**
+   * Renders the document list including:
+   * - sorting controls
+   * - loading and error states
+   * - filtered document results
+   */
   return (
-    <div className="course-detail__documents rounded p-3 h-100">
-      <h3 className="text-white h5 mb-3">Uploaded documents</h3>
+    <div className="panel course-detail__documents p-4">
+      <div className="course-detail__documents-header">
+        <h3 className="text-white h5 mb-3">Uploaded documents</h3>
+
+        <p className="course-detail__documents-count mb-0">
+          {isLoading
+            ? 'Loading documents...'
+            : `${filteredDocuments.length} of ${documents.length} file${documents.length !== 1 ? 's' : ''} shown`}
+        </p>
+      </div>
 
       <div className="d-flex align-items-center gap-2 flex-wrap mb-3">
         <span className="text-secondary small">Sort by:</span>
@@ -310,14 +374,20 @@ export default function CourseDocumentsList({ courseId, refreshKey }: CourseDocu
       )}
 
       {!isLoading && !hasError && documents.length === 0 && (
-        <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
+        <div className="panel  course-detail__placeholder p-4 text-secondary text-center">
           No documents uploaded yet.
         </div>
       )}
 
-      {!isLoading && !hasError && documents.length > 0 && (
+      {!isLoading && !hasError && documents.length > 0 && filteredDocuments.length === 0 && (
+        <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
+          No documents match your search.
+        </div>
+      )}
+
+      {!isLoading && !hasError && filteredDocuments.length > 0 && (
         <div className="d-flex flex-column gap-2">
-          {documents.map((doc) => {
+          {filteredDocuments.map((doc) => {
             const formattedDate = new Date(doc.createdAt).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'short',
