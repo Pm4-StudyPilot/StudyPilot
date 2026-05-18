@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
-import { Link } from 'react-router-dom';
-import Navbar from '../components/shared/layout/Navbar';
+import { useNavigate } from 'react-router-dom';
+import DashboardLayout from '../components/shared/layout/DashboardLayout';
 import Form from '../components/shared/form/Form';
 import InputField from '../components/shared/form/InputField';
 import Button from '../components/shared/Button';
@@ -12,6 +12,8 @@ import { updateProfileSchema } from '../validation/schemas';
 
 export default function SettingsPage() {
   const { user, updateUser } = useAuth();
+  const navigate = useNavigate();
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,6 +28,7 @@ export default function SettingsPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+
     setError('');
     setSuccess('');
 
@@ -43,6 +46,7 @@ export default function SettingsPage() {
         username: updatedUser.username,
         email: updatedUser.email,
       });
+
       setSuccess('Profile updated successfully');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -52,63 +56,77 @@ export default function SettingsPage() {
   }
 
   return (
-    <>
-      <Navbar />
-      <div className="container mt-5">
-        <div className="row g-4">
-          <div className="col-lg-7">
-            <div className="card shadow-sm">
-              <div className="card-body p-4">
-                <h1 className="h3 mb-1">Account Settings</h1>
-                <p className="text-muted mb-4">Manage your profile and security settings.</p>
+    <DashboardLayout activeNav="settings" showSearch={false}>
+      <section className="dashboard-page-stack">
+        <header className="dashboard-page-header">
+          <div>
+            <p className="dashboard-page-header__eyebrow">Account workspace</p>
 
-                {success && (
-                  <div className="alert alert-success" role="alert">
-                    {success}
-                  </div>
-                )}
+            <h1>Account Settings</h1>
 
-                <Form onSubmit={handleSubmit} error={error}>
-                  <InputField
-                    label="Username"
-                    value={values.username}
-                    onChange={(e) => handleChange('username', e.target.value)}
-                    error={errors.username}
-                    autoComplete="username"
-                  />
-
-                  <InputField
-                    label="Email"
-                    type="email"
-                    value={values.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
-                    error={errors.email}
-                    autoComplete="email"
-                  />
-
-                  <div className="d-flex gap-2 mt-3">
-                    <Button type="submit" loading={loading}>
-                      Save Profile
-                    </Button>
-                  </div>
-                </Form>
-              </div>
-            </div>
+            <p className="dashboard-page-header__subline">
+              Manage your profile and security settings.
+            </p>
           </div>
+        </header>
 
-          <div className="col-lg-5">
-            <div className="card shadow-sm">
-              <div className="card-body p-4">
-                <h2 className="h5 mb-2">Security</h2>
-                <p className="text-muted">Update your password to keep your account secure.</p>
-                <Link to="/settings/password" className="btn btn-outline-primary">
-                  Change Password
-                </Link>
+        <div className="settings-card-stack">
+          <section className="settings-card">
+            <div className="settings-card__content">
+              <div className="settings-card__header">
+                <h2 className="settings-card__title">Profile Information</h2>
+
+                <p className="settings-card__subtitle">Update your visible account information.</p>
               </div>
+
+              {success && (
+                <div className="alert alert-success" role="alert">
+                  {success}
+                </div>
+              )}
+
+              <Form onSubmit={handleSubmit} error={error}>
+                <InputField
+                  label="Username"
+                  value={values.username}
+                  onChange={(e) => handleChange('username', e.target.value)}
+                  error={errors.username}
+                  autoComplete="username"
+                />
+
+                <InputField
+                  label="Email"
+                  type="email"
+                  value={values.email}
+                  onChange={(e) => handleChange('email', e.target.value)}
+                  error={errors.email}
+                  autoComplete="email"
+                />
+
+                <div className="d-flex gap-2 mt-3">
+                  <Button type="submit" loading={loading}>
+                    Save Profile
+                  </Button>
+                </div>
+              </Form>
             </div>
-          </div>
+          </section>
+
+          <section className="settings-card">
+            <div className="settings-card__content">
+              <div className="settings-card__header">
+                <h2 className="settings-card__title">Security</h2>
+
+                <p className="settings-card__subtitle">
+                  Update your password to keep your account secure.
+                </p>
+              </div>
+
+              <Button onClick={() => navigate('/settings/password')}>Change Password</Button>
+            </div>
+          </section>
         </div>
-      </div>
-    </>
+      </section>
+    </DashboardLayout>
   );
 }

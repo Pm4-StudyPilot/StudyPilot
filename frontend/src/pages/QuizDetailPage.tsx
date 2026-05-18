@@ -16,7 +16,7 @@ export default function QuizDetailPage() {
           Back to course
         </Link>
 
-        <div className="course-panel rounded p-4">
+        <div className="panel background">
           <h2 className="text-white fw-bold mb-3">Quiz Detail</h2>
           <p className="text-secondary mb-2">Quiz ID: {quizId}</p>
           <p className="text-secondary">This page is empty for now.</p>
