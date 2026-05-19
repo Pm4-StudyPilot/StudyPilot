@@ -5,6 +5,7 @@ import DocumentUploadForm from '../components/courses/DocumentUploadForm';
 import CourseDocumentsList from '../components/courses/CourseDocumentsList';
 import CourseFeed, { CourseFeedItem } from '../components/courses/CourseFeed';
 import CreateTaskModal from '../components/tasks/CreateTaskModal';
+import CreateQuizModal from '../components/quizzes/CreateQuizModal';
 import TaskList from '../components/tasks/TaskList';
 import ProgressRing from '../components/shared/ProgressRing';
 import { api } from '../services/api';
@@ -31,7 +32,8 @@ export default function CourseDetailPage() {
   const [error, setError] = useState('');
   const [tasksError, setTasksError] = useState('');
   const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0);
-  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
+  const [createQuizModalOpen, setCreateQuizModalOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -72,7 +74,7 @@ export default function CourseDetailPage() {
    */
   function handleTaskCreated(task: TaskDto) {
     setTasks((prev) => [...prev, task]);
-    setCreateModalOpen(false);
+    setCreateTaskModalOpen(false);
   }
 
   /**
@@ -94,6 +96,14 @@ export default function CourseDetailPage() {
    */
   function handleTasksReordered(reordered: TaskDto[]) {
     setTasks(reordered);
+  }
+
+  /**
+   * Adds a newly created quiz to the local feed list.
+   */
+  function handleQuizCreated(quiz: QuizDto) {
+    setCourseFeedItems((prev) => [...prev, { type: 'quiz', data: quiz }]);
+    setCreateQuizModalOpen(false);
   }
 
   /**
@@ -241,7 +251,7 @@ export default function CourseDetailPage() {
                     </div>
                     <button
                       className="course-detail__add-button btn btn-primary bold"
-                      onClick={() => setCreateModalOpen(true)}
+                      onClick={() => setCreateTaskModalOpen(true)}
                       aria-label="Add task"
                     >
                       <i className="fa-solid fa-plus" />
@@ -275,9 +285,18 @@ export default function CourseDetailPage() {
                   )}
                 </section>
                 <div className="course-detail__materials">
-                  <div className="course-detail__section-title">
-                    <span className="course-detail__section-accent course-detail__section-accent--tertiary" />
-                    <h2>Course Materials</h2>
+                  <div className="course-detail__section-header">
+                    <div className="course-detail__section-title">
+                      <span className="course-detail__section-accent course-detail__section-accent--primary" />
+                      <h2>Course Materials</h2>
+                    </div>
+                    <button
+                      className="course-detail__add-button btn btn-primary bold"
+                      onClick={() => setCreateQuizModalOpen(true)}
+                      aria-label="Add quiz"
+                    >
+                      <i className="fa-solid fa-plus" />
+                    </button>
                   </div>
                   <CourseFeed items={filteredCourseFeedItems} />
                 </div>
@@ -310,11 +329,18 @@ export default function CourseDetailPage() {
           </div>
         )}
 
-        {createModalOpen && id && (
+        {createTaskModalOpen && id && (
           <CreateTaskModal
             courseId={id}
-            onClose={() => setCreateModalOpen(false)}
+            onClose={() => setCreateTaskModalOpen(false)}
             onCreated={handleTaskCreated}
+          />
+        )}
+        {createQuizModalOpen && id && (
+          <CreateQuizModal
+            courseId={id}
+            onClose={() => setCreateQuizModalOpen(false)}
+            onCreated={handleQuizCreated}
           />
         )}
       </section>
