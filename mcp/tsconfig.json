@@ -10,7 +10,7 @@
     "rootDir": "src",
     "resolveJsonModule": true,
     "declaration": true,
-    "types": ["bun-types"]
+    "types": ["bun-types", "express", "multer"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

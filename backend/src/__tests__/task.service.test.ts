@@ -141,6 +141,42 @@ describe('TaskService', () => {
     });
   });
 
+  it('should list overdue tasks for the user, sorted oldest-first', async () => {
+    const tasks = [
+      createMockTask({
+        id: 't1',
+        dueDate: new Date('2026-04-10T00:00:00Z'),
+        status: 'OPEN',
+      }),
+      createMockTask({
+        id: 't2',
+        dueDate: new Date('2026-04-12T00:00:00Z'),
+        status: 'IN_PROGRESS',
+        priority: 'HIGH',
+      }),
+    ];
+    const findMany = mock(async () => tasks);
+
+    const db: MockDb = {
+      course: {},
+      courseShare: {},
+      task: { findMany },
+    };
+
+    const service = new TaskService(db as unknown as ConstructorParameters<typeof TaskService>[0]);
+    const result = await service.findOverdueByUser('u1');
+
+    expect(result).toEqual(tasks);
+    expect(findMany).toHaveBeenCalledWith({
+      where: {
+        userId: 'u1',
+        dueDate: { lt: expect.any(Date) },
+        status: { not: 'DONE' },
+      },
+      orderBy: [{ dueDate: 'asc' }, { priority: 'desc' }],
+    });
+  });
+
   it('should return null when task does not belong to the user', async () => {
     const findFirst = mock(async () => null);
 

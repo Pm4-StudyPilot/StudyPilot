@@ -49,6 +49,17 @@ export class TaskService {
     }) as Promise<TaskDto[]>;
   }
 
+  async findOverdueByUser(userId: string): Promise<TaskDto[]> {
+    return this.db.task.findMany({
+      where: {
+        userId,
+        dueDate: { lt: new Date() },
+        status: { not: 'DONE' },
+      },
+      orderBy: [{ dueDate: 'asc' }, { priority: 'desc' }],
+    }) as Promise<TaskDto[]>;
+  }
+
   async findByIdForUser(id: string, userId: string): Promise<TaskDto | null> {
     return this.db.task.findFirst({
       where: {
