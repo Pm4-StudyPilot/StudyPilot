@@ -2,6 +2,12 @@
   "name": "backend",
   "version": "1.0.0",
   "private": true,
+  "exports": {
+    "./services": "./src/services/index.ts",
+    "./db": "./src/config/database.ts",
+    "./prisma-client": "./src/generated/prisma/client.ts",
+    "./types": "./src/types/index.ts"
+  },
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target node --external @mapbox/node-pre-gyp",
