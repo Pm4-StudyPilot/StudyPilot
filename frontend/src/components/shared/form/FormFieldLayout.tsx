@@ -1,15 +1,16 @@
-import { ReactNode } from "react"
+import { ReactNode } from 'react';
 
 type FormFieldLayoutProps = {
-  label: string
-  error?: string
-  description?: string
-  iconLeft?: ReactNode
-  iconRight?: ReactNode
-  noMargin?: boolean
-  id?: string
-  children: ReactNode
-}
+  label: string;
+  error?: string;
+  description?: string;
+  iconLeft?: ReactNode;
+  iconRight?: ReactNode;
+  noMargin?: boolean;
+  id?: string;
+  children: ReactNode;
+  className?: string;
+};
 
 export function FormFieldLayout({
   label,
@@ -19,11 +20,16 @@ export function FormFieldLayout({
   iconRight,
   children,
   noMargin,
-  id
+  id,
+  className = '',
 }: FormFieldLayoutProps) {
   return (
-    <div className={noMargin ? '' : 'mb-3'}>
-      {id && (<label className="form-label" htmlFor={id}>{label}</label>)}
+    <div className={noMargin ? className : 'mb-3 ' + className}>
+      {id && (
+        <label className="form-label" htmlFor={id}>
+          {label}
+        </label>
+      )}
       <div role="group" className="input-group">
         {iconLeft && <span className="input-group-text">{iconLeft}</span>}
         {children}
@@ -33,5 +39,5 @@ export function FormFieldLayout({
       {description && <div className="form-text">{description}</div>}
       {error && <div className="invalid-feedback d-block">{error}</div>}
     </div>
-  )
+  );
 }
