@@ -43,7 +43,7 @@ const questionFixture: QuestionWithAnswersDto = {
  */
 describe('QuestionCard', () => {
   it('renders the question title, description, and formatted type', () => {
-    render(<QuestionCard question={questionFixture} index={1} />);
+    render(<QuestionCard question={questionFixture} />);
 
     expect(screen.getByText('What is the capital of France?')).toBeInTheDocument();
     expect(screen.getByText('Choose the correct capital city.')).toBeInTheDocument();
@@ -51,14 +51,14 @@ describe('QuestionCard', () => {
   });
 
   it('renders answer statistics', () => {
-    render(<QuestionCard question={questionFixture} index={1} />);
+    render(<QuestionCard question={questionFixture} />);
 
     expect(screen.getByText('2 answers')).toBeInTheDocument();
     expect(screen.getByText('1 correct answer')).toBeInTheDocument();
   });
 
   it('renders answers with correct and incorrect labels', () => {
-    render(<QuestionCard question={questionFixture} index={1} />);
+    render(<QuestionCard question={questionFixture} />);
 
     expect(screen.getByText('Paris')).toBeInTheDocument();
     expect(screen.getByText('Berlin')).toBeInTheDocument();
@@ -73,7 +73,6 @@ describe('QuestionCard', () => {
           ...questionFixture,
           description: null,
         }}
-        index={1}
       />
     );
 

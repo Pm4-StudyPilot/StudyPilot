@@ -94,11 +94,10 @@ export default function QuestionList({
         </div>
       )}
 
-      {questions.map((question, index) => (
+      {questions.map((question) => (
         <QuestionCard
           key={question.id}
           question={question}
-          index={index + 1}
           editable={editable}
           onUpdateQuestion={onUpdateQuestion}
           onDeleteQuestion={onDeleteQuestion}
@@ -112,7 +111,6 @@ export default function QuestionList({
         <section className="question-list__new-question">
           <div className="question-list__new-question-header">
             <h3>Add a new question</h3>
-            <i className="fa-solid fa-plus" />
           </div>
 
           <div className="question-editor__fields">
