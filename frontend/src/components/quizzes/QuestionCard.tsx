@@ -14,7 +14,6 @@ interface AnswerFormState {
 
 interface QuestionCardProps {
   question: QuestionWithAnswersDto;
-  index: number;
   editable?: boolean;
   onUpdateQuestion?: (questionId: string, data: QuestionFormState) => Promise<void> | void;
   onDeleteQuestion?: (questionId: string) => Promise<void> | void;
@@ -37,7 +36,6 @@ function formatQuestionType(type: QuestionWithAnswersDto['type']) {
 
 export default function QuestionCard({
   question,
-  index,
   editable = false,
   onUpdateQuestion,
   onDeleteQuestion,
@@ -126,10 +124,6 @@ export default function QuestionCard({
     return (
       <article className="question-card question-card--editable">
         <header className="question-card__header">
-          <div className="question-card__number" aria-hidden="true">
-            {index}
-          </div>
-
           <div className="question-card__title-group question-editor">
             <div className="question-editor__fields">
               <label className="question-editor__field">
@@ -202,113 +196,118 @@ export default function QuestionCard({
           </div>
         </header>
 
-        <div className="answer-list answer-list--editable">
-          {question.answers.map((answer) => {
-            const draft = draftAnswers[answer.id] ?? {
-              content: answer.content,
-              isCorrect: answer.isCorrect,
-            };
+        <label className="question-editor__field">
+          <span>Answers</span>
+        </label>
 
-            return (
-              <div key={answer.id} className="answer-editor">
-                <label className="answer-editor__content">
-                  <span>Answer</span>
-                  <input
-                    className="form-control"
-                    value={draft.content}
-                    onChange={(event) =>
-                      setDraftAnswers((current) => ({
-                        ...current,
-                        [answer.id]: {
-                          ...draft,
-                          content: event.target.value,
-                        },
-                      }))
-                    }
-                  />
-                </label>
+        {!!question.answers.length && (
+          <div className="answer-list answer-list--editable">
+            {question.answers.map((answer) => {
+              const draft = draftAnswers[answer.id] ?? {
+                content: answer.content,
+                isCorrect: answer.isCorrect,
+              };
 
-                <label className="answer-editor__check">
-                  <input
-                    type="checkbox"
-                    checked={draft.isCorrect}
-                    onChange={(event) =>
-                      setDraftAnswers((current) => ({
-                        ...current,
-                        [answer.id]: {
-                          ...draft,
-                          isCorrect: event.target.checked,
-                        },
-                      }))
-                    }
-                  />
-                  Correct
-                </label>
+              return (
+                <div key={answer.id} className="answer-editor">
+                  <label className="answer-editor__content">
+                    <input
+                      className="form-control"
+                      value={draft.content}
+                      onChange={(event) =>
+                        setDraftAnswers((current) => ({
+                          ...current,
+                          [answer.id]: {
+                            ...draft,
+                            content: event.target.value,
+                          },
+                        }))
+                      }
+                    />
+                  </label>
 
-                <div className="answer-editor__actions">
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary btn-sm"
-                    disabled={!draft.content.trim() || savingAnswerId === answer.id}
-                    onClick={() => handleSaveAnswer(answer.id)}
-                  >
-                    <i className="fa-solid fa-floppy-disk me-1" />
-                    {savingAnswerId === answer.id ? 'Saving...' : 'Save'}
-                  </button>
+                  <label className="answer-editor__check">
+                    <input
+                      type="checkbox"
+                      checked={draft.isCorrect}
+                      onChange={(event) =>
+                        setDraftAnswers((current) => ({
+                          ...current,
+                          [answer.id]: {
+                            ...draft,
+                            isCorrect: event.target.checked,
+                          },
+                        }))
+                      }
+                    />
+                    Correct
+                  </label>
 
-                  <button
-                    type="button"
-                    className="btn btn-outline-danger btn-sm"
-                    onClick={() => onDeleteAnswer?.(question.id, answer.id)}
-                  >
-                    <i className="fa-solid fa-trash  me-1" />
-                    Delete
-                  </button>
+                  <div className="answer-editor__actions">
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary btn-sm"
+                      disabled={!draft.content.trim() || savingAnswerId === answer.id}
+                      onClick={() => handleSaveAnswer(answer.id)}
+                    >
+                      <i className="fa-solid fa-floppy-disk me-1" />
+                      {savingAnswerId === answer.id ? 'Saving...' : 'Save'}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger btn-sm"
+                      onClick={() => onDeleteAnswer?.(question.id, answer.id)}
+                    >
+                      <i className="fa-solid fa-trash  me-1" />
+                      Delete
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-
-          <div className="answer-editor answer-editor--new">
-            <label className="answer-editor__content">
-              <span>New answer</span>
-              <input
-                className="form-control"
-                value={newAnswer.content}
-                onChange={(event) =>
-                  setNewAnswer((current) => ({
-                    ...current,
-                    content: event.target.value,
-                  }))
-                }
-                placeholder="Add another possible answer"
-              />
-            </label>
-
-            <label className="answer-editor__check">
-              <input
-                type="checkbox"
-                checked={newAnswer.isCorrect}
-                onChange={(event) =>
-                  setNewAnswer((current) => ({
-                    ...current,
-                    isCorrect: event.target.checked,
-                  }))
-                }
-              />
-              Correct
-            </label>
-
-            <button
-              type="button"
-              className="btn btn-primary btn-sm answer-editor__add-button"
-              disabled={!newAnswer.content.trim() || addingAnswer}
-              onClick={handleCreateAnswer}
-            >
-              <i className="fa-solid fa-plus" />
-              {addingAnswer ? 'Adding...' : 'Add answer'}
-            </button>
+              );
+            })}
           </div>
+        )}
+
+        <div className="answer-editor answer-editor--new">
+          <label className="answer-editor__content">
+            <span>New answer</span>
+            <input
+              className="form-control"
+              value={newAnswer.content}
+              onChange={(event) =>
+                setNewAnswer((current) => ({
+                  ...current,
+                  content: event.target.value,
+                }))
+              }
+              placeholder="Add another possible answer"
+            />
+          </label>
+
+          <label className="answer-editor__check">
+            <input
+              type="checkbox"
+              checked={newAnswer.isCorrect}
+              onChange={(event) =>
+                setNewAnswer((current) => ({
+                  ...current,
+                  isCorrect: event.target.checked,
+                }))
+              }
+            />
+            Correct
+          </label>
+
+          <button
+            type="button"
+            className="btn btn-primary btn-sm answer-editor__add-button"
+            disabled={!newAnswer.content.trim() || addingAnswer}
+            onClick={handleCreateAnswer}
+          >
+            <i className="fa-solid fa-plus" />
+            {addingAnswer ? 'Adding...' : 'Add answer'}
+          </button>
         </div>
       </article>
     );
@@ -317,10 +316,6 @@ export default function QuestionCard({
   return (
     <article className="question-card">
       <header className="question-card__header">
-        <div className="question-card__number" aria-hidden="true">
-          {index}
-        </div>
-
         <div className="question-card__title-group">
           <div className="question-card__meta">
             <span className="question-card__type">{formatQuestionType(question.type)}</span>
