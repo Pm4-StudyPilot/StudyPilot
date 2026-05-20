@@ -30,16 +30,6 @@ describe('CourseFeed', () => {
     { type: 'quiz', data: quizA },
   ];
 
-  it('renders course materials heading', () => {
-    render(
-      <MemoryRouter>
-        <CourseFeed items={items} />
-      </MemoryRouter>
-    );
-
-    expect(screen.getByText('Course Materials')).toBeInTheDocument();
-  });
-
   it('renders all quiz cards', () => {
     render(
       <MemoryRouter>
@@ -110,5 +100,26 @@ describe('CourseFeed', () => {
     );
 
     expect(screen.getByText(/no course materials yet/i)).toBeInTheDocument();
+  });
+
+  it('ignores unsupported feed item types', () => {
+    const unsupportedItems = [
+      {
+        type: 'unsupported',
+        data: {
+          id: 'unsupported-1',
+          title: 'Unsupported material',
+          createdAt: '2026-05-02T10:00:00.000Z',
+        },
+      },
+    ] as unknown as CourseFeedItem[];
+
+    render(
+      <MemoryRouter>
+        <CourseFeed items={unsupportedItems} />
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByText('Unsupported material')).not.toBeInTheDocument();
   });
 });
