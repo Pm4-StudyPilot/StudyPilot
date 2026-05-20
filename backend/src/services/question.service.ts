@@ -1,5 +1,10 @@
 import { prisma } from '../config/database';
-import { CreateQuestionRequest, QuestionDto, UpdateQuestionRequest } from '../types';
+import {
+  CreateQuestionRequest,
+  QuestionDto,
+  QuestionWithAnswersDto,
+  UpdateQuestionRequest,
+} from '../types';
 import type { PrismaClient } from '../generated/prisma/client';
 
 export class QuestionService {
@@ -60,7 +65,7 @@ export class QuestionService {
     }) as Promise<QuestionDto | null>;
   }
 
-  async listByQuiz(quizId: string, ownerId: string): Promise<QuestionDto[]> {
+  async listByQuiz(quizId: string, ownerId: string): Promise<QuestionWithAnswersDto[]> {
     return this.db.question.findMany({
       where: {
         quizId,
@@ -68,8 +73,13 @@ export class QuestionService {
           course: { ownerId },
         },
       },
+      include: {
+        answers: {
+          orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
+        },
+      },
       orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
-    }) as Promise<QuestionDto[]>;
+    }) as Promise<QuestionWithAnswersDto[]>;
   }
 
   async reorderQuestions(quizId: string, ownerId: string, questionIds: string[]): Promise<boolean> {

@@ -173,6 +173,10 @@ export interface QuestionDto {
   updatedAt: Date;
 }
 
+export interface QuestionWithAnswersDto extends QuestionDto {
+  answers: AnswerDto[];
+}
+
 export interface AnswerDto {
   id: string;
   content: string;
