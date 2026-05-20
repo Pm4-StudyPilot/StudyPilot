@@ -343,4 +343,111 @@ describe('CourseDetailPage', () => {
     expect(screen.queryByText('Lecture Notes.pdf')).not.toBeInTheDocument();
     expect(screen.getByText('Project Brief.pdf')).toBeInTheDocument();
   });
+
+  /**
+   * Test case: Task loading error
+   *
+   * Scenario:
+   * The course request succeeds, but the task request fails.
+   *
+   * Expected behavior:
+   * - The course page still renders
+   * - The task error message is displayed
+   */
+  it('shows task error when task loading fails', async () => {
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/courses/c1') {
+        return Promise.resolve(courseFixture);
+      }
+
+      if (url === '/courses/c1/tasks') {
+        return Promise.reject(new Error('Failed to load tasks'));
+      }
+
+      if (url === '/courses/c1/quizzes') {
+        return Promise.resolve(quizFixtures);
+      }
+
+      if (url.startsWith('/documents/course/c1')) {
+        return Promise.resolve(documentFixtures);
+      }
+
+      return Promise.resolve([]);
+    });
+
+    renderWithRoute('c1');
+
+    await waitFor(() => {
+      expect(screen.getByText('Machine Learning Fundamentals')).toBeInTheDocument();
+      expect(screen.getByText('Failed to load tasks')).toBeInTheDocument();
+    });
+  });
+
+  /**
+   * Test case: Add task modal
+   *
+   * Scenario:
+   * The user clicks the add task button in the task section.
+   *
+   * Expected behavior:
+   * - The create task modal opens
+   */
+  it('opens the create task modal when clicking the add task button', async () => {
+    mockCourseDetailApi();
+
+    renderWithRoute('c1');
+
+    await waitFor(() => {
+      expect(screen.getByText('Machine Learning Fundamentals')).toBeInTheDocument();
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /add task/i,
+      })
+    );
+
+    expect(screen.getByText(/create task/i)).toBeInTheDocument();
+  });
+
+  /**
+   * Test case: Quiz loading failure
+   *
+   * Scenario:
+   * The quiz request fails while the course and tasks load successfully.
+   *
+   * Expected behavior:
+   * - The course page still renders
+   * - Course materials do not crash the page
+   */
+  it('continues rendering when course materials cannot be loaded', async () => {
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/courses/c1') {
+        return Promise.resolve(courseFixture);
+      }
+
+      if (url === '/courses/c1/tasks') {
+        return Promise.resolve(taskFixtures);
+      }
+
+      if (url === '/courses/c1/quizzes') {
+        return Promise.reject(new Error('Failed to load quizzes'));
+      }
+
+      if (url.startsWith('/documents/course/c1')) {
+        return Promise.resolve(documentFixtures);
+      }
+
+      return Promise.resolve([]);
+    });
+
+    renderWithRoute('c1');
+
+    await waitFor(() => {
+      expect(screen.getByText('Machine Learning Fundamentals')).toBeInTheDocument();
+      expect(screen.getByText('Course Materials')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Neural Networks Quiz')).not.toBeInTheDocument();
+  });
 });
