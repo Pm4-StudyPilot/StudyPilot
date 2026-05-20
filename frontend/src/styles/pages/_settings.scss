@@ -37,6 +37,14 @@
   }
 }
 
+.settings-page__button {
+  min-width: 12rem;
+}
+
+.settings-page__button-row {
+  flex-wrap: wrap;
+}
+
 .settings-card-stack {
   display: grid;
   gap: 1.5rem;

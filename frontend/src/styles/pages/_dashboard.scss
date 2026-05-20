@@ -667,7 +667,7 @@
   gap: 0.6rem;
   margin-bottom: 1.25rem;
   padding: 1rem 1.1rem;
-  border: var(border-warning);
+  border: var(--border-warning);
   border-radius: 1rem;
   background: var(--background-warning);
   color: var(--color-warning);
@@ -767,6 +767,17 @@
 
   .dashboard-topbar {
     position: unset;
+    padding: 0;
+    margin-bottom: 0.1rem;
+
+    border: none;
+    background: transparent;
+    min-height: unset;
+    gap: 0;
+  }
+
+  .dashboard-search {
+    margin: 0;
   }
 
   .dashboard-topbar--no-search {
