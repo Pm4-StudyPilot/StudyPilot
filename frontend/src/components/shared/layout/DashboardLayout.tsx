@@ -91,10 +91,11 @@ export default function DashboardLayout({
               <i className="fa-solid fa-book-open" />
               <span>Courses</span>
             </NavLink>
-
             <NavLink
               to="/settings"
-              className={({ isActive }) => navItemClass(isActive || activeNav === 'settings')}
+              className={({ isActive }) =>
+                `${navItemClass(isActive || activeNav === 'settings')} dashboard-nav__settings`
+              }
             >
               <i className="fa-solid fa-gear" />
               <span>Settings</span>
@@ -141,7 +142,7 @@ export default function DashboardLayout({
           <div className="dashboard-topbar__actions">
             <button
               type="button"
-              className="dashboard-topbar__icon"
+              className="dashboard-topbar__icon dashboard-topbar__settings"
               aria-label="Settings"
               onClick={() => navigate('/settings', { state: { from: location.pathname } })}
             >
