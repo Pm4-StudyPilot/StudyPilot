@@ -11,6 +11,7 @@ export default function QuizDetailPage() {
   const [questions, setQuestions] = useState<QuestionWithAnswersDto[]>([]);
   const [questionsError, setQuestionsError] = useState('');
   const [questionsLoading, setQuestionsLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
     if (!courseId) return;
@@ -29,6 +30,135 @@ export default function QuizDetailPage() {
       })
       .finally(() => setQuestionsLoading(false));
   }, [courseId, quizId]);
+
+  async function handleCreateQuestion(data: {
+    title: string;
+    description: string;
+    type: QuestionWithAnswersDto['type'];
+  }) {
+    if (!courseId || !quizId) return;
+
+    const createdQuestion = await api.post<QuestionWithAnswersDto>(
+      `/courses/${courseId}/quizzes/${quizId}/questions`,
+      {
+        title: data.title,
+        description: data.description,
+        type: data.type,
+      }
+    );
+
+    setQuestions((prev) => [...prev, { ...createdQuestion, answers: [] }]);
+  }
+
+  async function handleUpdateQuestion(
+    questionId: string,
+    data: {
+      title: string;
+      description: string;
+      type: QuestionWithAnswersDto['type'];
+    }
+  ) {
+    if (!courseId || !quizId) return;
+
+    const updatedQuestion = await api.patch<QuestionWithAnswersDto>(
+      `/courses/${courseId}/quizzes/${quizId}/questions/${questionId}`,
+      data
+    );
+
+    setQuestions((prev) =>
+      prev.map((question) =>
+        question.id === questionId
+          ? {
+              ...question,
+              ...updatedQuestion,
+              answers: question.answers,
+            }
+          : question
+      )
+    );
+  }
+
+  async function handleDeleteQuestion(questionId: string) {
+    if (!courseId || !quizId) return;
+
+    await api.delete(`/courses/${courseId}/quizzes/${quizId}/questions/${questionId}`);
+
+    setQuestions((prev) => prev.filter((question) => question.id !== questionId));
+  }
+
+  async function handleCreateAnswer(
+    questionId: string,
+    data: {
+      content: string;
+      isCorrect: boolean;
+    }
+  ) {
+    if (!courseId || !quizId) return;
+
+    const createdAnswer = await api.post<QuestionWithAnswersDto['answers'][number]>(
+      `/courses/${courseId}/quizzes/${quizId}/questions/${questionId}/answers`,
+      data
+    );
+
+    setQuestions((prev) =>
+      prev.map((question) =>
+        question.id === questionId
+          ? {
+              ...question,
+              answers: [...question.answers, createdAnswer],
+            }
+          : question
+      )
+    );
+  }
+
+  async function handleUpdateAnswer(
+    questionId: string,
+    answerId: string,
+    data: {
+      content: string;
+      isCorrect: boolean;
+    }
+  ) {
+    if (!courseId || !quizId) return;
+
+    const updatedAnswer = await api.patch<QuestionWithAnswersDto['answers'][number]>(
+      `/courses/${courseId}/quizzes/${quizId}/questions/${questionId}/answers/${answerId}`,
+      data
+    );
+
+    setQuestions((prev) =>
+      prev.map((question) =>
+        question.id === questionId
+          ? {
+              ...question,
+              answers: question.answers.map((answer) =>
+                answer.id === answerId ? updatedAnswer : answer
+              ),
+            }
+          : question
+      )
+    );
+  }
+
+  async function handleDeleteAnswer(questionId: string, answerId: string) {
+    if (!courseId || !quizId) return;
+
+    await api.delete(
+      `/courses/${courseId}/quizzes/${quizId}/questions/${questionId}/answers/${answerId}`
+    );
+
+    setQuestions((prev) =>
+      prev.map((question) =>
+        question.id === questionId
+          ? {
+              ...question,
+              answers: question.answers.filter((answer) => answer.id !== answerId),
+            }
+          : question
+      )
+    );
+  }
 
   const quizStats = useMemo(() => {
     const answerCount = questions.reduce((total, question) => total + question.answers.length, 0);
@@ -156,12 +286,33 @@ export default function QuizDetailPage() {
             <section className="quiz-detail__questions-panel panel">
               <div className="quiz-detail__section-header">
                 <h2 className="quiz-detail__section-title">Questions and answers</h2>
-                <span className="quiz-detail__question-count">
-                  {quizStats.questionCount} item{quizStats.questionCount !== 1 ? 's' : ''}
-                </span>
+
+                <div className="quiz-detail__section-actions">
+                  <span className="quiz-detail__question-count">
+                    {quizStats.questionCount} item{quizStats.questionCount !== 1 ? 's' : ''}
+                  </span>
+
+                  <button
+                    type="button"
+                    className={`btn ${editMode ? 'btn-secondary' : 'btn-primary'} quiz-detail__edit-button`}
+                    onClick={() => setEditMode((current) => !current)}
+                  >
+                    <i className={`fa-solid ${editMode ? 'fa-eye' : 'fa-pen'}`} />
+                    {editMode ? 'Preview' : 'Edit'}
+                  </button>
+                </div>
               </div>
 
-              <QuestionList questions={questions} />
+              <QuestionList
+                questions={questions}
+                editable={editMode}
+                onCreateQuestion={handleCreateQuestion}
+                onUpdateQuestion={handleUpdateQuestion}
+                onDeleteQuestion={handleDeleteQuestion}
+                onCreateAnswer={handleCreateAnswer}
+                onUpdateAnswer={handleUpdateAnswer}
+                onDeleteAnswer={handleDeleteAnswer}
+              />
             </section>
           </div>
         )}
