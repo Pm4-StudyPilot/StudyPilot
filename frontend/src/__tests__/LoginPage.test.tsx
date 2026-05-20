@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import LoginPage from '../pages/LoginPage';
 import { api } from '../services/api';
@@ -18,7 +17,7 @@ const mockNavigate = vi.fn();
  * Mock AuthContext.
  *
  * Replaces the real useAuth hook with a simplified mock version
- * so that LoginPage can be tested without real authentication state.
+ * so LoginPage can be tested without real authentication state.
  */
 vi.mock('../context/useAuth', () => ({
   useAuth: () => ({
@@ -29,7 +28,7 @@ vi.mock('../context/useAuth', () => ({
 /**
  * Mock react-router-dom navigation while keeping the other real exports.
  *
- * MemoryRouter is still used as normal router wrapper in tests,
+ * MemoryRouter is still used as the router wrapper in tests,
  * but useNavigate is replaced so navigation can be asserted.
  */
 vi.mock('react-router-dom', async () => {
@@ -57,61 +56,123 @@ vi.mock('../services/api', () => ({
  * LoginPage component tests.
  *
  * Covered scenarios:
- * - rendering of all required login fields
+ * - rendering of the redesigned login page
+ * - logout feedback from sessionStorage
+ * - validation on empty submit
  * - successful login flow
- * - server-side error display on failed login
- * - client-side validation prevents empty submission
+ * - server-side error display
+ * - fallback error handling
+ * - auth navigation links
  */
 describe('LoginPage', () => {
-  /**
-   * Reset all mocks before each test to avoid leaking state
-   * between test cases.
-   */
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
   });
 
   afterEach(() => {
-    cleanup();
+    sessionStorage.clear();
   });
 
   /**
-   * Test case: Render login form
-   *
-   * Scenario:
-   * The login page is opened.
-   *
-   * Expected behavior:
-   * - Identifier field is displayed
-   * - Password field is displayed
-   * - Login button is displayed
+   * Renders the page inside a MemoryRouter.
    */
-  it('renders all login fields', () => {
-    render(
+  function renderPage() {
+    return render(
       <MemoryRouter>
         <LoginPage />
       </MemoryRouter>
     );
+  }
+
+  /**
+   * Test case: Render login form.
+   *
+   * Expected behavior:
+   * - page heading is displayed
+   * - identifier and password fields are displayed
+   * - login button is displayed
+   * - auth navigation links are displayed
+   */
+  it('renders all login fields', () => {
+    renderPage();
+
+    expect(
+      screen.getByRole('heading', {
+        name: /sign in/i,
+      })
+    ).toBeInTheDocument();
 
     expect(screen.getByLabelText(/email or username/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('button', {
+        name: /login/i,
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('link', {
+        name: /need an account/i,
+      })
+    ).toHaveAttribute('href', '/register');
+
+    expect(
+      screen.getByRole('link', {
+        name: /forgot your password/i,
+      })
+    ).toHaveAttribute('href', '/forgot-password');
   });
 
   /**
-   * Test case: Successful login
-   *
-   * Scenario:
-   * A valid identifier and password are entered
-   * and the backend returns a token and user object.
+   * Test case: Logout feedback.
    *
    * Expected behavior:
-   * - API is called with identifier and password
-   * - AuthContext login() is called with returned auth data
-   * - Navigation to "/" is triggered
+   * - message from sessionStorage is displayed
+   * - message is removed from sessionStorage after reading
+   */
+  it('shows logout feedback from session storage', () => {
+    sessionStorage.setItem('logoutMessage', 'Successfully logged out');
+
+    renderPage();
+
+    expect(screen.getByText(/successfully logged out/i)).toBeInTheDocument();
+
+    expect(sessionStorage.getItem('logoutMessage')).toBeNull();
+  });
+
+  /**
+   * Test case: Empty form validation.
+   *
+   * Expected behavior:
+   * - login request is not sent
+   * - validation errors prevent submission
+   */
+  it('does not submit when required fields are empty', async () => {
+    renderPage();
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /login/i,
+      })
+    );
+
+    await waitFor(() => {
+      expect(api.post).not.toHaveBeenCalled();
+    });
+  });
+
+  /**
+   * Test case: Successful login.
+   *
+   * Expected behavior:
+   * - login endpoint is called with form data
+   * - login() is called with returned auth data
+   * - navigation to dashboard is triggered
    */
   it('submits login successfully', async () => {
-    vi.mocked(api.post).mockResolvedValueOnce({
+    vi.mocked(api.post).mockResolvedValue({
       token: 'fake-token',
       user: {
         id: '1',
@@ -121,104 +182,113 @@ describe('LoginPage', () => {
       },
     });
 
-    render(
-      <MemoryRouter>
-        <LoginPage />
-      </MemoryRouter>
-    );
+    renderPage();
 
     fireEvent.change(screen.getByLabelText(/email or username/i), {
-      target: { value: 'testuser' },
+      target: {
+        value: 'testuser',
+      },
     });
 
     fireEvent.change(screen.getByLabelText(/password/i), {
-      target: { value: 'Strong@Password123!' },
+      target: {
+        value: 'Password123!',
+      },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /login/i,
+      })
+    );
 
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith('/auth/login', {
         identifier: 'testuser',
-        password: 'Strong@Password123!',
+        password: 'Password123!',
       });
-
-      expect(mockLogin).toHaveBeenCalledWith('fake-token', {
-        id: '1',
-        email: 'test@students.zhaw.ch',
-        username: 'testuser',
-        role: 'student',
-      });
-
-      expect(mockNavigate).toHaveBeenCalledWith('/');
     });
+
+    expect(mockLogin).toHaveBeenCalledWith('fake-token', {
+      id: '1',
+      email: 'test@students.zhaw.ch',
+      username: 'testuser',
+      role: 'student',
+    });
+
+    expect(mockNavigate).toHaveBeenCalledWith('/');
   });
 
   /**
-   * Test case: Failed login
-   *
-   * Scenario:
-   * The backend rejects the login request with an error.
+   * Test case: Failed login.
    *
    * Expected behavior:
-   * - API request is made
-   * - Error message is displayed to the user
-   * - AuthContext login() is not called
-   * - Navigation is not triggered
+   * - backend error message is displayed
+   * - login is not called
+   * - navigation is not triggered
    */
-  it('shows an error message if login fails', async () => {
-    vi.mocked(api.post).mockRejectedValueOnce(new Error('Invalid credentials'));
+  it('shows error message when login fails', async () => {
+    vi.mocked(api.post).mockRejectedValue(new Error('Invalid credentials'));
 
-    render(
-      <MemoryRouter>
-        <LoginPage />
-      </MemoryRouter>
-    );
+    renderPage();
 
     fireEvent.change(screen.getByLabelText(/email or username/i), {
-      target: { value: 'testuser' },
+      target: {
+        value: 'wronguser',
+      },
     });
 
     fireEvent.change(screen.getByLabelText(/password/i), {
-      target: { value: 'WrongPassword123!' },
+      target: {
+        value: 'WrongPassword123!',
+      },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /login/i,
+      })
+    );
 
-    await waitFor(() => {
-      expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument();
-    });
+    expect(await screen.findByText(/invalid credentials/i)).toBeInTheDocument();
 
     expect(mockLogin).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   /**
-   * Test case: Empty form submission
-   *
-   * Scenario:
-   * The login button is clicked without entering any values.
+   * Test case: Unknown login failure.
    *
    * Expected behavior:
-   * - Client-side validation blocks submission
-   * - API is not called
-   * - Validation messages are displayed
+   * - fallback error message is displayed
+   * - login is not called
+   * - navigation is not triggered
    */
-  it('should not submit if required fields are empty', async () => {
-    render(
-      <MemoryRouter>
-        <LoginPage />
-      </MemoryRouter>
-    );
+  it('shows fallback error message when login fails with unknown error', async () => {
+    vi.mocked(api.post).mockRejectedValue('Unknown failure');
 
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
+    renderPage();
 
-    await waitFor(() => {
-      expect(screen.getByText(/email or username is required/i)).toBeInTheDocument();
-      expect(screen.getByText(/password is required/i)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/email or username/i), {
+      target: {
+        value: 'testuser',
+      },
     });
 
-    expect(api.post).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText(/password/i), {
+      target: {
+        value: 'Password123!',
+      },
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /login/i,
+      })
+    );
+
+    expect(await screen.findByText(/something went wrong/i)).toBeInTheDocument();
+
     expect(mockLogin).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
   });

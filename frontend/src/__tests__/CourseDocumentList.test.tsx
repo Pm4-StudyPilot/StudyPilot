@@ -52,6 +52,12 @@ function createDeferred<T>() {
  * - clicking Name toggles sorting from asc to desc
  * - refreshKey triggers a refetch
  * - error message is shown when the request fails
+ * - fallback error message is shown for non-error rejections
+ * - documents can be filtered by filename
+ * - no-search-results message is shown when no documents match the search term
+ * - small file sizes are formatted in KB
+ * - unknown file types are displayed correctly
+ * - sorting by file size is supported
  */
 describe('CourseDocumentsList', () => {
   beforeEach(() => {
@@ -77,7 +83,7 @@ describe('CourseDocumentsList', () => {
 
     render(<CourseDocumentsList courseId="course-1" refreshKey={0} />);
 
-    expect(screen.getByText('Loading documents...')).toBeInTheDocument();
+    expect(screen.getAllByText('Loading documents...')).toHaveLength(2);
   });
 
   /**
@@ -194,6 +200,31 @@ describe('CourseDocumentsList', () => {
   });
 
   /**
+   * Test case: Sort by size
+   *
+   * Scenario:
+   * The user clicks the Size sort button.
+   *
+   * Expected behavior:
+   * - The backend is called with sort=fileSize:desc
+   */
+  it('sorts documents by file size when Size is clicked', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+
+    render(<CourseDocumentsList courseId="course-1" refreshKey={0} />);
+
+    await waitFor(() => {
+      expect(api.get).toHaveBeenCalledWith('/documents/course/course-1?sort=createdAt:desc');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Size/i }));
+
+    await waitFor(() => {
+      expect(api.get).toHaveBeenCalledWith('/documents/course/course-1?sort=fileSize:desc');
+    });
+  });
+
+  /**
    * Test case: refreshKey change
    *
    * Scenario:
@@ -238,15 +269,125 @@ describe('CourseDocumentsList', () => {
   });
 
   /**
-   * Test case: Open action calls the download endpoint with disposition=inline
+   * Test case: Non-error rejection
    *
    * Scenario:
-   * The user clicks the Open button on a document row.
+   * The API request rejects with a non-Error value.
    *
    * Expected behavior:
-   * - api.getBlob is called with disposition=inline
-   * - window.open is called with the created object URL
+   * - The fallback error message is displayed
    */
+  it('shows fallback error message when the fetch rejects with a non-error value', async () => {
+    vi.mocked(api.get).mockRejectedValueOnce('Unexpected failure');
+
+    render(<CourseDocumentsList courseId="course-1" refreshKey={0} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to load documents.')).toBeInTheDocument();
+    });
+  });
+
+  /**
+   * Test case: Small and unknown document metadata
+   *
+   * Scenario:
+   * The API returns a document with a small file size and unknown file type.
+   *
+   * Expected behavior:
+   * - The file size is displayed in KB
+   * - The unknown file type is displayed as provided
+   */
+  it('renders small file sizes and unknown file types', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([
+      {
+        id: 'doc-1',
+        filename: 'notes.unknown',
+        fileType: 'application/custom',
+        fileSize: 512,
+        createdAt: '2026-04-20T10:00:00.000Z',
+      },
+    ]);
+
+    render(<CourseDocumentsList courseId="course-1" refreshKey={0} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('notes.unknown')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Type: application/custom')).toBeInTheDocument();
+    expect(screen.getByText('Size: 0.5 KB')).toBeInTheDocument();
+  });
+
+  /**
+   * Test case: Document search
+   *
+   * Scenario:
+   * A search term is passed to the component.
+   *
+   * Expected behavior:
+   * - Only matching documents are rendered
+   * - Non-matching documents are not rendered
+   * - The shown count reflects the filtered result count
+   */
+  it('filters documents by filename through the searchTerm prop', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([
+      {
+        id: 'doc-1',
+        filename: '03 - Agile Estimating and Planning.pdf',
+        fileType: 'application/pdf',
+        fileSize: 5570000,
+        createdAt: '2026-04-20T10:00:00.000Z',
+      },
+      {
+        id: 'doc-2',
+        filename: '04 - DevOps.pdf',
+        fileType: 'application/pdf',
+        fileSize: 2480000,
+        createdAt: '2026-04-20T11:00:00.000Z',
+      },
+    ]);
+
+    render(<CourseDocumentsList courseId="course-1" refreshKey={0} searchTerm="devops" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('04 - DevOps.pdf')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('03 - Agile Estimating and Planning.pdf')).not.toBeInTheDocument();
+    expect(screen.getByText('1 of 2 files shown')).toBeInTheDocument();
+  });
+
+  /**
+   * Test case: No document search results
+   *
+   * Scenario:
+   * A search term is passed that does not match any document filename.
+   *
+   * Expected behavior:
+   * - No document rows are rendered
+   * - A no-search-results message is displayed
+   */
+  it('shows no-search-results message when no documents match the search term', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([
+      {
+        id: 'doc-1',
+        filename: '03 - Agile Estimating and Planning.pdf',
+        fileType: 'application/pdf',
+        fileSize: 5570000,
+        createdAt: '2026-04-20T10:00:00.000Z',
+      },
+    ]);
+
+    render(<CourseDocumentsList courseId="course-1" refreshKey={0} searchTerm="nonexistent" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('No documents match your search.')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('03 - Agile Estimating and Planning.pdf')).not.toBeInTheDocument();
+    expect(screen.getByText('0 of 1 file shown')).toBeInTheDocument();
+  });
+
   it('opens a document inline when the Open button is clicked', async () => {
     vi.mocked(api.get).mockResolvedValueOnce([
       {
