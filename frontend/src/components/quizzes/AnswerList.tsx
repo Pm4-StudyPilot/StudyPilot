@@ -92,7 +92,7 @@ export default function AnswerList({
           <div
             key={answer.id}
             className={`answer-card ${answer.isCorrect ? 'answer-card' : 'answer-card'}`}
-            onClick={onPlay(answer.id)}
+            onClick={() => onPlay?.(answer.id)}
           >
             <p className="answer-card__content">{answer.content}</p>
 

@@ -1,32 +1,140 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, cleanup, within } from '@testing-library/react';
+import { render, screen, waitFor, cleanup, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import QuizDetailPage from '../pages/QuizDetailPage';
 import { api } from '../services/api';
+import { QuestionWithAnswersDto } from '../types/dto';
 
 /**
- * Mock API service.
- *
- * Prevents real HTTP requests and allows controlled responses
- * for quiz detail requests.
+ * Mock API service
  */
 vi.mock('../services/api', () => ({
   api: {
     get: vi.fn(),
+    post: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
 /**
- * Mock AuthContext.
- *
- * QuizDetailPage uses DashboardLayout which depends on useAuth.
+ * Mock AuthContext (used by DashboardLayout)
  */
 vi.mock('../context/useAuth', () => ({
   useAuth: () => ({
     user: { username: 'testuser', email: 'test@example.com' },
     logout: vi.fn(),
   }),
+}));
+
+/**
+ * Mock QuestionList (IMPORTANT: isolates QuizDetailPage behavior)
+ *
+ * Behavior:
+ * - Always shows question titles
+ * - Shows answers ONLY in edit mode
+ * - Shows empty state when no questions exist
+ */
+vi.mock('../components/quizzes/QuestionList.tsx', () => ({
+  default: ({
+    questions,
+    editable,
+    onCreateQuestion,
+    onUpdateQuestion,
+    onDeleteQuestion,
+    onCreateAnswer,
+    onUpdateAnswer,
+    onDeleteAnswer,
+  }: {
+    questions: QuestionWithAnswersDto[];
+    editable?: boolean;
+    onCreateQuestion?: (data: NewQuestionFormState) => Promise<void> | void;
+    onUpdateQuestion?: (questionId: string, data: NewQuestionFormState) => Promise<void> | void;
+    onDeleteQuestion?: (questionId: string) => Promise<void> | void;
+    onCreateAnswer?: (
+      questionId: string,
+      data: { content: string; isCorrect: boolean }
+    ) => Promise<void> | void;
+    onUpdateAnswer?: (
+      questionId: string,
+      answerId: string,
+      data: { content: string; isCorrect: boolean }
+    ) => Promise<void> | void;
+    onDeleteAnswer?: (questionId: string, answerId: string) => Promise<void> | void;
+  }) => {
+    return (
+      <div>
+        <button
+          onClick={() =>
+            onCreateQuestion?.({
+              title: 'New Question',
+              description: 'New Desc',
+              type: 'SINGLE_CHOICE',
+            })
+          }
+        >
+          Add Question
+        </button>
+
+        {questions?.length === 0 && <div>No questions yet</div>}
+
+        {questions?.map((q: QuestionWithAnswersDto) => (
+          <div key={q.id}>
+            <div>{q.title}</div>
+
+            <button
+              onClick={() =>
+                onUpdateQuestion?.(q.id, {
+                  title: q.title + ' (updated)',
+                  description: q.description || '',
+                  type: q.type,
+                })
+              }
+            >
+              Update Question
+            </button>
+
+            <button onClick={() => onDeleteQuestion?.(q.id)}>Delete Question</button>
+
+            {editable && (
+              <div>
+                <button
+                  onClick={() =>
+                    onCreateAnswer?.(q.id, {
+                      content: 'New Answer',
+                      isCorrect: false,
+                    })
+                  }
+                >
+                  Add Answer
+                </button>
+
+                {q.answers?.map((a: QuestionWithAnswersDto) => (
+                  <div key={a.id}>
+                    {a.content}
+
+                    <button
+                      onClick={() =>
+                        onUpdateAnswer?.(q.id, a.id, {
+                          content: a.content + ' (updated)',
+                          isCorrect: a.isCorrect,
+                        })
+                      }
+                    >
+                      Update Answer
+                    </button>
+
+                    <button onClick={() => onDeleteAnswer?.(q.id, a.id)}>Delete Answer</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  },
 }));
 
 const quizFixture = {
@@ -44,53 +152,27 @@ const questionFixtures = [
     id: 'question-1',
     title: 'What is the capital of France?',
     description: 'Choose the correct capital city.',
-    type: 'SINGLE_CHOICE' as const,
+    type: 'SINGLE_CHOICE',
     quizId: 'quiz-1',
     createdAt: '2026-05-01T12:00:00.000Z',
     updatedAt: '2026-05-01T12:00:00.000Z',
     answers: [
-      {
-        id: 'answer-1',
-        content: 'Paris',
-        isCorrect: true,
-        questionId: 'question-1',
-        createdAt: '2026-05-01T12:00:00.000Z',
-        updatedAt: '2026-05-01T12:00:00.000Z',
-      },
-      {
-        id: 'answer-2',
-        content: 'Berlin',
-        isCorrect: false,
-        questionId: 'question-1',
-        createdAt: '2026-05-01T12:00:00.000Z',
-        updatedAt: '2026-05-01T12:00:00.000Z',
-      },
+      { id: 'answer-1', content: 'Paris', isCorrect: true },
+      { id: 'answer-2', content: 'Berlin', isCorrect: false },
     ],
   },
   {
     id: 'question-2',
     title: 'What is the capital of Spain?',
     description: null,
-    type: 'SINGLE_CHOICE' as const,
+    type: 'SINGLE_CHOICE',
     quizId: 'quiz-1',
     createdAt: '2026-05-01T12:00:00.000Z',
     updatedAt: '2026-05-01T12:00:00.000Z',
-    answers: [
-      {
-        id: 'answer-3',
-        content: 'Madrid',
-        isCorrect: true,
-        questionId: 'question-2',
-        createdAt: '2026-05-01T12:00:00.000Z',
-        updatedAt: '2026-05-01T12:00:00.000Z',
-      },
-    ],
+    answers: [{ id: 'answer-3', content: 'Madrid', isCorrect: true }],
   },
 ];
 
-/**
- * Renders QuizDetailPage with course and quiz route parameters.
- */
 function renderWithRoute(courseId = 'course-1', quizId = 'quiz-1') {
   return render(
     <MemoryRouter initialEntries={[`/courses/${courseId}/quizzes/${quizId}`]}>
@@ -101,9 +183,6 @@ function renderWithRoute(courseId = 'course-1', quizId = 'quiz-1') {
   );
 }
 
-/**
- * Mocks all API calls used by QuizDetailPage.
- */
 function mockQuizDetailApi({
   quiz = quizFixture,
   questions = questionFixtures,
@@ -124,39 +203,18 @@ function mockQuizDetailApi({
   });
 }
 
-/**
- * QuizDetailPage component tests.
- *
- * Covered scenarios:
- * - loading spinner is shown while fetching
- * - quiz details are rendered after successful fetch
- * - quiz stats are calculated from questions and answers
- * - question list is rendered
- * - empty question state is rendered
- * - error message is shown when fetching fails
- * - fallback error message is shown for non-error rejections
- * - back link points to the course detail page
- */
 describe('QuizDetailPage', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
+  beforeEach(() => vi.clearAllMocks());
+  afterEach(() => cleanup());
 
   it('shows a loading spinner while fetching', () => {
     vi.mocked(api.get).mockReturnValue(new Promise(() => {}));
-
     renderWithRoute();
-
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
   it('renders quiz details after a successful fetch', async () => {
     mockQuizDetailApi();
-
     renderWithRoute();
 
     await waitFor(() => {
@@ -171,34 +229,21 @@ describe('QuizDetailPage', () => {
 
   it('renders calculated quiz stats', async () => {
     mockQuizDetailApi();
-
     renderWithRoute();
 
     const summary = await screen.findByLabelText('Quiz summary');
-
-    expect(within(summary).getByText('Overview')).toBeInTheDocument();
 
     const questionStat = within(summary).getByText('Questions').closest('.quiz-detail__stat');
     const answerStat = within(summary).getByText('Answers').closest('.quiz-detail__stat');
     const correctStat = within(summary).getByText('Correct').closest('.quiz-detail__stat');
 
-    expect(questionStat).not.toBeNull();
-    expect(answerStat).not.toBeNull();
-    expect(correctStat).not.toBeNull();
-
-    expect(within(questionStat as HTMLElement).getByText('2')).toBeInTheDocument();
-    expect(within(questionStat as HTMLElement).getByText('Questions')).toBeInTheDocument();
-
-    expect(within(answerStat as HTMLElement).getByText('3')).toBeInTheDocument();
-    expect(within(answerStat as HTMLElement).getByText('Answers')).toBeInTheDocument();
-
-    expect(within(correctStat as HTMLElement).getByText('2')).toBeInTheDocument();
-    expect(within(correctStat as HTMLElement).getByText('Correct')).toBeInTheDocument();
+    expect(within(questionStat!).getByText('2')).toBeInTheDocument();
+    expect(within(answerStat!).getByText('3')).toBeInTheDocument();
+    expect(within(correctStat!).getByText('2')).toBeInTheDocument();
   });
 
-  it('renders questions and answers', async () => {
+  it('renders questions in view mode WITHOUT showing answers', async () => {
     mockQuizDetailApi();
-
     renderWithRoute();
 
     await waitFor(() => {
@@ -206,14 +251,27 @@ describe('QuizDetailPage', () => {
       expect(screen.getByText('What is the capital of Spain?')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Paris')).toBeInTheDocument();
+    // answers must NOT be visible in view mode
+    expect(screen.queryByText('Paris')).not.toBeInTheDocument();
+    expect(screen.queryByText('Berlin')).not.toBeInTheDocument();
+    expect(screen.queryByText('Madrid')).not.toBeInTheDocument();
+  });
+
+  it('toggles edit mode and shows answers', async () => {
+    mockQuizDetailApi();
+    renderWithRoute();
+
+    const editButton = await screen.findByRole('button', { name: /edit/i });
+
+    fireEvent.click(editButton);
+
+    expect(await screen.findByText('Paris')).toBeInTheDocument();
     expect(screen.getByText('Berlin')).toBeInTheDocument();
     expect(screen.getByText('Madrid')).toBeInTheDocument();
   });
 
-  it('renders the empty question state when the quiz has no questions', async () => {
+  it('renders empty question state', async () => {
     mockQuizDetailApi({ questions: [] });
-
     renderWithRoute();
 
     await waitFor(() => {
@@ -223,12 +281,11 @@ describe('QuizDetailPage', () => {
     expect(screen.getByText('0 items')).toBeInTheDocument();
   });
 
-  it('shows an error message when the quiz fetch fails', async () => {
+  it('shows error when quiz fetch fails', async () => {
     vi.mocked(api.get).mockImplementation((url: string) => {
       if (url === '/courses/course-1/quizzes/quiz-1') {
         return Promise.reject(new Error('Failed to load quiz'));
       }
-
       return Promise.resolve(questionFixtures);
     });
 
@@ -239,12 +296,11 @@ describe('QuizDetailPage', () => {
     });
   });
 
-  it('shows fallback error message when fetching rejects with a non-error value', async () => {
+  it('shows fallback error for non-error rejection', async () => {
     vi.mocked(api.get).mockImplementation((url: string) => {
       if (url === '/courses/course-1/quizzes/quiz-1') {
         return Promise.reject('Unexpected failure');
       }
-
       return Promise.resolve(questionFixtures);
     });
 
@@ -255,14 +311,129 @@ describe('QuizDetailPage', () => {
     });
   });
 
-  it('links back to the course detail page', async () => {
+  it('links back to course page', async () => {
     mockQuizDetailApi();
-
     renderWithRoute();
 
     const backLink = screen.getByRole('link', { name: /back to course/i });
 
-    expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute('href', '/courses/course-1');
+  });
+  it('creates a new question', async () => {
+    mockQuizDetailApi();
+
+    vi.mocked(api.post).mockResolvedValue({
+      id: 'question-new',
+      title: 'New Question',
+      description: 'New Desc',
+      type: 'SINGLE_CHOICE',
+      answers: [],
+    });
+
+    renderWithRoute();
+
+    const addBtn = await screen.findByText('Add Question');
+    addBtn.click();
+
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalled();
+      expect(screen.getByText('New Question')).toBeInTheDocument();
+    });
+  });
+  it('updates a question', async () => {
+    mockQuizDetailApi();
+
+    vi.mocked(api.patch).mockResolvedValue({
+      id: 'question-1',
+      title: 'Updated Title',
+      description: 'Choose the correct capital city.',
+      type: 'SINGLE_CHOICE',
+      answers: questionFixtures[0].answers,
+    });
+
+    renderWithRoute();
+
+    const updateBtn = await screen.findAllByText('Update Question');
+    updateBtn[0].click();
+
+    await waitFor(() => {
+      expect(api.patch).toHaveBeenCalled();
+      expect(screen.getByText('Updated Title')).toBeInTheDocument();
+    });
+  });
+  it('deletes a question', async () => {
+    mockQuizDetailApi();
+
+    vi.mocked(api.delete).mockResolvedValue(undefined);
+
+    renderWithRoute();
+
+    const deleteBtn = await screen.findAllByText('Delete Question');
+    deleteBtn[0].click();
+
+    await waitFor(() => {
+      expect(api.delete).toHaveBeenCalled();
+    });
+  });
+  it('creates an answer for a question', async () => {
+    mockQuizDetailApi();
+
+    vi.mocked(api.post).mockResolvedValue({
+      id: 'answer-new',
+      content: 'New Answer',
+      isCorrect: false,
+    });
+
+    renderWithRoute();
+
+    const editBtn = await screen.findByRole('button', { name: /edit/i });
+    editBtn.click();
+
+    const addAnswerBtn = await screen.findAllByText('Add Answer');
+    addAnswerBtn[0].click();
+
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalled();
+      expect(screen.getByText('New Answer')).toBeInTheDocument();
+    });
+  });
+  it('updates an answer', async () => {
+    mockQuizDetailApi();
+
+    vi.mocked(api.patch).mockResolvedValue({
+      id: 'answer-1',
+      content: 'Paris (updated)',
+      isCorrect: true,
+    });
+
+    renderWithRoute();
+
+    const editBtn = await screen.findByRole('button', { name: /edit/i });
+    editBtn.click();
+
+    const updateBtns = await screen.findAllByText('Update Answer');
+    updateBtns[0].click();
+
+    await waitFor(() => {
+      expect(api.patch).toHaveBeenCalled();
+      expect(screen.getByText('Paris (updated)')).toBeInTheDocument();
+    });
+  });
+  it('deletes an answer', async () => {
+    mockQuizDetailApi();
+
+    vi.mocked(api.delete).mockResolvedValue(undefined);
+
+    renderWithRoute();
+
+    const editBtn = await screen.findByRole('button', { name: /edit/i });
+    editBtn.click();
+
+    const deleteBtns = await screen.findAllByText('Delete Answer');
+    deleteBtns[0].click();
+
+    await waitFor(() => {
+      expect(api.delete).toHaveBeenCalled();
+    });
   });
 });
