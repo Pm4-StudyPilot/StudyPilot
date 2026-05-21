@@ -4,6 +4,7 @@ import path from 'node:path';
 import { prisma } from '../config/database';
 import { storage } from '../config/minio';
 import { CourseShareService } from './course-share.service';
+import { logger } from '../lib/logger';
 
 /**
  * Input data required to upload a document.
@@ -415,6 +416,72 @@ class DocumentService {
       contentType: document.fileType ?? 'application/octet-stream',
       fileSize: document.fileSize,
     };
+  }
+
+  /**
+   * Deletes a document owned by the authenticated user.
+   *
+   * Workflow:
+   * 1. Look up the document and its parent course in a single query
+   * 2. Verify the user owns the parent course
+   *    (only course owners can delete — shared collaborators have read access only)
+   * 3. Delete the database record first so the document no longer appears in the UI
+   * 4. Delete the underlying object from storage
+   *    Storage failures are logged but do not fail the request — the user-visible
+   *    state is already consistent, and the orphan object can be reclaimed later
+   *
+   * Order rationale:
+   * - DB first, storage second: if storage fails after the DB delete, the user
+   *   sees the document as gone (which matches their intent). The leftover
+   *   object in MinIO is invisible and recoverable.
+   * - The reverse order would create a broken link visible to the user if the
+   *   DB delete failed after the storage delete.
+   *
+   * Error semantics:
+   * - DOCUMENT_NOT_FOUND: document id does not exist
+   * - DOCUMENT_FORBIDDEN: document exists but the user is not the course owner
+   *
+   * @param documentId Document id
+   * @param userId Authenticated user id
+   *
+   * @throws Error('DOCUMENT_NOT_FOUND') if the document does not exist
+   * @throws Error('DOCUMENT_FORBIDDEN') if the user is not the course owner
+   */
+  async deleteForOwner(documentId: string, userId: string): Promise<void> {
+    const document = await prisma.document.findUnique({
+      where: { id: documentId },
+      select: {
+        bucket: true,
+        objectKey: true,
+        course: {
+          select: { ownerId: true },
+        },
+      },
+    });
+
+    if (!document) {
+      throw new Error('DOCUMENT_NOT_FOUND');
+    }
+
+    if (document.course.ownerId !== userId) {
+      throw new Error('DOCUMENT_FORBIDDEN');
+    }
+
+    await prisma.document.delete({
+      where: { id: documentId },
+    });
+
+    try {
+      await storage.delete(document.bucket, document.objectKey);
+    } catch (storageError) {
+      // Best-effort cleanup. The DB record is already gone so the user
+      // cannot see or interact with the document; an orphan object in
+      // storage is acceptable and can be reclaimed by a janitor job.
+      logger.error(
+        { err: storageError, documentId, bucket: document.bucket, objectKey: document.objectKey },
+        'Failed to delete document object from storage'
+      );
+    }
   }
 }
 

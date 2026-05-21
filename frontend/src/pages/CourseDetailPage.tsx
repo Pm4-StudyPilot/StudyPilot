@@ -5,6 +5,7 @@ import DocumentUploadForm from '../components/courses/DocumentUploadForm';
 import CourseDocumentsList from '../components/courses/CourseDocumentsList';
 import CourseFeed, { CourseFeedItem } from '../components/courses/CourseFeed';
 import CreateTaskModal from '../components/tasks/CreateTaskModal';
+import CreateQuizModal from '../components/quizzes/CreateQuizModal';
 import TaskList from '../components/tasks/TaskList';
 import ProgressRing from '../components/shared/ProgressRing';
 import { api } from '../services/api';
@@ -28,10 +29,13 @@ export default function CourseDetailPage() {
   const [courseSearchTerm, setCourseSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [tasksLoading, setTasksLoading] = useState(true);
+  const [courseFeedLoading, setCourseFeedLoading] = useState(true);
   const [error, setError] = useState('');
   const [tasksError, setTasksError] = useState('');
+  const [courseFeedError, setCourseFeedError] = useState('');
   const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0);
-  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
+  const [createQuizModalOpen, setCreateQuizModalOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -55,9 +59,10 @@ export default function CourseDetailPage() {
     api
       .get<QuizDto[]>(`/courses/${id}/quizzes`)
       .then((quizzes) => setCourseFeedItems(quizzes.map((quiz) => ({ type: 'quiz', data: quiz }))))
-      .catch(() => {
-        setCourseFeedItems([]);
-      });
+      .catch((err) => {
+        setCourseFeedError(err instanceof Error ? err.message : 'Failed to load course feed');
+      })
+      .finally(() => setCourseFeedLoading(false));
   }, [id]);
 
   /**
@@ -72,7 +77,7 @@ export default function CourseDetailPage() {
    */
   function handleTaskCreated(task: TaskDto) {
     setTasks((prev) => [...prev, task]);
-    setCreateModalOpen(false);
+    setCreateTaskModalOpen(false);
   }
 
   /**
@@ -94,6 +99,14 @@ export default function CourseDetailPage() {
    */
   function handleTasksReordered(reordered: TaskDto[]) {
     setTasks(reordered);
+  }
+
+  /**
+   * Adds a newly created quiz to the local feed list.
+   */
+  function handleQuizCreated(quiz: QuizDto) {
+    setCourseFeedItems((prev) => [...prev, { type: 'quiz', data: quiz }]);
+    setCreateQuizModalOpen(false);
   }
 
   /**
@@ -241,7 +254,7 @@ export default function CourseDetailPage() {
                     </div>
                     <button
                       className="course-detail__add-button btn btn-primary bold"
-                      onClick={() => setCreateModalOpen(true)}
+                      onClick={() => setCreateTaskModalOpen(true)}
                       aria-label="Add task"
                     >
                       <i className="fa-solid fa-plus" />
@@ -274,13 +287,39 @@ export default function CourseDetailPage() {
                     </div>
                   )}
                 </section>
-                <div className="course-detail__materials">
-                  <div className="course-detail__section-title">
-                    <span className="course-detail__section-accent course-detail__section-accent--tertiary" />
-                    <h2>Course Materials</h2>
+
+                {courseFeedLoading && (
+                  <div className="dashboard-state panel dashboard-state--loading course-detail__section-card p-4">
+                    <div className="spinner-border text-secondary" role="status">
+                      <span className="visually-hidden">Loading course materials...</span>
+                    </div>
                   </div>
-                  <CourseFeed items={filteredCourseFeedItems} />
-                </div>
+                )}
+
+                {!courseFeedLoading && courseFeedError && (
+                  <div className="dashboard-state panel dashboard-state--error course-detail__section-card">
+                    {courseFeedError}
+                  </div>
+                )}
+
+                {!courseFeedLoading && !courseFeedError && (
+                  <div className="course-detail__materials">
+                    <div className="course-detail__section-header">
+                      <div className="course-detail__section-title">
+                        <span className="course-detail__section-accent course-detail__section-accent--primary" />
+                        <h2>Course Materials</h2>
+                      </div>
+                      <button
+                        className="course-detail__add-button btn btn-primary bold"
+                        onClick={() => setCreateQuizModalOpen(true)}
+                        aria-label="Add quiz"
+                      >
+                        <i className="fa-solid fa-plus" />
+                      </button>
+                    </div>
+                    <CourseFeed items={filteredCourseFeedItems} />
+                  </div>
+                )}
               </div>
 
               <aside className="course-detail__documents-column">
@@ -310,11 +349,18 @@ export default function CourseDetailPage() {
           </div>
         )}
 
-        {createModalOpen && id && (
+        {createTaskModalOpen && id && (
           <CreateTaskModal
             courseId={id}
-            onClose={() => setCreateModalOpen(false)}
+            onClose={() => setCreateTaskModalOpen(false)}
             onCreated={handleTaskCreated}
+          />
+        )}
+        {createQuizModalOpen && id && (
+          <CreateQuizModal
+            courseId={id}
+            onClose={() => setCreateQuizModalOpen(false)}
+            onCreated={handleQuizCreated}
           />
         )}
       </section>

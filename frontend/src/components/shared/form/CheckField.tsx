@@ -1,20 +1,27 @@
-import { InputHTMLAttributes, useId } from "react"
+import { InputHTMLAttributes, useId } from 'react';
 
-type CheckFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
-  label: string
-  type: "checkbox" | "radio"
-  error?: string
-}
+type CheckFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & {
+  label: string;
+  type: 'checkbox' | 'radio';
+  labelPosition: 'left' | 'right';
+  error?: string;
+};
 
 export default function CheckField({
   label,
   type,
   error,
   id,
+  labelPosition = 'left',
   ...props
 }: CheckFieldProps) {
-  const generatedId = useId()
-  const finalId = id ?? generatedId
+  const generatedId = useId();
+  const finalId = id ?? generatedId;
+  const labelElement = (
+    <label className="form-check-label" htmlFor={finalId}>
+      {label}
+    </label>
+  );
 
   return (
     <div className="form-check mb-3">
@@ -22,12 +29,11 @@ export default function CheckField({
         {...props}
         id={finalId}
         type={type}
-        className={`form-check-input${error ? " is-invalid" : ""}`}
+        className={`form-check-input${error ? ' is-invalid' : ''}`}
       />
-      <label className="form-check-label" htmlFor={finalId}>
-        {label}
-      </label>
+      {labelPosition === 'left' && labelElement}
       {error && <div className="invalid-feedback d-block">{error}</div>}
+      {labelPosition !== 'left' && labelElement}
     </div>
-  )
+  );
 }

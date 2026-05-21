@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getSortIcon } from '../../utils/sort';
 import { api } from '../../services/api';
+import DeleteDocumentModal from './DeleteDocumentModal';
 
 // Props for the CourseDocumentsList component.
 type CourseDocumentsListProps = {
@@ -154,6 +155,7 @@ export default function CourseDocumentsList({
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [actionError, setActionError] = useState('');
   const [pendingActionDocId, setPendingActionDocId] = useState<string | null>(null);
+  const [documentToDelete, setDocumentToDelete] = useState<DocumentDto | null>(null);
 
   /**
    * Opens a document in a new browser tab.
@@ -217,6 +219,18 @@ export default function CourseDocumentsList({
     } finally {
       setPendingActionDocId(null);
     }
+  }
+
+  /**
+   * Removes a deleted document from local state.
+   *
+   * The list is updated in-place rather than by refetching, since the
+   * backend has already confirmed the delete and we want immediate
+   * feedback for the user.
+   */
+  function handleDocumentDeleted(deletedId: string) {
+    setDocuments((prev) => prev.filter((d) => d.id !== deletedId));
+    setDocumentToDelete(null);
   }
 
   const sort = buildSortOption(sortField, sortDirection);
@@ -433,12 +447,30 @@ export default function CourseDocumentsList({
                       <i className="fa-solid fa-download me-1" aria-hidden="true" />
                       Download
                     </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => setDocumentToDelete(doc)}
+                      disabled={isPending}
+                      aria-label={`Delete ${doc.filename}`}
+                    >
+                      <i className="fa-solid fa-trash" aria-hidden="true" />
+                    </button>
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {documentToDelete && (
+        <DeleteDocumentModal
+          document={documentToDelete}
+          onClose={() => setDocumentToDelete(null)}
+          onDeleted={handleDocumentDeleted}
+        />
       )}
     </div>
   );
