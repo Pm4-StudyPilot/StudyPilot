@@ -141,6 +141,7 @@ export default function QuestionCard({
                     title: event.target.value,
                   }))
                 }
+                onBlur={handleSaveQuestion}
               />
 
               <TextareaField
@@ -154,9 +155,11 @@ export default function QuestionCard({
                   }))
                 }
                 rows={3}
+                onBlur={handleSaveQuestion}
               />
 
               <SelectField
+                label="Question type"
                 className="form-select"
                 value={draftQuestion.type}
                 onChange={(event) =>
@@ -166,34 +169,13 @@ export default function QuestionCard({
                   }))
                 }
                 options={questionTypeOptions}
+                onBlur={handleSaveQuestion}
               />
-            </div>
-
-            <div className="question-editor__actions">
-              <button
-                type="button"
-                className="btn btn-primary question-editor__save-button"
-                disabled={!draftQuestion.title.trim() || savingQuestion}
-                onClick={handleSaveQuestion}
-              >
-                <i className="fa-solid fa-floppy-disk" />
-                {savingQuestion ? 'Saving...' : 'Save question'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline-danger btn-sm"
-                onClick={() => onDeleteQuestion?.(question.id)}
-              >
-                <i className="fa-solid fa-trash me-1" />
-                Delete
-              </button>
             </div>
           </div>
         </header>
 
-        <label className="question-editor__field">
-          <span>Answers</span>
-        </label>
+        <span className="question-editor__field">Answers</span>
 
         {!!question.answers.length && (
           <div className="answer-list answer-list--editable">
@@ -218,6 +200,7 @@ export default function QuestionCard({
                           },
                         }))
                       }
+                      onBlur={() => handleSaveAnswer(answer.id)}
                     />
                   </label>
 
@@ -226,28 +209,22 @@ export default function QuestionCard({
                     label="Correct"
                     type="checkbox"
                     checked={draft.isCorrect}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      const checked = event.target.checked;
+
                       setDraftAnswers((current) => ({
                         ...current,
                         [answer.id]: {
                           ...draft,
-                          isCorrect: event.target.checked,
+                          isCorrect: checked,
                         },
-                      }))
-                    }
+                      }));
+
+                      void handleSaveAnswer(answer.id);
+                    }}
                   />
 
                   <div className="answer-editor__actions">
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary btn-sm"
-                      disabled={!draft.content.trim() || savingAnswerId === answer.id}
-                      onClick={() => handleSaveAnswer(answer.id)}
-                    >
-                      <i className="fa-solid fa-floppy-disk me-1" />
-                      {savingAnswerId === answer.id ? 'Saving...' : 'Save'}
-                    </button>
-
                     <button
                       type="button"
                       className="btn btn-outline-danger btn-sm"
@@ -275,6 +252,7 @@ export default function QuestionCard({
                   content: event.target.value,
                 }))
               }
+              onBlur={() => handleSaveAnswer(answer.id)}
               placeholder="Add another possible answer"
             />
           </label>
@@ -283,12 +261,19 @@ export default function QuestionCard({
             <input
               type="checkbox"
               checked={newAnswer.isCorrect}
-              onChange={(event) =>
-                setNewAnswer((current) => ({
+              onChange={(event) => {
+                const checked = event.target.checked;
+
+                setDraftAnswers((current) => ({
                   ...current,
-                  isCorrect: event.target.checked,
-                }))
-              }
+                  [answer.id]: {
+                    ...draft,
+                    isCorrect: checked,
+                  },
+                }));
+
+                void handleSaveAnswer(answer.id);
+              }}
             />
             Correct
           </label>
@@ -302,6 +287,17 @@ export default function QuestionCard({
             <i className="fa-solid fa-plus" />
             {addingAnswer ? 'Adding...' : 'Add answer'}
           </button>
+        </div>
+        <div className="question-editor__actions">
+          <button
+            type="button"
+            className="btn btn-outline-danger btn-sm"
+            onClick={() => onDeleteQuestion?.(question.id)}
+          >
+            <i className="fa-solid fa-trash me-1" />
+            Delete
+          </button>
+          {(savingAnswerId || savingQuestion) && <>Saving...</>}
         </div>
       </article>
     );
