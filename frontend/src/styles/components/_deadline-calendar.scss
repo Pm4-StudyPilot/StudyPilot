@@ -283,14 +283,14 @@
     display: grid;
     align-content: start;
     gap: 1rem;
+    height: 11.3rem;
   }
 
   &__task-list--preview {
-    min-height: 11.3rem;
+    overflow: hidden;
   }
 
   &__task-list--scrollable {
-    max-height: clamp(11.3rem, 28vh, 18rem);
     overflow-y: auto;
     margin-block: -0.15rem;
     padding: 0.15rem 0.35rem 0.15rem 0;
@@ -392,6 +392,9 @@
   }
 
   &__empty-state {
+    display: grid;
+    place-items: center;
+    height: 11.3rem;
     border: 1px dashed var(--color-border);
     background-color: transparent;
     font-size: var(--font-size-base);
