@@ -140,7 +140,11 @@ describe('CourseDocumentsList', () => {
       expect(screen.getByText('04 - DevOps.pdf')).toBeInTheDocument();
     });
 
-    expect(screen.getAllByText(/Type: PDF/i).length).toBe(2);
+    expect(screen.getByText('5.31 MB')).toBeInTheDocument();
+    expect(screen.getByText('2.37 MB')).toBeInTheDocument();
+    expect(screen.getAllByText(/Updated Apr 20, 2026/i)).toHaveLength(2);
+
+    expect(document.querySelectorAll('.fa-file-pdf')).toHaveLength(2);
   });
 
   /**
@@ -297,7 +301,7 @@ describe('CourseDocumentsList', () => {
    * - The file size is displayed in KB
    * - The unknown file type is displayed as provided
    */
-  it('renders small file sizes and unknown file types', async () => {
+  it('renders small file sizes and fallback file icon for unknown file types', async () => {
     vi.mocked(api.get).mockResolvedValueOnce([
       {
         id: 'doc-1',
@@ -314,8 +318,10 @@ describe('CourseDocumentsList', () => {
       expect(screen.getByText('notes.unknown')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Type: application/custom')).toBeInTheDocument();
-    expect(screen.getByText('Size: 0.5 KB')).toBeInTheDocument();
+    expect(screen.getByText('0.5 KB')).toBeInTheDocument();
+    expect(screen.getByText(/Updated Apr 20, 2026/i)).toBeInTheDocument();
+
+    expect(document.querySelector('.fa-file.text-secondary')).toBeInTheDocument();
   });
 
   /**

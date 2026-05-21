@@ -137,7 +137,9 @@ export default function DocumentUploadForm({ courseId, onUploadSuccess }: Docume
         <div className="course-detail__upload-zone-copy">
           <p className="course-detail__upload-zone-title mb-1">Upload Document</p>
           <p className="course-detail__upload-zone-hint mb-0">
-            Drag &amp; drop a file here, or click to browse. Max file size: 50MB.
+            Drag &amp; drop a file here, or click to browse.
+            <br />
+            Max file size: 50MB.
           </p>
         </div>
 

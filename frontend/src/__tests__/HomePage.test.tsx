@@ -512,12 +512,10 @@ describe('HomePage', () => {
    * Test case: Featured course card link.
    *
    * Expected behavior:
-   * - featured course card links to the matching course detail page
+   * - the course title links to the matching course detail page
    *
    * Note:
-   * The current markup contains two links with the accessible name
-   * "Machine Learning": the full featured card and an inner title link.
-   * Therefore this test intentionally uses getAllByRole.
+   * Only the course title itself is rendered as a link.
    */
   it('renders the featured course card as a link to the course detail page', async () => {
     mockHomePageApi();
@@ -533,5 +531,104 @@ describe('HomePage', () => {
     });
 
     expect(featuredCourseLinks[0]).toHaveAttribute('href', '/courses/c1');
+  });
+
+  /**
+   * Test case: Dashboard warnings
+   *
+   * Scenario:
+   * Supporting dashboard requests fail while the main course request succeeds.
+   *
+   * Expected behavior:
+   * - Warning banners are rendered for failed task, quiz, and document requests
+   * - The dashboard still renders successfully
+   */
+  it('shows warning banner when supporting dashboard data cannot be fully loaded', async () => {
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/courses') {
+        return Promise.resolve([courseFixtures[0]]);
+      }
+
+      if (url === '/courses/c1/tasks') {
+        return Promise.reject(new Error('Tasks unavailable'));
+      }
+
+      if (url.startsWith('/documents/course/c1')) {
+        return Promise.reject(new Error('Documents unavailable'));
+      }
+
+      if (url === '/courses/c1/quizzes') {
+        return Promise.reject(new Error('Quizzes unavailable'));
+      }
+
+      return Promise.resolve([]);
+    });
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('Some task data could not be loaded.')).toBeInTheDocument();
+      expect(screen.getByText('Some document data could not be loaded.')).toBeInTheDocument();
+      expect(screen.getByText('Some quiz data could not be loaded.')).toBeInTheDocument();
+    });
+  });
+
+  /**
+   * Test case: Empty dashboard state
+   *
+   * Scenario:
+   * The backend returns no courses for the current user.
+   *
+   * Expected behavior:
+   * - The empty dashboard state is rendered
+   * - A helpful explanatory message is shown
+   */
+  it('shows empty dashboard state when no courses are returned', async () => {
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/courses') {
+        return Promise.resolve([]);
+      }
+
+      return Promise.resolve([]);
+    });
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('No courses yet')).toBeInTheDocument();
+      expect(screen.getByText(/dashboard has nothing to display yet/i)).toBeInTheDocument();
+    });
+  });
+
+  /**
+   * Test case: Dashboard course links
+   *
+   * Scenario:
+   * Dashboard course cards are rendered after a successful fetch.
+   *
+   * Expected behavior:
+   * - Only the course titles are clickable links
+   * - The surrounding dashboard cards are not rendered as anchor elements
+   */
+  it('renders only course titles as links inside dashboard cards', async () => {
+    mockHomePageApi();
+
+    renderPage();
+
+    const featuredCourseLink = await screen.findByRole('link', {
+      name: 'Machine Learning',
+    });
+
+    const compactCourseLink = screen.getByRole('link', {
+      name: 'Physics Engines',
+    });
+
+    expect(featuredCourseLink).toHaveAttribute('href', '/courses/c1');
+
+    expect(compactCourseLink).toHaveAttribute('href', '/courses/c2');
+
+    expect(featuredCourseLink.closest('.dashboard-featured-card')).not.toHaveAttribute('href');
+
+    expect(compactCourseLink.closest('.dashboard-course-card')).not.toHaveAttribute('href');
   });
 });
