@@ -377,7 +377,7 @@ function CompactCourseCard({ data, index }: { data: DashboardCourseData; index: 
       : 'No quizzes';
 
   return (
-    <Link to={`/courses/${data.course.id}`} className="dashboard-course-card card light">
+    <div className="dashboard-course-card card light">
       <div className="dashboard-course-card__ring-wrap">
         <ProgressRing
           openTasks={progress.openTasks}
@@ -393,10 +393,14 @@ function CompactCourseCard({ data, index }: { data: DashboardCourseData; index: 
 
       <div className="dashboard-course-card__body">
         <div className="dashboard-course-card__code">{quizLabel}</div>
-        <h3 className="dashboard-course-card__title">{data.course.name}</h3>
+        <h3 className="dashboard-course-card__title">
+          <Link to={`/courses/${data.course.id}`} className="dashboard-course-card__title-link">
+            {data.course.name}
+          </Link>
+        </h3>
         <div className="dashboard-course-card__meta">{buildCourseSupportMeta(data)}</div>
       </div>
-    </Link>
+    </div>
   );
 }
 
