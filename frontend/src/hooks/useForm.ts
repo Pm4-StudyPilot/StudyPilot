@@ -68,7 +68,6 @@ export function useForm<T>(schema: ZodSchema<T>, initial: T) {
    * @param value New value for the field
    */
   function handleChange<K extends keyof T>(key: K, value: T[K]) {
-    console.log(key, value);
     setValues((prev) => ({ ...prev, [key]: value }));
   }
 

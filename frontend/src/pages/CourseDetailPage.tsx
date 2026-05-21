@@ -302,7 +302,7 @@ export default function CourseDetailPage() {
                   </div>
                 )}
 
-                {!tasksLoading && !tasksError && (
+                {!courseFeedLoading && !courseFeedError && (
                   <div className="course-detail__materials">
                     <div className="course-detail__section-header">
                       <div className="course-detail__section-title">
