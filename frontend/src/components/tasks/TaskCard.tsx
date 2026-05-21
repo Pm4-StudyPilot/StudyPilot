@@ -1,5 +1,10 @@
 import { useState } from 'react';
 import { TaskDto } from '../../types/dto';
+import {
+  TASK_PRIORITY_BADGE_CLASS,
+  TASK_STATUS_BADGE_CLASS,
+  TASK_STATUS_LABEL,
+} from './taskDisplay';
 
 interface TaskCardProps {
   task: TaskDto;
@@ -8,24 +13,6 @@ interface TaskCardProps {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
   isDragging?: boolean;
 }
-
-const PRIORITY_BADGE: Record<TaskDto['priority'], string> = {
-  LOW: 'bg-secondary',
-  MEDIUM: 'bg-warning text-dark',
-  HIGH: 'bg-danger',
-};
-
-const STATUS_BADGE: Record<TaskDto['status'], string> = {
-  OPEN: 'bg-secondary',
-  IN_PROGRESS: 'bg-primary',
-  DONE: 'bg-success',
-};
-
-const STATUS_LABEL: Record<TaskDto['status'], string> = {
-  OPEN: 'Open',
-  IN_PROGRESS: 'In Progress',
-  DONE: 'Done',
-};
 
 /**
  * TaskCard
@@ -57,19 +44,12 @@ export default function TaskCard({
     : null;
 
   return (
-    <div
-      className={`task-card rounded p-3 mb-2${isDragging ? ' opacity-50' : ''}`}
-      style={{
-        background: 'var(--color-panel, #1e1e2e)',
-        border: '1px solid rgba(255,255,255,0.08)',
-      }}
-    >
+    <div className={`task-card rounded p-3 mb-2${isDragging ? ' opacity-50' : ''}`}>
       <div className="d-flex align-items-center gap-2">
         {dragHandleProps && (
           <span
             {...dragHandleProps}
             className="task-card__drag-handle text-secondary"
-            style={{ cursor: 'grab', fontSize: '0.85rem' }}
             aria-label="drag handle"
           >
             <i className="fa-solid fa-grip-vertical" />
@@ -90,16 +70,16 @@ export default function TaskCard({
 
         <div className="d-flex align-items-center gap-2 ms-auto">
           {formattedDueDate && (
-            <span className="text-secondary" style={{ fontSize: '0.8rem' }}>
+            <span className="task-card__date text-secondary">
               <i className="fa-regular fa-calendar me-1" />
               {formattedDueDate}
             </span>
           )}
-          <span className={`badge ${PRIORITY_BADGE[task.priority]}`} style={{ fontSize: '0.7rem' }}>
+          <span className={`task-card__badge badge ${TASK_PRIORITY_BADGE_CLASS[task.priority]}`}>
             {task.priority}
           </span>
-          <span className={`badge ${STATUS_BADGE[task.status]}`} style={{ fontSize: '0.7rem' }}>
-            {STATUS_LABEL[task.status]}
+          <span className={`task-card__badge badge ${TASK_STATUS_BADGE_CLASS[task.status]}`}>
+            {TASK_STATUS_LABEL[task.status]}
           </span>
           <button
             className="btn btn-link p-0 text-secondary"
@@ -119,10 +99,7 @@ export default function TaskCard({
       </div>
 
       {expanded && (
-        <div
-          className="task-card__description mt-2 pt-2 text-secondary"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: '0.9rem' }}
-        >
+        <div className="task-card__description mt-2 pt-2 text-secondary">
           {task.description ?? <em>No description.</em>}
         </div>
       )}

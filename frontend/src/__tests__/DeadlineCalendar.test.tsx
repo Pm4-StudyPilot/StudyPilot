@@ -108,8 +108,8 @@ describe('DeadlineCalendar', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Deadline Calendar')).toBeInTheDocument();
     expect(await screen.findByText('May 2026')).toBeInTheDocument();
+    expect(await screen.findByText('Upcoming Deadlines')).toBeInTheDocument();
     expect(
       await screen.findByRole('button', { name: /may 10, 2026, today, 1 deadline/i })
     ).toBeInTheDocument();
@@ -117,10 +117,12 @@ describe('DeadlineCalendar', () => {
     expect(screen.getByText('Read chapter 5')).toBeInTheDocument();
     expect(screen.getByText('Due soon')).toBeInTheDocument();
     expect(screen.getAllByText('Due today').length).toBeGreaterThan(0);
-    expect(document.querySelectorAll('.deadline-calendar__day-course-dot').length).toBeGreaterThan(0);
+    expect(document.querySelectorAll('.deadline-calendar__day-dot').length).toBeGreaterThan(0);
+    expect(document.querySelector('.deadline-calendar__day-count')).not.toBeInTheDocument();
+    expect(screen.queryByText('Selected day')).not.toBeInTheDocument();
   });
 
-  it('shows tasks for the selected day and labels overdue items', async () => {
+  it('replaces upcoming deadlines with the selected day after clicking a date', async () => {
     vi.mocked(api.get).mockImplementation((endpoint: string) => {
       if (endpoint in tasksByEndpoint) {
         return Promise.resolve(tasksByEndpoint[endpoint as keyof typeof tasksByEndpoint]);
@@ -135,12 +137,40 @@ describe('DeadlineCalendar', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Next deadlines')).toBeInTheDocument();
+    expect(await screen.findByText('Upcoming Deadlines')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /may 3, 2026, 1 deadline/i }));
 
+    expect(screen.getByRole('heading', { name: 'May 3, 2026' })).toBeInTheDocument();
+    expect(screen.queryByText('Upcoming Deadlines')).not.toBeInTheDocument();
     expect(screen.getByText('Lab recap')).toBeInTheDocument();
     expect(screen.getByText('Overdue')).toBeInTheDocument();
     expect(screen.getAllByText('Computer Science').length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('button', { name: /show upcoming deadlines/i }));
+
+    expect(screen.getByText('Upcoming Deadlines')).toBeInTheDocument();
+    expect(screen.queryByText('Lab recap')).not.toBeInTheDocument();
+  });
+
+  it('links each task back to its course through the course chip', async () => {
+    vi.mocked(api.get).mockImplementation((endpoint: string) => {
+      if (endpoint in tasksByEndpoint) {
+        return Promise.resolve(tasksByEndpoint[endpoint as keyof typeof tasksByEndpoint]);
+      }
+
+      return Promise.reject(new Error(`Unexpected endpoint: ${endpoint}`));
+    });
+
+    render(
+      <MemoryRouter>
+        <DeadlineCalendar courses={courses} />
+      </MemoryRouter>
+    );
+
+    const biologyLinks = await screen.findAllByRole('link', { name: /biology/i });
+
+    expect(biologyLinks[0]).toHaveAttribute('href', '/courses/course-2');
+    expect(screen.queryByText('Open course')).not.toBeInTheDocument();
   });
 
   it('shows an error state when the course request fails', async () => {

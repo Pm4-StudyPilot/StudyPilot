@@ -6,6 +6,7 @@ const now = new Date('2026-03-26T12:00:00.000Z');
 type MockCourse = {
   id: string;
   name: string;
+  color: string;
   ownerId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -25,7 +26,7 @@ type MockTask = {
 type MockCourseDb = {
   course: {
     create?: (args: {
-      data: { name: string; ownerId: string };
+      data: { name: string; color: string; ownerId: string };
       select: unknown;
     }) => Promise<MockCourse & { tasks: MockTask[] }>;
     findMany?: (args: {
@@ -39,7 +40,7 @@ type MockCourseDb = {
     }) => Promise<(MockCourse & { tasks: MockTask[] }) | null>;
     update?: (args: {
       where: { id: string };
-      data: { name: string };
+      data: { name: string; color?: string };
       select: unknown;
     }) => Promise<MockCourse & { tasks: MockTask[] }>;
     deleteMany?: (args: { where: { id: string; ownerId: string } }) => Promise<{ count: number }>;
@@ -50,6 +51,7 @@ function createMockCourse(id: string, name: string, ownerId: string): MockCourse
   return {
     id,
     name,
+    color: '#6C63FF',
     ownerId,
     createdAt: now,
     updatedAt: now,
@@ -83,6 +85,7 @@ describe('CourseService', () => {
     expect(create).toHaveBeenCalledWith({
       data: {
         name: 'Biology 101',
+        color: expect.any(String),
         ownerId: 'u1',
       },
       select: expect.any(Object),

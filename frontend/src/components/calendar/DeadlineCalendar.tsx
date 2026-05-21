@@ -5,7 +5,6 @@ import { CourseDto, TaskDto } from '../../types/dto';
 import { normalizeCourseColor, withOpacity } from '../../utils/courseColors';
 import {
   buildCalendarDays,
-  formatLocalDateKey,
   formatLongDate,
   formatMonthLabel,
   formatShortDate,
@@ -15,6 +14,7 @@ import {
   parseDateKey,
   shiftMonth,
 } from '../../utils/calendar';
+import { TASK_PRIORITY_BADGE_CLASS } from '../tasks/taskDisplay';
 
 type CalendarTask = TaskDto & {
   courseName: string;
@@ -23,6 +23,13 @@ type CalendarTask = TaskDto & {
 };
 
 type LoadState = 'loading' | 'success' | 'error';
+
+type TaskRequestState = {
+  courseKey: string;
+  status: Exclude<LoadState, 'loading'>;
+  tasks: CalendarTask[];
+  error: string;
+};
 
 type DeadlineFlag = {
   tone: 'default' | 'today' | 'soon' | 'overdue';
@@ -37,22 +44,17 @@ interface DeadlineCalendarProps {
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const UPCOMING_LIMIT = 6;
-const MAX_DAY_SWATCHES = 3;
+const EMPTY_CALENDAR_TASKS: CalendarTask[] = [];
+
+const DEADLINE_BADGE_CLASS: Record<DeadlineFlag['tone'], string> = {
+  default: 'bg-secondary',
+  today: 'bg-primary',
+  soon: 'bg-warning text-dark',
+  overdue: 'bg-danger',
+};
 
 function isTaskCompleted(task: TaskDto): boolean {
   return task.completed || task.status === 'DONE';
-}
-
-function getPriorityBadgeClass(priority: TaskDto['priority']): string {
-  switch (priority) {
-    case 'HIGH':
-      return 'bg-danger-subtle text-danger-emphasis border border-danger-subtle';
-    case 'MEDIUM':
-      return 'bg-warning-subtle text-warning-emphasis border border-warning-subtle';
-    case 'LOW':
-    default:
-      return 'bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle';
-  }
 }
 
 function sortCalendarTasks(tasks: CalendarTask[]): CalendarTask[] {
@@ -149,8 +151,8 @@ function createCalendarTasks(courses: CourseDto[], tasksByCourse: TaskDto[][]): 
   );
 }
 
-function getDayCourseColors(tasks: CalendarTask[]): string[] {
-  return Array.from(new Set(tasks.map((task) => normalizeCourseColor(task.courseColor))));
+function getDayDotColor(tasks: CalendarTask[]): string {
+  return normalizeCourseColor(tasks[0]?.courseColor);
 }
 
 function DeadlineTaskCard({
@@ -167,35 +169,38 @@ function DeadlineTaskCard({
 
   return (
     <li
-      className="deadline-calendar__task-card rounded-4 p-3"
+      className="deadline-calendar__task-card task-card rounded p-3"
       style={{
         borderColor: withOpacity(normalizedColor, 0.2),
         boxShadow: `inset 3px 0 0 ${normalizedColor}`,
       }}
     >
-      <div className="d-flex align-items-start justify-content-between gap-3">
-        <div className="flex-grow-1">
-          <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+      <div className="d-flex flex-column gap-2">
+        <div className="d-flex flex-wrap align-items-center gap-2">
+          <Link
+            to={`/courses/${task.courseId}`}
+            className="deadline-calendar__course-link text-decoration-none"
+            style={{
+              backgroundColor: withOpacity(normalizedColor, 0.16),
+              borderColor: withOpacity(normalizedColor, 0.28),
+            }}
+          >
             <span
-              className="deadline-calendar__chip deadline-calendar__chip--course"
-              style={{
-                backgroundColor: withOpacity(normalizedColor, 0.16),
-                borderColor: withOpacity(normalizedColor, 0.28),
-              }}
-            >
-              <span
-                className="deadline-calendar__course-dot"
-                style={{ backgroundColor: normalizedColor }}
-                aria-hidden="true"
-              />
-              {task.courseName}
-            </span>
-            <span className={`badge ${getPriorityBadgeClass(task.priority)}`}>{task.priority}</span>
-            <span className={`deadline-calendar__chip deadline-calendar__chip--${flag.tone}`}>
-              {flag.label}
-            </span>
-          </div>
+              className="deadline-calendar__course-dot"
+              style={{ backgroundColor: normalizedColor }}
+              aria-hidden="true"
+            />
+            {task.courseName}
+          </Link>
+          <span className={`task-card__badge badge ${TASK_PRIORITY_BADGE_CLASS[task.priority]}`}>
+            {task.priority}
+          </span>
+          <span className={`task-card__badge badge ${DEADLINE_BADGE_CLASS[flag.tone]}`}>
+            {flag.label}
+          </span>
+        </div>
 
+        <div>
           <h3 className="deadline-calendar__task-title text-white h6 mb-1">{task.title}</h3>
 
           {task.description && (
@@ -211,14 +216,6 @@ function DeadlineTaskCard({
             </p>
           )}
         </div>
-
-        <Link
-          to={`/courses/${task.courseId}`}
-          className="deadline-calendar__task-link text-decoration-none"
-          style={{ color: normalizedColor }}
-        >
-          Open course
-        </Link>
       </div>
     </li>
   );
@@ -232,54 +229,49 @@ export default function DeadlineCalendar({
   const todayDateKey = getTodayDateKey();
   const initialToday = parseDateKey(todayDateKey);
 
-  const [tasks, setTasks] = useState<CalendarTask[]>([]);
-  const [loadState, setLoadState] = useState<LoadState>('loading');
-  const [error, setError] = useState('');
+  const courseKey = useMemo(
+    () => JSON.stringify(courses.map((course) => [course.id, course.name, course.color])),
+    [courses]
+  );
+  const [taskRequest, setTaskRequest] = useState<TaskRequestState>({
+    courseKey: '',
+    status: 'success',
+    tasks: [],
+    error: '',
+  });
   const [activeMonth, setActiveMonth] = useState(
     () => new Date(initialToday.getFullYear(), initialToday.getMonth(), 1)
   );
-  const [selectedDateKey, setSelectedDateKey] = useState(todayDateKey);
+  const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
 
   useEffect(() => {
-    if (coursesLoading) {
-      setLoadState('loading');
-      setError('');
-      return;
-    }
-
-    if (coursesError) {
-      setTasks([]);
-      setLoadState('error');
-      setError(coursesError);
-      return;
-    }
+    if (coursesLoading || coursesError) return;
 
     let isCancelled = false;
 
     async function loadDeadlineTasks() {
-      setLoadState('loading');
-      setError('');
-
       try {
-        if (courses.length === 0) {
-          setTasks([]);
-          setLoadState('success');
-          return;
-        }
-
         const tasksByCourse = await Promise.all(
           courses.map((course) => api.get<TaskDto[]>(`/courses/${course.id}/tasks`))
         );
 
         if (isCancelled) return;
 
-        setTasks(createCalendarTasks(courses, tasksByCourse));
-        setLoadState('success');
+        setTaskRequest({
+          courseKey,
+          status: 'success',
+          tasks: createCalendarTasks(courses, tasksByCourse),
+          error: '',
+        });
       } catch (loadError: unknown) {
         if (isCancelled) return;
 
-        setError(loadError instanceof Error ? loadError.message : 'Failed to load deadlines');
-        setLoadState('error');
+        setTaskRequest({
+          courseKey,
+          status: 'error',
+          tasks: [],
+          error: loadError instanceof Error ? loadError.message : 'Failed to load deadlines',
+        });
       }
     }
 
@@ -288,7 +280,17 @@ export default function DeadlineCalendar({
     return () => {
       isCancelled = true;
     };
-  }, [courses, coursesError, coursesLoading]);
+  }, [courseKey, courses, coursesError, coursesLoading]);
+
+  const hasCurrentTaskRequest = taskRequest.courseKey === courseKey;
+  const loadState: LoadState =
+    coursesLoading || (!coursesError && !hasCurrentTaskRequest)
+      ? 'loading'
+      : coursesError || taskRequest.status === 'error'
+        ? 'error'
+        : 'success';
+  const error = coursesError || (hasCurrentTaskRequest ? taskRequest.error : '');
+  const tasks = hasCurrentTaskRequest ? taskRequest.tasks : EMPTY_CALENDAR_TASKS;
 
   const tasksByDate = useMemo(() => {
     return tasks.reduce<Record<string, CalendarTask[]>>((grouped, task) => {
@@ -301,11 +303,9 @@ export default function DeadlineCalendar({
     }, {});
   }, [tasks]);
 
-  const selectedDateTasks = tasksByDate[selectedDateKey] ?? [];
+  const selectedDateTasks = selectedDateKey ? (tasksByDate[selectedDateKey] ?? []) : [];
   const calendarDays = useMemo(() => buildCalendarDays(activeMonth), [activeMonth]);
   const activeMonthLabel = formatMonthLabel(activeMonth);
-
-  const datedCourseCount = useMemo(() => new Set(tasks.map((task) => task.courseId)).size, [tasks]);
 
   const upcomingTasks = useMemo(() => {
     return sortCalendarTasks(
@@ -315,16 +315,21 @@ export default function DeadlineCalendar({
     ).slice(0, UPCOMING_LIMIT);
   }, [tasks, todayDateKey]);
 
+  const visibleTasks = selectedDateKey ? selectedDateTasks : upcomingTasks;
+  const detailTitle = selectedDateKey ? formatLongDate(selectedDateKey) : 'Upcoming Deadlines';
+  const emptyMessage = selectedDateKey
+    ? 'No task deadlines fall on this date.'
+    : 'No upcoming deadlines yet. Add or update task due dates to populate this list.';
+
   function handleMonthShift(offset: number) {
-    const nextMonth = shiftMonth(activeMonth, offset);
-    setActiveMonth(nextMonth);
-    setSelectedDateKey(formatLocalDateKey(nextMonth));
+    setActiveMonth(shiftMonth(activeMonth, offset));
+    setSelectedDateKey(null);
   }
 
   function handleGoToToday() {
     const today = parseDateKey(todayDateKey);
     setActiveMonth(new Date(today.getFullYear(), today.getMonth(), 1));
-    setSelectedDateKey(todayDateKey);
+    setSelectedDateKey(null);
   }
 
   function handleDateSelect(dateKey: string) {
@@ -334,26 +339,7 @@ export default function DeadlineCalendar({
   }
 
   return (
-    <section className="deadline-calendar rounded-4 p-4">
-      <div className="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
-        <div>
-          <p className="deadline-calendar__eyebrow text-uppercase mb-2">Planner</p>
-          <h2 className="text-white fw-bold h4 mb-1">Deadline Calendar</h2>
-          <p className="text-secondary mb-0">
-            View task deadlines across your courses without leaving the dashboard.
-          </p>
-        </div>
-
-        {loadState === 'success' && (
-          <div className="deadline-calendar__summary rounded-4 px-3 py-2">
-            <div className="text-white fw-semibold">{tasks.length} dated tasks</div>
-            <div className="text-secondary small">
-              {datedCourseCount} course{datedCourseCount === 1 ? '' : 's'} with deadlines
-            </div>
-          </div>
-        )}
-      </div>
-
+    <section className="deadline-calendar">
       {loadState === 'loading' && (
         <div className="d-flex justify-content-center py-5">
           <div className="spinner-border text-secondary" role="status">
@@ -366,12 +352,9 @@ export default function DeadlineCalendar({
 
       {loadState === 'success' && (
         <>
-          <div className="deadline-calendar__surface rounded-4 p-3 p-lg-4 mb-4">
+          <div className="deadline-calendar__month mb-4">
             <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-              <div>
-                <p className="text-secondary small text-uppercase mb-1">Monthly view</p>
-                <h3 className="text-white h5 mb-0">{activeMonthLabel}</h3>
-              </div>
+              <h2 className="text-white fw-bold h5 mb-0">{activeMonthLabel}</h2>
 
               <div className="d-flex align-items-center gap-2">
                 <button
@@ -412,7 +395,7 @@ export default function DeadlineCalendar({
               <div className="deadline-calendar__grid">
                 {calendarDays.map((day) => {
                   const dayTasks = tasksByDate[day.dateKey] ?? [];
-                  const dayCourseColors = getDayCourseColors(dayTasks);
+                  const dayDotColor = getDayDotColor(dayTasks);
                   const isSelected = day.dateKey === selectedDateKey;
                   const isToday = day.dateKey === todayDateKey;
                   const dayTone = getDayTone(dayTasks, todayDateKey);
@@ -439,23 +422,11 @@ export default function DeadlineCalendar({
                       <span className="deadline-calendar__day-number">{day.dayNumber}</span>
 
                       {dayTasks.length > 0 && (
-                        <span className="deadline-calendar__day-footer">
-                          <span className="deadline-calendar__day-count">{dayTasks.length}</span>
-                          <span className="deadline-calendar__day-swatches" aria-hidden="true">
-                            {dayCourseColors.slice(0, MAX_DAY_SWATCHES).map((courseColor) => (
-                              <span
-                                key={`${day.dateKey}-${courseColor}`}
-                                className="deadline-calendar__day-course-dot"
-                                style={{ backgroundColor: courseColor }}
-                              />
-                            ))}
-                            {dayCourseColors.length > MAX_DAY_SWATCHES && (
-                              <span className="deadline-calendar__day-more">
-                                +{dayCourseColors.length - MAX_DAY_SWATCHES}
-                              </span>
-                            )}
-                          </span>
-                        </span>
+                        <span
+                          className="deadline-calendar__day-dot"
+                          style={{ backgroundColor: dayDotColor }}
+                          aria-hidden="true"
+                        />
                       )}
                     </button>
                   );
@@ -464,62 +435,38 @@ export default function DeadlineCalendar({
             </div>
           </div>
 
-          <div className="deadline-calendar__info-grid">
-            <section className="deadline-calendar__detail-card rounded-4 p-3 p-lg-4">
-              <div className="d-flex align-items-start justify-content-between gap-3 mb-3">
-                <div>
-                  <p className="text-secondary small text-uppercase mb-1">Selected day</p>
-                  <h3 className="text-white h5 mb-0">{formatLongDate(selectedDateKey)}</h3>
-                </div>
+          <section className="deadline-calendar__detail">
+            <div className="d-flex align-items-center justify-content-between gap-3 mb-3">
+              <h3 className="text-white h5 mb-0">{detailTitle}</h3>
 
-                <span className="deadline-calendar__summary-pill">
-                  {selectedDateTasks.length} task{selectedDateTasks.length === 1 ? '' : 's'}
-                </span>
-              </div>
-
-              {selectedDateTasks.length === 0 ? (
-                <div className="deadline-calendar__empty-state rounded-4 p-3 text-secondary text-center">
-                  No task deadlines fall on this date.
-                </div>
-              ) : (
-                <ul className="deadline-calendar__task-list list-unstyled mb-0">
-                  {selectedDateTasks.map((task) => (
-                    <DeadlineTaskCard key={task.id} task={task} todayDateKey={todayDateKey} />
-                  ))}
-                </ul>
+              {selectedDateKey && (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-link deadline-calendar__reset p-0 text-decoration-none"
+                  onClick={() => setSelectedDateKey(null)}
+                >
+                  Show upcoming deadlines
+                </button>
               )}
-            </section>
+            </div>
 
-            <section className="deadline-calendar__detail-card rounded-4 p-3 p-lg-4">
-              <div className="d-flex align-items-start justify-content-between gap-3 mb-3">
-                <div>
-                  <p className="text-secondary small text-uppercase mb-1">Upcoming</p>
-                  <h3 className="text-white h5 mb-0">Next deadlines</h3>
-                </div>
-
-                <span className="deadline-calendar__summary-pill">
-                  {upcomingTasks.length} shown
-                </span>
+            {visibleTasks.length === 0 ? (
+              <div className="deadline-calendar__empty-state rounded p-3 text-secondary text-center">
+                {emptyMessage}
               </div>
-
-              {upcomingTasks.length === 0 ? (
-                <div className="deadline-calendar__empty-state rounded-4 p-3 text-secondary text-center">
-                  No upcoming deadlines yet. Add or update task due dates to populate this list.
-                </div>
-              ) : (
-                <ul className="deadline-calendar__task-list list-unstyled mb-0">
-                  {upcomingTasks.map((task) => (
-                    <DeadlineTaskCard
-                      key={`${task.id}-upcoming`}
-                      task={task}
-                      todayDateKey={todayDateKey}
-                      showDate={true}
-                    />
-                  ))}
-                </ul>
-              )}
-            </section>
-          </div>
+            ) : (
+              <ul className="deadline-calendar__task-list list-unstyled mb-0">
+                {visibleTasks.map((task) => (
+                  <DeadlineTaskCard
+                    key={`${selectedDateKey ?? 'upcoming'}-${task.id}`}
+                    task={task}
+                    todayDateKey={todayDateKey}
+                    showDate={!selectedDateKey}
+                  />
+                ))}
+              </ul>
+            )}
+          </section>
         </>
       )}
     </section>

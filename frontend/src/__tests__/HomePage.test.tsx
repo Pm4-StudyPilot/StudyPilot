@@ -18,6 +18,15 @@ vi.mock('../context/useAuth', () => ({
   }),
 }));
 
+vi.mock('../utils/calendar', async () => {
+  const actual = await vi.importActual<typeof import('../utils/calendar')>('../utils/calendar');
+
+  return {
+    ...actual,
+    getTodayDateKey: () => '2026-05-10',
+  };
+});
+
 describe('HomePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -70,7 +79,7 @@ describe('HomePage', () => {
     );
 
     expect(screen.getByText('My Courses')).toBeInTheDocument();
-    expect(screen.getByText('Deadline Calendar')).toBeInTheDocument();
+    expect(await screen.findByText('Upcoming Deadlines')).toBeInTheDocument();
     expect((await screen.findAllByText('Computer Science')).length).toBeGreaterThan(0);
     expect(await screen.findByText('Read chapter 5', {}, { timeout: 3000 })).toBeInTheDocument();
   });
