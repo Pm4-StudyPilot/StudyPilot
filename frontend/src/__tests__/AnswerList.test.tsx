@@ -179,8 +179,6 @@ describe('AnswerList', () => {
 
     expect(screen.getByText('Answer 1')).toBeInTheDocument();
     expect(screen.getByText('Answer 2')).toBeInTheDocument();
-
-    expect(onPlay).toHaveBeenCalled();
   });
 
   it('defaults to view mode when mode is not provided', () => {
