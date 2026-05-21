@@ -10,6 +10,8 @@ import RequestPasswordResetPage from './pages/RequestPasswordResetPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import CourseDetailPage from './pages/CourseDetailPage';
 import QuizDetailPage from './pages/QuizDetailPage';
+import AiInput from './components/ai/AiInput';
+import AiInputGuard from './components/shared/AiInputGuard';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
@@ -18,59 +20,64 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/forgot-password" element={<RequestPasswordResetPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <HomePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/courses"
-        element={
-          <ProtectedRoute>
-            <CoursesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <SettingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings/password"
-        element={
-          <ProtectedRoute>
-            <ChangePasswordPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/courses/:courseId/quizzes/:quizId"
-        element={
-          <ProtectedRoute>
-            <QuizDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/courses/:id"
-        element={
-          <ProtectedRoute>
-            <CourseDetailPage />
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<RequestPasswordResetPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/courses"
+          element={
+            <ProtectedRoute>
+              <CoursesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings/password"
+          element={
+            <ProtectedRoute>
+              <ChangePasswordPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/courses/:courseId/quizzes/:quizId"
+          element={
+            <ProtectedRoute>
+              <QuizDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/courses/:id"
+          element={
+            <ProtectedRoute>
+              <CourseDetailPage />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+      <AiInputGuard>
+        <AiInput />
+      </AiInputGuard>
+    </>
   );
 }

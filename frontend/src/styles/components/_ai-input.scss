@@ -1,0 +1,166 @@
+.ai-input {
+  position: fixed;
+  bottom: var(--space-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  width: min(600px, calc(100vw - 2 * var(--space-lg)));
+
+  &__panel {
+    display: flex;
+    flex-direction: column;
+    // Fixed height, but never taller than the screen (leaving room for the
+    // input row and surrounding margins). Content scrolls when it overflows.
+    height: min(800px, calc(100vh - 8rem));
+    padding: var(--space-md);
+    background: var(--background-shiny);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-soft);
+    animation: ai-input-panel-open 0.18s ease-out;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+
+  &__panel-header {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: var(--space-sm);
+  }
+
+  &__close {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+
+    &:hover {
+      background: var(--color-glow-soft);
+      color: var(--color-text-primary);
+    }
+
+    svg {
+      display: block;
+    }
+  }
+
+  &__messages {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-sm);
+    overflow-y: auto;
+  }
+
+  &__message {
+    max-width: 85%;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-card);
+    font-size: var(--font-size-base);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+
+    &--user {
+      align-self: flex-end;
+      background: var(--color-secondary-accent);
+      color: var(--color-text-primary);
+    }
+
+    &--assistant {
+      align-self: flex-start;
+      background: var(--color-card-bg);
+      color: var(--color-text-primary);
+    }
+  }
+
+  &__form {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    background: var(--background-shiny);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-soft);
+  }
+
+  &__field {
+    flex: 1;
+    min-width: 0;
+    padding: 0 var(--space-sm);
+    border: none;
+    background: transparent;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+
+    &::placeholder {
+      color: var(--color-text-muted);
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &__send {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: var(--color-primary-bold);
+    color: var(--color-white);
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      opacity 0.15s ease;
+
+    &:hover:not(:disabled) {
+      background: var(--color-primary);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    svg {
+      display: block;
+      // Optical nudge: the paper-plane glyph sits slightly low-left in its
+      // viewBox, so geometric centering looks off-center without this.
+      transform: translateX(1px);
+    }
+  }
+}
+
+@keyframes ai-input-panel-open {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
