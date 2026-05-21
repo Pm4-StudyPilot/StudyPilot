@@ -5,6 +5,7 @@ import InputField from '../shared/form/InputField';
 import TextareaField from '../shared/form/TextareaField';
 import SelectField from '../shared/form/SelectField';
 import AnswerList from './AnswerList';
+import CheckField from '../shared/form/CheckField';
 
 interface QuestionFormState {
   title: string;
@@ -212,38 +213,35 @@ export default function QuestionCard({
         )}
 
         <div className="answer-editor answer-editor--new">
-          <label className="answer-editor__content">
-            <span>New answer</span>
-            <input
-              className="form-control"
-              value={newAnswer.content}
-              onChange={(event) =>
-                setNewAnswer((current) => ({
-                  ...current,
-                  content: event.target.value,
-                }))
-              }
-              placeholder="Add another possible answer"
-            />
-          </label>
+          <InputField
+            label="New answer"
+            className="answer-editor__content form-control"
+            value={newAnswer.content}
+            onChange={(event) =>
+              setNewAnswer((current) => ({
+                ...current,
+                content: event.target.value,
+              }))
+            }
+            placeholder="Add another possible answer"
+          />
 
-          <label className="answer-editor__check">
-            <input
-              type="checkbox"
-              checked={newAnswer.isCorrect}
-              onChange={(event) =>
-                setNewAnswer((current) => ({
-                  ...current,
-                  isCorrect: event.target.checked,
-                }))
-              }
-            />
-            Correct
-          </label>
+          <CheckField
+            label="Correct"
+            type="checkbox"
+            checked={newAnswer.isCorrect}
+            onChange={(event) =>
+              setNewAnswer((current) => ({
+                ...current,
+                isCorrect: event.target.checked,
+              }))
+            }
+            className="answer-editor__check"
+          />
 
           <button
             type="button"
-            className="btn btn-primary btn-sm answer-editor__add-button"
+            className="btn btn-primary btn-sm answer-editor__add-button mb-3"
             disabled={!newAnswer.content.trim() || addingAnswer}
             onClick={handleCreateAnswer}
           >

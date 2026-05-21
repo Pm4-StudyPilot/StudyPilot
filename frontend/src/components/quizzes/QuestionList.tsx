@@ -153,6 +153,7 @@ export default function QuestionList({
             />
 
             <SelectField
+              label="Question type"
               className="form-select"
               value={newQuestion.type}
               onChange={(event) =>
