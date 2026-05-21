@@ -136,31 +136,6 @@
   }
 }
 
-// TaskCard
-.task-card {
-  background-color: var(--color-panel, #1e2030);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-
-  &__drag-handle {
-    cursor: grab;
-    font-size: 0.85rem;
-  }
-
-  &__date {
-    font-size: 0.8rem;
-    white-space: nowrap;
-  }
-
-  &__badge {
-    font-size: 0.7rem;
-  }
-
-  &__description {
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    font-size: 0.9rem;
-  }
-}
-
 // DeleteCourseModal
 .delete-course-modal {
   &__message {
@@ -293,315 +268,346 @@
 
 // Deadline Calendar
 .deadline-calendar {
-  &__weekdays,
-  &__grid {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 0.5rem;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
 
-  &__month-frame {
-    overflow-x: auto;
-    padding-bottom: 0.1rem;
-  }
-
-  &__filter {
-    position: relative;
-  }
-
-  &__filter-toggle {
-    align-items: center;
-    background-color: rgba(30, 32, 48, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 0.5rem;
-    color: #fff;
-    display: inline-flex;
-    font-size: 0.86rem;
-    font-weight: 600;
-    gap: 0.65rem;
-    justify-content: space-between;
-    min-height: 2rem;
-    min-width: 12rem;
-    padding: 0.35rem 0.65rem;
-
-    &:hover,
-    &:focus-visible {
-      background-color: #1e2030;
-      border-color: #6c63ff;
-      box-shadow: 0 0 0 0.2rem rgba(108, 99, 255, 0.2);
-      color: #fff;
-    }
-  }
-
-  &__filter-label {
-    align-items: center;
-    display: inline-flex;
-    gap: 0.45rem;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__filter-dot {
-    border-radius: 999px;
-    display: inline-block;
-    flex-shrink: 0;
-    height: 0.5rem;
-    width: 0.5rem;
-  }
-
-  &__filter-menu {
-    background-color: #1e2030;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 0.65rem;
-    box-shadow: 0 16px 36px rgba(6, 8, 20, 0.38);
-    min-width: 16rem;
-    padding: 0.55rem;
-    position: absolute;
-    right: 0;
-    top: calc(100% + 0.4rem);
-    z-index: 5;
-  }
-
-  &__filter-search {
-    align-items: center;
-    background-color: rgba(15, 16, 32, 0.72);
+  &__surface,
+  &__detail-card {
+    background-color: #111119;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 0.5rem;
-    color: #8f96bf;
-    display: flex;
-    gap: 0.45rem;
-    margin-bottom: 0.45rem;
-    padding: 0.4rem 0.55rem;
-
-    input {
-      background: transparent;
-      border: 0;
-      color: #fff;
-      font-size: 0.85rem;
-      min-width: 0;
-      outline: 0;
-      width: 100%;
-
-      &::placeholder {
-        color: #8f96bf;
-      }
-    }
+    border-radius: 2rem;
+    box-shadow: 0 24px 55px rgba(0, 0, 0, 0.32);
   }
 
-  &__filter-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    max-height: 14rem;
-    overflow-y: auto;
-    padding-right: 0.15rem;
+  &__surface {
+    padding: 2.5rem 2.75rem;
   }
 
-  &__filter-option {
+  &__detail-card {
+    padding: 2rem 2.75rem;
+  }
+
+  &__header,
+  &__detail-header {
     align-items: center;
-    background: transparent;
-    border: 0;
-    border-radius: 0.45rem;
-    color: #ced4da;
     display: flex;
-    font-size: 0.85rem;
-    gap: 0.5rem;
-    padding: 0.45rem 0.5rem;
-    text-align: left;
-    width: 100%;
-
-    &:hover,
-    &:focus-visible,
-    &--active {
-      background-color: rgba(108, 99, 255, 0.16);
-      color: #fff;
-    }
+    justify-content: space-between;
+    gap: 1rem;
   }
 
-  &__filter-empty {
-    color: #8f96bf;
-    font-size: 0.85rem;
-    padding: 0.7rem 0.5rem;
-    text-align: center;
+  &__header {
+    margin-bottom: 2rem;
   }
 
-  &__weekday {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-align: center;
+  &__month-title,
+  &__detail-header h3 {
+    color: #f5f5f8;
+    font-size: clamp(1.45rem, 3vw, 2.15rem);
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    margin: 0;
     text-transform: uppercase;
   }
 
-  &__day {
-    align-items: flex-start;
-    background-color: rgba(15, 16, 32, 0.62);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 0.5rem;
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 66px;
-    padding: 0.75rem 0.65rem;
-    text-align: left;
+  &__nav {
+    align-items: center;
+    display: inline-flex;
+    gap: 1.2rem;
+  }
+
+  &__nav-button {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: #a6a4b2;
+    display: inline-flex;
+    font-size: 1.55rem;
+    justify-content: center;
+    padding: 0.25rem;
     transition:
-      border-color 0.2s ease,
-      background-color 0.2s ease,
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
+      color 0.2s ease,
+      transform 0.2s ease;
 
     &:hover {
-      border-color: rgba(108, 99, 255, 0.45);
-      background-color: rgba(34, 36, 55, 0.94);
+      color: #fff;
       transform: translateY(-1px);
     }
   }
 
-  &__day--outside {
-    color: rgba(173, 181, 189, 0.6);
-    background-color: rgba(18, 20, 32, 0.4);
+  &__month-frame {
+    overflow-x: auto;
   }
 
-  &__day--selected {
-    border-color: rgba(108, 99, 255, 0.9);
-    box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.3);
+  &__weekdays,
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 
-  &__day--today {
-    background-color: rgba(48, 54, 84, 0.94);
+  &__weekdays {
+    margin-bottom: 1.45rem;
   }
 
-  &__day--active {
-    border-color: rgba(120, 130, 214, 0.25);
+  &__weekday {
+    color: #a09dab;
+    font-size: 0.92rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-align: center;
+    text-transform: uppercase;
   }
 
-  &__day--overdue {
-    box-shadow: inset 0 0 0 1px rgba(220, 53, 69, 0.18);
+  &__grid {
+    row-gap: 1.35rem;
   }
 
-  &__day--today.deadline-calendar__day--active {
-    box-shadow: inset 0 0 0 1px rgba(13, 110, 253, 0.22);
+  &__day {
+    align-items: center;
+    aspect-ratio: 1;
+    background: transparent;
+    border: 0;
+    border-radius: 1rem;
+    color: #f2f2f5;
+    display: inline-flex;
+    justify-content: center;
+    margin: 0 auto;
+    max-height: 3.35rem;
+    max-width: 3.35rem;
+    min-height: 2.75rem;
+    position: relative;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.2s ease;
+    width: 100%;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.06);
+      transform: translateY(-1px);
+    }
   }
 
   &__day-number {
-    font-size: 0.96rem;
-    font-weight: 700;
+    font-size: 1.35rem;
+    font-weight: 500;
     line-height: 1;
   }
 
-  &__day-dot,
+  &__day--outside {
+    color: #6f6c7d;
+  }
+
+  &__day--today {
+    background-color: #ff4b32;
+    color: #111119;
+
+    .deadline-calendar__day-number {
+      font-weight: 900;
+    }
+  }
+
+  &__day--selected:not(.deadline-calendar__day--today) {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  &__day-swatches {
+    bottom: 0.35rem;
+    display: inline-flex;
+    gap: 0.18rem;
+    left: 50%;
+    position: absolute;
+    transform: translateX(-50%);
+  }
+
+  &__day-course-dot,
   &__course-dot {
     border-radius: 999px;
     display: inline-block;
     flex-shrink: 0;
   }
 
-  &__day-dot {
-    align-self: flex-end;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
-    height: 0.45rem;
-    width: 0.45rem;
+  &__day-course-dot {
+    height: 0.36rem;
+    width: 0.36rem;
   }
 
   &__course-dot {
-    height: 0.42rem;
-    width: 0.42rem;
+    height: 0.48rem;
+    width: 0.48rem;
   }
 
-  &__reset {
-    color: #adb5bd;
-    font-size: 0.82rem;
-    font-weight: 600;
-
-    &:hover,
-    &:focus-visible {
-      color: #fff;
-    }
+  &__summary-pill {
+    background-color: rgba(255, 255, 255, 0.07);
+    border-radius: 999px;
+    color: #c6c3d1;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.4rem 0.75rem;
+    white-space: nowrap;
   }
 
   &__empty-state {
-    background-color: rgba(15, 16, 32, 0.55);
-    border: 1px dashed rgba(255, 255, 255, 0.08);
-    font-size: 0.92rem;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    border-radius: 1.35rem;
+    color: #b8b5c5;
+    font-size: 1.05rem;
+    line-height: 1.55;
+    margin-top: 1.65rem;
+    padding: 1.3rem 1.5rem;
   }
 
   &__task-list {
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    gap: 1rem;
+    margin-top: 1.65rem;
   }
 
   &__task-card {
-    margin-bottom: 0;
+    align-items: center;
+    background-color: transparent;
+    border: 0;
+    border-radius: 1.35rem;
+    display: grid;
+    gap: 1.35rem;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 0;
   }
 
-  &__course-link {
+  &__date-badge {
     align-items: center;
-    border: 1px solid rgba(108, 99, 255, 0.2);
-    border-radius: 999px;
-    color: #fff;
-    display: inline-flex;
-    font-size: 0.72rem;
-    font-weight: 700;
-    gap: 0.42rem;
-    line-height: 1;
-    padding: 0.38rem 0.62rem;
+    border-radius: 1.25rem;
+    color: #f5f5f8;
+    display: flex;
+    flex-direction: column;
+    height: 4.55rem;
+    justify-content: center;
+    min-width: 4.55rem;
+    text-transform: uppercase;
 
-    &:hover,
-    &:focus-visible {
-      color: #fff;
-      filter: brightness(1.1);
+    span {
+      font-size: 0.85rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
+    strong {
+      font-size: 1.65rem;
+      line-height: 1.05;
     }
   }
 
-  &__task-title {
-    font-size: 0.98rem;
-    line-height: 1.4;
+  &__course-line {
+    align-items: center;
+    color: #bdb9c8;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    gap: 0.45rem;
+    margin-bottom: 0.35rem;
   }
 
-  &__task-description,
-  &__task-date {
-    font-size: 0.84rem;
-    line-height: 1.5;
+  &__status {
+    color: #9f9baa;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-left: 0.35rem;
+  }
+
+  &__status--today,
+  &__status--soon {
+    color: #ffca7b;
+  }
+
+  &__status--overdue {
+    color: #ff7b7b;
+  }
+
+  &__task-title {
+    color: #f5f5f8;
+    font-size: 1.12rem;
+    font-weight: 800;
+    line-height: 1.25;
+  }
+
+  &__task-description {
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+
+  &__task-link {
+    font-size: 0.82rem;
+    font-weight: 800;
+    white-space: nowrap;
+
+    &:hover {
+      color: #fff !important;
+    }
   }
 }
 
 @media (max-width: 767.98px) {
   .deadline-calendar {
-    &__toolbar {
-      width: 100%;
+    gap: 1rem;
+
+    &__surface,
+    &__detail-card {
+      border-radius: 1.5rem;
+      padding: 1.45rem;
     }
 
-    &__filter,
-    &__filter-toggle {
-      width: 100%;
+    &__header {
+      margin-bottom: 1.55rem;
     }
 
-    &__filter-menu {
-      left: 0;
-      min-width: 100%;
-      right: auto;
+    &__month-title,
+    &__detail-header h3 {
+      font-size: 1.35rem;
+    }
+
+    &__nav {
+      gap: 0.75rem;
+    }
+
+    &__nav-button {
+      font-size: 1.2rem;
     }
 
     &__weekdays,
     &__grid {
-      gap: 0.4rem;
-      min-width: 32rem;
+      min-width: 27rem;
+    }
+
+    &__grid {
+      row-gap: 0.8rem;
     }
 
     &__weekday {
-      font-size: 0.68rem;
+      font-size: 0.78rem;
     }
 
     &__day {
-      min-height: 62px;
-      padding: 0.6rem 0.5rem;
+      max-height: 2.8rem;
+      max-width: 2.8rem;
+      min-height: 2.45rem;
     }
 
     &__day-number {
-      font-size: 0.88rem;
+      font-size: 1.05rem;
+    }
+
+    &__task-card {
+      align-items: flex-start;
+      grid-template-columns: 1fr auto;
+    }
+
+    &__date-badge {
+      grid-row: span 2;
+      height: 3.9rem;
+      min-width: 3.9rem;
     }
   }
 

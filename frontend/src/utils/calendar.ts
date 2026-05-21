@@ -60,7 +60,8 @@ export function shiftMonth(month: Date, offset: number): Date {
 export function buildCalendarDays(month: Date): CalendarDay[] {
   const firstDayOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
   const firstGridDate = new Date(firstDayOfMonth);
-  firstGridDate.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay());
+  const mondayBasedDayIndex = (firstDayOfMonth.getDay() + 6) % 7;
+  firstGridDate.setDate(firstDayOfMonth.getDate() - mondayBasedDayIndex);
 
   return Array.from({ length: 42 }, (_, index) => {
     const date = new Date(firstGridDate);
