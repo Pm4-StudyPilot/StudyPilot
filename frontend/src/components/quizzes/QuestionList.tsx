@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { QuestionWithAnswersDto } from '../../types/dto';
 import QuestionCard from './QuestionCard.tsx';
 import InputField from '../shared/form/InputField';
-import TextAreaField from '../shared/form/TextAreaField';
+import TextAreaField from '../shared/form/TextareaField';
 import SelectField from '../shared/form/SelectField';
 import { questionTypeOptions } from './types';
 

@@ -37,7 +37,7 @@ vi.mock('../components/shared/form/InputField', () => ({
   ),
 }));
 
-vi.mock('../components/shared/form/TextAreaField', () => ({
+vi.mock('../components/shared/form/TextareaField', () => ({
   default: ({
     label,
     value,

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import AnswerList from '../components/answers/AnswerList';
+import AnswerList from '../components/quizzes/AnswerList';
 import { AnswerDto, QuestionWithAnswersDto } from '../types/dto';
 
 vi.mock('../components/shared/form/CheckField', () => ({
