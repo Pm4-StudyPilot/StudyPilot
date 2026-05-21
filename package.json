@@ -5,7 +5,8 @@
   "workspaces": [
     "frontend",
     "backend",
-    "mcp"
+    "mcp",
+    "agent"
   ],
   "scripts": {
     "dev": "node scripts/start-services.js",

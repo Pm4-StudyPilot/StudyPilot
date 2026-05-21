@@ -40,4 +40,14 @@ describe('AiChatPanel', () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('shows a typing indicator while loading', () => {
+    render(<AiChatPanel messages={messages} loading onClose={vi.fn()} />);
+    expect(screen.getByLabelText(/tars is typing/i)).toBeInTheDocument();
+  });
+
+  it('does not show the typing indicator when not loading', () => {
+    render(<AiChatPanel messages={messages} onClose={vi.fn()} />);
+    expect(screen.queryByLabelText(/tars is typing/i)).not.toBeInTheDocument();
+  });
 });
