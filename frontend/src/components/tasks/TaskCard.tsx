@@ -1,5 +1,10 @@
 import { useState } from 'react';
 import { TaskDto } from '../../types/dto';
+import {
+  TASK_PRIORITY_BADGE_CLASS,
+  TASK_STATUS_BADGE_CLASS,
+  TASK_STATUS_LABEL,
+} from './taskDisplay';
 
 interface TaskCardProps {
   task: TaskDto;
@@ -8,24 +13,6 @@ interface TaskCardProps {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
   isDragging?: boolean;
 }
-
-const PRIORITY_BADGE: Record<TaskDto['priority'], string> = {
-  LOW: 'bg-secondary',
-  MEDIUM: 'bg-warning text-dark',
-  HIGH: 'bg-danger',
-};
-
-const STATUS_BADGE: Record<TaskDto['status'], string> = {
-  OPEN: 'bg-secondary',
-  IN_PROGRESS: 'bg-primary',
-  DONE: 'bg-success',
-};
-
-const STATUS_LABEL: Record<TaskDto['status'], string> = {
-  OPEN: 'Open',
-  IN_PROGRESS: 'In Progress',
-  DONE: 'Done',
-};
 
 /**
  * TaskCard
@@ -87,11 +74,11 @@ export default function TaskCard({
               {formattedDueDate}
             </span>
           )}
-          <span className={`task-card__priority badge ${PRIORITY_BADGE[task.priority]}`}>
+          <span className={`task-card__priority badge ${TASK_PRIORITY_BADGE_CLASS[task.priority]}`}>
             {task.priority}
           </span>
-          <span className={`task-card__status badge ${STATUS_BADGE[task.status]}`}>
-            {STATUS_LABEL[task.status]}
+          <span className={`task-card__status badge ${TASK_STATUS_BADGE_CLASS[task.status]}`}>
+            {TASK_STATUS_LABEL[task.status]}
           </span>
           <button
             className="btn btn-link p-0 text-secondary"

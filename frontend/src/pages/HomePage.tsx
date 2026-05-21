@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import DeadlineCalendar from '../components/calendar/DeadlineCalendar';
 import ProgressRing from '../components/shared/ProgressRing';
 import DashboardLayout from '../components/shared/layout/DashboardLayout';
 import { api } from '../services/api';
@@ -49,60 +50,13 @@ type DashboardCourseData = {
   quizError?: string;
 };
 
-type DeadlineItem = {
-  id: string;
-  month: string;
-  day: string;
-  title: string;
-  courseName: string;
-  time: string;
-  variant: RingVariant;
-};
-
 const COURSE_VARIANTS: RingVariant[] = ['primary', 'secondary', 'tertiary', 'quaternary'];
-const WEEKDAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 /**
  * Returns a visual progress variant based on the course index.
  */
 function getVariant(index: number): RingVariant {
   return COURSE_VARIANTS[index % COURSE_VARIANTS.length];
-}
-
-/**
- * Builds the visible calendar days for the current dashboard month.
- */
-function buildCalendarDays(currentDate: Date) {
-  const firstOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-  const startOffset = (firstOfMonth.getDay() + 6) % 7;
-  const startDate = new Date(firstOfMonth);
-  startDate.setDate(firstOfMonth.getDate() - startOffset);
-
-  return Array.from({ length: 35 }, (_, index) => {
-    const date = new Date(startDate);
-    date.setDate(startDate.getDate() + index);
-
-    return {
-      label: date.getDate(),
-      currentMonth: date.getMonth() === currentDate.getMonth(),
-      isToday:
-        date.getDate() === currentDate.getDate() &&
-        date.getMonth() === currentDate.getMonth() &&
-        date.getFullYear() === currentDate.getFullYear(),
-    };
-  });
-}
-
-/**
- * Formats a task due date as a readable time label.
- */
-function formatDeadlineTime(value: string | null) {
-  if (!value) return 'No due time';
-
-  return new Date(value).toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
 }
 
 /**
@@ -241,53 +195,6 @@ function getDashboardMatches(
     }));
 
   return [...taskMatches, ...documentMatches, ...quizMatches].slice(0, 2);
-}
-
-/**
- * Builds upcoming deadline entries from all dashboard course tasks.
- */
-function buildDeadlineItems(
-  courses: DashboardCourseData[],
-  currentDate: Date
-): { items: DeadlineItem[]; missingDueDates: boolean } {
-  const startOfToday = new Date(currentDate);
-  startOfToday.setHours(0, 0, 0, 0);
-
-  const allTasks = courses.flatMap((entry, index) =>
-    entry.tasks.map((task) => ({
-      task,
-      courseName: entry.course.name,
-      variant: getVariant(index),
-    }))
-  );
-
-  const dueTasks = allTasks
-    .filter(({ task }) => task.dueDate)
-    .sort(
-      (a, b) =>
-        new Date(a.task.dueDate as string).getTime() - new Date(b.task.dueDate as string).getTime()
-    );
-
-  const upcoming = dueTasks
-    .filter(({ task }) => new Date(task.dueDate as string).getTime() >= startOfToday.getTime())
-    .slice(0, 3);
-
-  return {
-    items: upcoming.map(({ task, courseName, variant }) => {
-      const dueDate = new Date(task.dueDate as string);
-
-      return {
-        id: task.id,
-        month: dueDate.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
-        day: String(dueDate.getDate()).padStart(2, '0'),
-        title: task.title,
-        courseName,
-        time: formatDeadlineTime(task.dueDate),
-        variant,
-      };
-    }),
-    missingDueDates: dueTasks.length === 0,
-  };
 }
 
 /**
@@ -494,91 +401,29 @@ function CompactCourseCard({ data, index }: { data: DashboardCourseData; index: 
  * Renders the right dashboard rail with calendar, deadlines, and stats.
  */
 function DashboardRail({
-  currentDate,
-  deadlines,
+  courses,
+  coursesLoading,
+  coursesError,
+  tasksByCourseId,
   dueThisWeek,
   averageProgress,
-  missingDueDates,
 }: {
-  currentDate: Date;
-  deadlines: DeadlineItem[];
+  courses: CourseDto[];
+  coursesLoading: boolean;
+  coursesError: string;
+  tasksByCourseId: Record<string, TaskDto[]>;
   dueThisWeek: number;
   averageProgress: number;
-  missingDueDates: boolean;
 }) {
-  const calendarDays = buildCalendarDays(currentDate);
-
   return (
     <aside className="dashboard-rail">
       <section className="dashboard-rail__panel card dark">
-        <div className="dashboard-rail__header">
-          <h2>
-            {currentDate.toLocaleDateString('en-US', {
-              month: 'long',
-              year: 'numeric',
-            })}
-          </h2>
-          <div className="dashboard-rail__month-actions">
-            <button type="button" aria-label="Previous month">
-              <i className="fa-solid fa-chevron-left" />
-            </button>
-            <button type="button" aria-label="Next month">
-              <i className="fa-solid fa-chevron-right" />
-            </button>
-          </div>
-        </div>
-
-        <div className="dashboard-calendar">
-          {WEEKDAY_LABELS.map((weekday, index) => (
-            <span key={`${weekday}-${index}`} className="dashboard-calendar__weekday">
-              {weekday}
-            </span>
-          ))}
-          {calendarDays.map((day) => (
-            <span
-              key={`${day.label}-${day.currentMonth}-${day.isToday}`}
-              className={[
-                'dashboard-calendar__day',
-                day.currentMonth ? '' : 'dashboard-calendar__day--muted',
-                day.isToday ? 'dashboard-calendar__day--today' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              {day.label}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      <section className="dashboard-rail__panel card dark">
-        <h2 className="dashboard-rail__section-title">Upcoming Deadlines</h2>
-        {deadlines.length > 0 ? (
-          <div className="dashboard-deadlines">
-            {deadlines.map((deadline) => (
-              <div key={deadline.id} className="dashboard-deadline">
-                <div
-                  className={`dashboard-deadline__date dashboard-deadline__date--${deadline.variant}`}
-                >
-                  <span>{deadline.month}</span>
-                  <strong>{deadline.day}</strong>
-                </div>
-                <div>
-                  <div className="dashboard-deadline__title">{deadline.title}</div>
-                  <div className="dashboard-deadline__meta">
-                    {deadline.courseName} - {deadline.time}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="dashboard-section-message">
-            {missingDueDates
-              ? 'No tasks with due dates are available from the backend.'
-              : 'No upcoming deadlines are currently scheduled.'}
-          </div>
-        )}
+        <DeadlineCalendar
+          courses={courses}
+          coursesLoading={coursesLoading}
+          coursesError={coursesError}
+          tasksByCourseId={tasksByCourseId}
+        />
       </section>
 
       <div className="dashboard-stats">
@@ -698,9 +543,13 @@ export default function HomePage() {
         )
       : 0;
 
-  const { items: deadlines, missingDueDates } = useMemo(
-    () => buildDeadlineItems(dashboardCourses, currentDate),
-    [dashboardCourses, currentDate]
+  const tasksByCourseId = useMemo(
+    () =>
+      dashboardCourses.reduce<Record<string, TaskDto[]>>((grouped, entry) => {
+        grouped[entry.course.id] = entry.tasks;
+        return grouped;
+      }, {}),
+    [dashboardCourses]
   );
 
   const dueThisWeek = useMemo(() => {
@@ -802,11 +651,12 @@ export default function HomePage() {
         </section>
 
         <DashboardRail
-          currentDate={currentDate}
-          deadlines={deadlines}
+          courses={dashboardCourses.map((entry) => entry.course)}
+          coursesLoading={loading}
+          coursesError={error}
+          tasksByCourseId={tasksByCourseId}
           dueThisWeek={dueThisWeek}
           averageProgress={averageProgress}
-          missingDueDates={missingDueDates}
         />
       </div>
     </DashboardLayout>
