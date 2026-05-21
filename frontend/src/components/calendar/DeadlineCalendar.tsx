@@ -147,17 +147,9 @@ function getDayDotColor(tasks: CalendarTask[]): string {
   return normalizeCourseColor(tasks[0]?.courseColor);
 }
 
-function formatDeadlineTime(value: string | null): string {
-  if (!value) return 'No due time';
-
-  return new Date(value).toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
-
 function DeadlineTaskCard({ task }: { task: CalendarTask }) {
   const dueDate = parseDateKey(task.dueDateKey);
+  const taskDescription = task.description?.trim();
 
   return (
     <li className="deadline-calendar__task-card">
@@ -173,9 +165,7 @@ function DeadlineTaskCard({ task }: { task: CalendarTask }) {
         <Link to={`/courses/${task.courseId}`} className="deadline-calendar__task-title">
           {task.title}
         </Link>
-        <p className="deadline-calendar__task-meta">
-          {task.courseName} - {formatDeadlineTime(task.dueDate)}
-        </p>
+        {taskDescription && <p className="deadline-calendar__task-meta">{taskDescription}</p>}
       </div>
     </li>
   );

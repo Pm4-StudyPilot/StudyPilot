@@ -125,7 +125,8 @@ describe('DeadlineCalendar', () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText('Quiz prep').length).toBeGreaterThan(0);
     expect(screen.getByText('Read chapter 5')).toBeInTheDocument();
-    expect(screen.getAllByText(/Biology - /).length).toBeGreaterThan(0);
+    expect(screen.getByText('Review DNA structure flashcards.')).toBeInTheDocument();
+    expect(screen.queryByText(/Biology - /)).not.toBeInTheDocument();
     expect(document.querySelectorAll('.deadline-calendar__date-badge')).toHaveLength(2);
     expect(document.querySelectorAll('.deadline-calendar__day-dot').length).toBeGreaterThan(0);
     expect(api.get).not.toHaveBeenCalled();
@@ -254,7 +255,8 @@ describe('DeadlineCalendar', () => {
     expect(screen.getByRole('heading', { name: 'May 3, 2026' })).toBeInTheDocument();
     expect(screen.queryByText('Upcoming Deadlines')).not.toBeInTheDocument();
     expect(screen.getByText('Lab recap')).toBeInTheDocument();
-    expect(screen.getAllByText(/Computer Science - /).length).toBeGreaterThan(0);
+    expect(screen.getByText("Summarize last week's experiment notes.")).toBeInTheDocument();
+    expect(screen.queryByText(/Computer Science - /)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /show upcoming deadlines/i }));
 
