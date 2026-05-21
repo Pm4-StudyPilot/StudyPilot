@@ -94,6 +94,34 @@ describe('CreateCourseModal', () => {
     });
   });
 
+  it('submits the selected course color', async () => {
+    const newCourse = {
+      id: 'c2',
+      name: 'Visual Design',
+      color: '#00C2A8',
+      ownerId: 'u1',
+      createdAt: '2026-03-26T12:00:00.000Z',
+      updatedAt: '2026-03-26T12:00:00.000Z',
+    };
+
+    vi.mocked(api.post).mockResolvedValueOnce(newCourse);
+
+    render(<CreateCourseModal onClose={mockOnClose} onCreated={mockOnCreated} />);
+
+    fireEvent.change(screen.getByLabelText(/course name/i), {
+      target: { value: 'Visual Design' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /select #00c2a8/i }));
+    fireEvent.click(screen.getByRole('button', { name: /create course/i }));
+
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/courses', {
+        name: 'Visual Design',
+        color: '#00C2A8',
+      });
+    });
+  });
+
   /**
    * Test case: Empty name validation
    *

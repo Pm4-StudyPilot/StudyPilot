@@ -152,6 +152,37 @@ describe('DeadlineCalendar', () => {
     expect(api.get).toHaveBeenCalledWith('/courses/course-2/tasks');
   });
 
+  it('shows task loading errors when deadline requests fail', async () => {
+    vi.mocked(api.get).mockRejectedValueOnce(new Error('Task service unavailable'));
+
+    render(
+      <MemoryRouter>
+        <DeadlineCalendar courses={[courses[0]]} />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Task service unavailable')).toBeInTheDocument();
+  });
+
+  it('navigates between months and returns to the upcoming view', async () => {
+    render(
+      <MemoryRouter>
+        <DeadlineCalendar courses={courses} tasksByCourseId={tasksByCourseId} />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Upcoming Deadlines');
+    fireEvent.click(screen.getByRole('button', { name: /may 3, 2026, 1 deadline/i }));
+    expect(screen.getByRole('heading', { name: 'May 3, 2026' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /go to next month/i }));
+    expect(screen.getByText('June 2026')).toBeInTheDocument();
+    expect(screen.getByText('Upcoming Deadlines')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /go to previous month/i }));
+    expect(screen.getByText('May 2026')).toBeInTheDocument();
+  });
+
   it('expands the upcoming deadlines preview when more tasks are available', async () => {
     const extraTasksByCourseId: Record<string, TaskDto[]> = {
       ...tasksByCourseId,
@@ -240,6 +271,93 @@ describe('DeadlineCalendar', () => {
     expect(screen.queryByText('Read chapter 5')).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /computer science/i })).not.toBeInTheDocument();
     expect(document.querySelectorAll('.deadline-calendar__day-dot')).toHaveLength(1);
+  });
+
+  it('shows an empty course search state and can reset the course filter', async () => {
+    render(
+      <MemoryRouter>
+        <DeadlineCalendar courses={courses} tasksByCourseId={tasksByCourseId} />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Upcoming Deadlines');
+
+    fireEvent.click(screen.getByRole('button', { name: /all courses/i }));
+    fireEvent.change(screen.getByLabelText(/search courses/i), { target: { value: 'history' } });
+
+    expect(screen.getByText('No courses found.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('option', { name: /all courses/i }));
+
+    expect(screen.getByRole('button', { name: /all courses/i })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+  });
+
+  it('skips tasks without due dates and keeps completed tasks out of upcoming deadlines', async () => {
+    const mixedTasksByCourseId: Record<string, TaskDto[]> = {
+      'course-1': [
+        {
+          id: 'task-without-date',
+          title: 'No due date task',
+          description: null,
+          dueDate: null,
+          priority: 'LOW',
+          status: 'OPEN',
+          position: 0,
+          completed: false,
+          courseId: 'course-1',
+          createdAt: '2026-05-01T10:00:00.000Z',
+          updatedAt: '2026-05-01T10:00:00.000Z',
+        },
+        {
+          id: 'completed-task',
+          title: 'Completed project',
+          description: 'Already submitted.',
+          dueDate: '2026-05-11T00:00:00.000Z',
+          priority: 'MEDIUM',
+          status: 'DONE',
+          position: 1,
+          completed: true,
+          courseId: 'course-1',
+          createdAt: '2026-05-01T10:00:00.000Z',
+          updatedAt: '2026-05-01T10:00:00.000Z',
+        },
+        {
+          id: 'scheduled-task',
+          title: 'Portfolio review',
+          description: null,
+          dueDate: '2026-05-21T00:00:00.000Z',
+          priority: 'LOW',
+          status: 'OPEN',
+          position: 2,
+          completed: false,
+          courseId: 'course-1',
+          createdAt: '2026-05-01T10:00:00.000Z',
+          updatedAt: '2026-05-01T10:00:00.000Z',
+        },
+      ],
+      'course-2': [],
+    };
+
+    render(
+      <MemoryRouter>
+        <DeadlineCalendar courses={courses} tasksByCourseId={mixedTasksByCourseId} />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Portfolio review')).toBeInTheDocument();
+    expect(screen.queryByText('Completed project')).not.toBeInTheDocument();
+    expect(screen.queryByText('No due date task')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /may 21, 2026, 1 deadline/i })).toHaveClass(
+      'deadline-calendar__day--default'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /may 11, 2026, 1 deadline/i }));
+
+    expect(screen.getByText('Completed project')).toBeInTheDocument();
+    expect(screen.getByText('Already submitted.')).toBeInTheDocument();
   });
 
   it('replaces upcoming deadlines with the selected day after clicking a date', async () => {

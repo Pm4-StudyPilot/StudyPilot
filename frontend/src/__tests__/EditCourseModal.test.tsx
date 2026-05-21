@@ -93,6 +93,24 @@ describe('EditCourseModal', () => {
     });
   });
 
+  it('submits updated course colors', async () => {
+    const updatedCourse = { ...mockCourse, color: '#00C2A8' };
+    vi.mocked(api.patch).mockResolvedValueOnce(updatedCourse);
+
+    render(<EditCourseModal course={mockCourse} onClose={mockOnClose} onUpdated={mockOnUpdated} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /select #00c2a8/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(api.patch).toHaveBeenCalledWith('/courses/c1', {
+        name: 'Machine Learning',
+        color: '#00C2A8',
+      });
+      expect(mockOnUpdated).toHaveBeenCalledWith(updatedCourse);
+    });
+  });
+
   /**
    * Test case: Empty name validation
    *
