@@ -74,9 +74,14 @@ export default function QuestionCard({
   const [savingAnswerId, setSavingAnswerId] = useState<string | null>(null);
   const [addingAnswer, setAddingAnswer] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [questionError, setQuestionError] = useState<string | null>(null);
 
   async function handleSaveQuestion() {
-    if (!draftQuestion.title.trim()) return;
+    setQuestionError(null);
+    if (!draftQuestion.title.trim()) {
+      setQuestionError('Question title is required');
+      return;
+    }
 
     setSavingQuestion(true);
 
@@ -86,6 +91,8 @@ export default function QuestionCard({
         description: draftQuestion.description.trim(),
         type: draftQuestion.type,
       });
+    } catch {
+      setQuestionError('Failed to save question');
     } finally {
       setSavingQuestion(false);
     }
@@ -93,8 +100,11 @@ export default function QuestionCard({
 
   async function handleSaveAnswer(answerId: string, overrideDraft?: AnswerFormState) {
     const draft = overrideDraft ?? draftAnswers[answerId];
-
-    if (!draft?.content.trim()) return;
+    setQuestionError(null);
+    if (!draft?.content.trim()) {
+      setQuestionError('Answer content is required');
+      return;
+    }
 
     setSavingAnswerId(answerId);
 
@@ -103,13 +113,19 @@ export default function QuestionCard({
         content: draft.content.trim(),
         isCorrect: draft.isCorrect,
       });
+    } catch {
+      setQuestionError('Failed to save answer');
     } finally {
       setSavingAnswerId(null);
     }
   }
 
   async function handleCreateAnswer() {
-    if (!newAnswer.content.trim()) return;
+    setQuestionError(null);
+    if (!newAnswer.content.trim()) {
+      setQuestionError('Answer content is required');
+      return;
+    }
 
     setAddingAnswer(true);
 
@@ -123,6 +139,8 @@ export default function QuestionCard({
         content: '',
         isCorrect: false,
       });
+    } catch {
+      setQuestionError('Failed to create question');
     } finally {
       setAddingAnswer(false);
     }
@@ -213,15 +231,12 @@ export default function QuestionCard({
             <input
               type="checkbox"
               checked={newAnswer.isCorrect}
-              onChange={(event) => {
-                setDraftAnswers((current) => ({
+              onChange={(event) =>
+                setNewAnswer((current) => ({
                   ...current,
-                  [answer.id]: {
-                    ...draft,
-                    isCorrect: event.target.checked,
-                  },
-                }));
-              }}
+                  isCorrect: event.target.checked,
+                }))
+              }
             />
             Correct
           </label>
@@ -246,6 +261,7 @@ export default function QuestionCard({
             Delete
           </button>
           {(savingAnswerId || savingQuestion) && <>Saving...</>}
+          {questionError && <div className="text-danger">{questionError}</div>}
         </div>
       </article>
     );

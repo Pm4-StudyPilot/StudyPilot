@@ -56,9 +56,14 @@ export default function QuestionList({
     type: 'SINGLE_CHOICE',
   });
   const [saving, setSaving] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   async function handleCreateQuestion() {
-    if (!newQuestion.title.trim()) return;
+    setCreateError(null);
+    if (!newQuestion.title.trim()) {
+      setCreateError('Question title is required');
+      return;
+    }
 
     setSaving(true);
 
@@ -74,6 +79,8 @@ export default function QuestionList({
         description: '',
         type: 'SINGLE_CHOICE',
       });
+    } catch {
+      setCreateError('Failed to create question');
     } finally {
       setSaving(false);
     }
@@ -167,6 +174,7 @@ export default function QuestionList({
             <i className="fa-solid fa-plus" />
             {saving ? 'Adding...' : 'Add question'}
           </button>
+          {createError && <div className="text-danger">{createError}</div>}
         </section>
       )}
     </div>
