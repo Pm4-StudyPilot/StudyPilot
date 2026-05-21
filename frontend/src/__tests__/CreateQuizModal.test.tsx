@@ -147,4 +147,91 @@ describe('CreateQuizModal', () => {
 
     expect(mockOnCreated).not.toHaveBeenCalled();
   });
+  /**
+   * Test case: Description and random order payload
+   *
+   * Scenario:
+   * The user enters a description and enables random question order.
+   *
+   * Expected behavior:
+   * - API payload includes trimmed description
+   * - API payload includes isOrderRandom = true
+   */
+  it('submits description and random question order correctly', async () => {
+    const newQuiz = {
+      id: 'q2',
+      title: 'Science Quiz',
+      description: 'Physics questions',
+      isOrderRandom: true,
+      courseId: 'c1',
+      createdAt: '2026-04-15T12:00:00.000Z',
+      updatedAt: '2026-04-15T12:00:00.000Z',
+    };
+
+    vi.mocked(api.post).mockResolvedValueOnce(newQuiz);
+
+    render(<CreateQuizModal courseId={courseId} onClose={mockOnClose} onCreated={mockOnCreated} />);
+
+    fireEvent.change(screen.getByLabelText(/title/i), {
+      target: { value: 'Science Quiz' },
+    });
+
+    fireEvent.change(screen.getByLabelText(/description/i), {
+      target: { value: '   Physics questions   ' },
+    });
+
+    fireEvent.click(screen.getByLabelText(/random question order/i));
+
+    fireEvent.click(screen.getByRole('button', { name: /create quiz/i }));
+
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/courses/c1/quizzes', {
+        title: 'Science Quiz',
+        description: 'Physics questions',
+        isOrderRandom: true,
+      });
+    });
+  });
+
+  /**
+   * Test case: Empty description omission
+   *
+   * Scenario:
+   * The description contains only whitespace.
+   *
+   * Expected behavior:
+   * - API payload does not include description
+   */
+  it('omits description from payload when it is empty after trimming', async () => {
+    const newQuiz = {
+      id: 'q3',
+      title: 'History Quiz',
+      description: null,
+      isOrderRandom: false,
+      courseId: 'c1',
+      createdAt: '2026-04-15T12:00:00.000Z',
+      updatedAt: '2026-04-15T12:00:00.000Z',
+    };
+
+    vi.mocked(api.post).mockResolvedValueOnce(newQuiz);
+
+    render(<CreateQuizModal courseId={courseId} onClose={mockOnClose} onCreated={mockOnCreated} />);
+
+    fireEvent.change(screen.getByLabelText(/title/i), {
+      target: { value: 'History Quiz' },
+    });
+
+    fireEvent.change(screen.getByLabelText(/description/i), {
+      target: { value: '     ' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /create quiz/i }));
+
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/courses/c1/quizzes', {
+        title: 'History Quiz',
+        isOrderRandom: false,
+      });
+    });
+  });
 });
