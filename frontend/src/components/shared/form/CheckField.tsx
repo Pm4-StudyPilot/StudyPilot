@@ -3,7 +3,7 @@ import { InputHTMLAttributes, useId } from 'react';
 type CheckFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & {
   label: string;
   type: 'checkbox' | 'radio';
-  labelPosition: 'left' | 'right';
+  labelPosition?: 'left' | 'right';
   error?: string;
   className?: string;
 };

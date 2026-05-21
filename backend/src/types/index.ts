@@ -30,10 +30,12 @@ export interface LoginRequest {
 
 export interface CreateCourseRequest {
   name: string;
+  color?: string;
 }
 
 export interface UpdateCourseRequest {
   name: string;
+  color?: string;
 }
 
 export interface ChangePasswordRequest {
@@ -189,6 +191,7 @@ export interface AnswerDto {
 export interface CourseDto {
   id: string;
   name: string;
+  color: string;
   ownerId: string;
   createdAt: Date;
   updatedAt: Date;
