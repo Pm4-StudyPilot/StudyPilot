@@ -64,6 +64,12 @@ hr {
   color: var(--color-text-secondary);
 }
 
+.inline-form-check {
+  margin-bottom: 0 !important;
+  display: inline-block;
+  align-self: center;
+}
+
 .panel,
 .card {
   color: var(--color-text-primary);

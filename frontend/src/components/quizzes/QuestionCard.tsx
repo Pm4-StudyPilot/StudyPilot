@@ -1,5 +1,10 @@
 import { useState } from 'react';
 import { QuestionWithAnswersDto } from '../../types/dto';
+import { questionTypeOptions } from './types';
+import InputField from '../shared/form/InputField';
+import TextareaField from '../shared/form/TextareaField';
+import SelectField from '../shared/form/SelectField';
+import CheckField from '../shared/form/CheckField';
 
 interface QuestionFormState {
   title: string;
@@ -126,52 +131,42 @@ export default function QuestionCard({
         <header className="question-card__header">
           <div className="question-card__title-group question-editor">
             <div className="question-editor__fields">
-              <label className="question-editor__field">
-                <span>Question title</span>
-                <input
-                  className="form-control"
-                  value={draftQuestion.title}
-                  onChange={(event) =>
-                    setDraftQuestion((current) => ({
-                      ...current,
-                      title: event.target.value,
-                    }))
-                  }
-                />
-              </label>
+              <InputField
+                label="Question title"
+                className="form-control"
+                value={draftQuestion.title}
+                onChange={(event) =>
+                  setDraftQuestion((current) => ({
+                    ...current,
+                    title: event.target.value,
+                  }))
+                }
+              />
 
-              <label className="question-editor__field">
-                <span>Description</span>
-                <textarea
-                  className="form-control"
-                  value={draftQuestion.description}
-                  onChange={(event) =>
-                    setDraftQuestion((current) => ({
-                      ...current,
-                      description: event.target.value,
-                    }))
-                  }
-                  rows={3}
-                />
-              </label>
+              <TextareaField
+                label="Description"
+                className="form-control"
+                value={draftQuestion.description}
+                onChange={(event) =>
+                  setDraftQuestion((current) => ({
+                    ...current,
+                    description: event.target.value,
+                  }))
+                }
+                rows={3}
+              />
 
-              <label className="question-editor__field">
-                <span>Question type</span>
-                <select
-                  className="form-select"
-                  value={draftQuestion.type}
-                  onChange={(event) =>
-                    setDraftQuestion((current) => ({
-                      ...current,
-                      type: event.target.value as QuestionWithAnswersDto['type'],
-                    }))
-                  }
-                >
-                  <option value="SINGLE_CHOICE">Single choice</option>
-                  <option value="MULTIPLE_CHOICE">Multiple choice</option>
-                  <option value="CARD">Card</option>
-                </select>
-              </label>
+              <SelectField
+                className="form-select"
+                value={draftQuestion.type}
+                onChange={(event) =>
+                  setDraftQuestion((current) => ({
+                    ...current,
+                    type: event.target.value as QuestionWithAnswersDto['type'],
+                  }))
+                }
+                options={questionTypeOptions}
+              />
             </div>
 
             <div className="question-editor__actions">
@@ -226,22 +221,21 @@ export default function QuestionCard({
                     />
                   </label>
 
-                  <label className="answer-editor__check">
-                    <input
-                      type="checkbox"
-                      checked={draft.isCorrect}
-                      onChange={(event) =>
-                        setDraftAnswers((current) => ({
-                          ...current,
-                          [answer.id]: {
-                            ...draft,
-                            isCorrect: event.target.checked,
-                          },
-                        }))
-                      }
-                    />
-                    Correct
-                  </label>
+                  <CheckField
+                    className="inline-form-check"
+                    label="Correct"
+                    type="checkbox"
+                    checked={draft.isCorrect}
+                    onChange={(event) =>
+                      setDraftAnswers((current) => ({
+                        ...current,
+                        [answer.id]: {
+                          ...draft,
+                          isCorrect: event.target.checked,
+                        },
+                      }))
+                    }
+                  />
 
                   <div className="answer-editor__actions">
                     <button

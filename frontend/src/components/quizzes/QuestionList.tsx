@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { QuestionWithAnswersDto } from '../../types/dto';
 import QuestionCard from './QuestionCard.tsx';
+import InputField from '../shared/form/InputField';
+import TextAreaField from '../shared/form/TextAreaField';
+import SelectField from '../shared/form/SelectField';
+import { questionTypeOptions } from './types';
 
 interface NewQuestionFormState {
   title: string;
@@ -114,54 +118,44 @@ export default function QuestionList({
           </div>
 
           <div className="question-editor__fields">
-            <label className="question-editor__field">
-              <span>Question title</span>
-              <input
-                className="form-control"
-                value={newQuestion.title}
-                onChange={(event) =>
-                  setNewQuestion((current) => ({
-                    ...current,
-                    title: event.target.value,
-                  }))
-                }
-                placeholder="e.g. What is the capital of France?"
-              />
-            </label>
+            <InputField
+              label="Question title"
+              name="title"
+              value={newQuestion.title}
+              onChange={(event) =>
+                setNewQuestion((current) => ({
+                  ...current,
+                  title: event.target.value,
+                }))
+              }
+              placeholder="e.g. What is the capital of France?"
+            />
 
-            <label className="question-editor__field">
-              <span>Description</span>
-              <textarea
-                className="form-control"
-                value={newQuestion.description}
-                onChange={(event) =>
-                  setNewQuestion((current) => ({
-                    ...current,
-                    description: event.target.value,
-                  }))
-                }
-                placeholder="Additional explanation or hint"
-                rows={3}
-              />
-            </label>
+            <TextAreaField
+              className="form-control"
+              label="Description"
+              value={newQuestion.description}
+              onChange={(event) =>
+                setNewQuestion((current) => ({
+                  ...current,
+                  description: event.target.value,
+                }))
+              }
+              placeholder="Additional explanation or hint"
+              rows={3}
+            />
 
-            <label className="question-editor__field">
-              <span>Question type</span>
-              <select
-                className="form-select"
-                value={newQuestion.type}
-                onChange={(event) =>
-                  setNewQuestion((current) => ({
-                    ...current,
-                    type: event.target.value as QuestionWithAnswersDto['type'],
-                  }))
-                }
-              >
-                <option value="SINGLE_CHOICE">Single choice</option>
-                <option value="MULTIPLE_CHOICE">Multiple choice</option>
-                <option value="CARD">Card</option>
-              </select>
-            </label>
+            <SelectField
+              className="form-select"
+              value={newQuestion.type}
+              onChange={(event) =>
+                setNewQuestion((current) => ({
+                  ...current,
+                  type: event.target.value as QuestionWithAnswersDto['type'],
+                }))
+              }
+              options={questionTypeOptions}
+            />
           </div>
 
           <button
