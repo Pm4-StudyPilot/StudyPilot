@@ -85,3 +85,7 @@ export interface AnswerDto {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface QuestionWithAnswersDto extends QuestionDto {
+  answers: AnswerDto[];
+}

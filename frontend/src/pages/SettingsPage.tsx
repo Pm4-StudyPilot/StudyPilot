@@ -104,7 +104,11 @@ export default function SettingsPage() {
                 />
 
                 <div className="d-flex gap-2 mt-3">
-                  <Button type="submit" loading={loading}>
+                  <Button
+                    type="submit"
+                    loading={loading}
+                    className="btn btn-primary bold settings-page__button"
+                  >
                     Save Profile
                   </Button>
                 </div>
@@ -122,7 +126,12 @@ export default function SettingsPage() {
                 </p>
               </div>
 
-              <Button onClick={() => navigate('/settings/password')}>Change Password</Button>
+              <Button
+                onClick={() => navigate('/settings/password')}
+                className="btn btn-primary bold settings-page__button"
+              >
+                Change Password
+              </Button>
             </div>
           </section>
         </div>

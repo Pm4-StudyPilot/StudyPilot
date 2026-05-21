@@ -5,6 +5,7 @@ type CheckFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & {
   type: 'checkbox' | 'radio';
   labelPosition?: 'left' | 'right';
   error?: string;
+  className?: string;
 };
 
 export default function CheckField({
@@ -12,6 +13,7 @@ export default function CheckField({
   type,
   error,
   id,
+  className,
   labelPosition = 'left',
   ...props
 }: CheckFieldProps) {
@@ -24,7 +26,7 @@ export default function CheckField({
   );
 
   return (
-    <div className="form-check mb-3">
+    <div className={'form-check mb-3 ' + className}>
       <input
         {...props}
         id={finalId}

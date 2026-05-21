@@ -290,7 +290,7 @@ function FeaturedCourseCard({
   const sectionLabel = searchTerm.trim() ? 'Search Results' : 'Recent Assignments';
 
   return (
-    <Link to={`/courses/${data.course.id}`} className="dashboard-featured-card card">
+    <div className="dashboard-featured-card card">
       <div className="dashboard-featured-card__content">
         <div className="dashboard-featured-card__eyebrow">
           <span className="dashboard-pill">
@@ -298,8 +298,11 @@ function FeaturedCourseCard({
           </span>
           <span>{quizSummary}</span>
         </div>
-        {/* TODO: Check with Nadine if the whole card being clickable is necessary for the search feature */}
-        <h2 className="dashboard-featured-card__title">{data.course.name}</h2>
+        <h2 className="dashboard-featured-card__title">
+          <Link to={`/courses/${data.course.id}`} className="dashboard-featured-card__title-link">
+            {data.course.name}
+          </Link>
+        </h2>
         <div className="dashboard-featured-card__section-label">{sectionLabel}</div>
         {assignments.length > 0 ? (
           <div className="dashboard-featured-card__assignments">
@@ -351,7 +354,7 @@ function FeaturedCourseCard({
           {progress.completedTasks} / {progress.totalTasks || 0} tasks completed
         </p>
       </div>
-    </Link>
+    </div>
   );
 }
 
@@ -390,10 +393,14 @@ function CompactCourseCard({ data, index }: { data: DashboardCourseData; index: 
 
       <div className="dashboard-course-card__body">
         <div className="dashboard-course-card__code">{quizLabel}</div>
-        <h3 className="dashboard-course-card__title">{data.course.name}</h3>
+        <h3 className="dashboard-course-card__title">
+          <Link to={`/courses/${data.course.id}`} className="dashboard-course-card__title-link">
+            {data.course.name}
+          </Link>
+        </h3>
         <div className="dashboard-course-card__meta">{buildCourseSupportMeta(data)}</div>
       </div>
-    </Link>
+    </div>
   );
 }
 
