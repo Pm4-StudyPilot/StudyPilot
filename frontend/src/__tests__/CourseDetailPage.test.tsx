@@ -72,6 +72,7 @@ vi.mock('../context/useAuth', () => ({
 const courseFixture = {
   id: 'c1',
   name: 'Machine Learning Fundamentals',
+  color: '#6C63FF',
   ownerId: 'u1',
   createdAt: '2026-03-26T12:00:00.000Z',
   updatedAt: '2026-03-26T12:00:00.000Z',

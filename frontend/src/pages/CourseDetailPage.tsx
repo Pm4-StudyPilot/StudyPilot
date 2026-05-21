@@ -10,6 +10,7 @@ import TaskList from '../components/tasks/TaskList';
 import ProgressRing from '../components/shared/ProgressRing';
 import { api } from '../services/api';
 import { CourseDto, QuizDto, TaskDto } from '../types/dto';
+import { withOpacity } from '../utils/courseColors';
 
 /**
  * CourseDetailPage
@@ -215,10 +216,23 @@ export default function CourseDetailPage() {
                   <span className="course-detail__meta-line">{courseMeta.join(' - ')}</span>
                 </div>
 
-                <h1 className="course-detail__title">{course.name}</h1>
+                <div className="course-detail__title-row">
+                  <span
+                    className="course-card__color-dot course-detail__color-dot"
+                    style={{ backgroundColor: course.color }}
+                    aria-hidden="true"
+                  />
+                  <h1 className="course-detail__title">{course.name}</h1>
+                </div>
               </div>
 
-              <aside className="course-detail__progress-card">
+              <aside
+                className="course-detail__progress-card"
+                style={{
+                  borderColor: withOpacity(course.color, 0.24),
+                  boxShadow: `inset 3px 0 0 ${course.color}`,
+                }}
+              >
                 <div className="course-detail__progress-ring-wrap">
                   <ProgressRing
                     openTasks={progress.openTasks}

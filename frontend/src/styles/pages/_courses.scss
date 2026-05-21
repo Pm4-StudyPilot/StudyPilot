@@ -38,6 +38,15 @@
     font-size: 0.95rem;
   }
 
+  &__color-dot {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: var(--radius-pill);
+    box-shadow: 0 0 0 3px var(--color-glow-soft);
+  }
+
   &__date {
     font-size: 0.78rem;
   }
@@ -132,6 +141,18 @@
     font-size: clamp(2.75rem, 4vw, 4.8rem);
     line-height: 1.02;
     letter-spacing: -0.06em;
+  }
+
+  &__title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  &__color-dot {
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.9rem;
   }
 
   &__support-note {
@@ -467,6 +488,61 @@
 
   &__upload-button {
     justify-self: start;
+  }
+}
+
+.course-color-field {
+  &__swatches {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  &__swatch {
+    height: 2.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.9rem;
+    transition:
+      transform 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:hover,
+    &:focus-visible {
+      border-color: color-mix(in srgb, var(--color-primary) 40%, transparent);
+      transform: translateY(-1px);
+    }
+  }
+
+  &__swatch--selected {
+    border-color: color-mix(in srgb, var(--color-white) 30%, transparent);
+  }
+
+  &__custom {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  &__custom .form-control-color {
+    min-width: 3.5rem;
+    height: 2.7rem;
+    padding: 0.25rem;
+    border-color: var(--color-border);
+    border-radius: 0.85rem;
+    background-color: var(--color-input-bg);
+    cursor: pointer;
+  }
+
+  &__value {
+    color: var(--color-text-primary);
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.84rem;
+    letter-spacing: 0.04em;
+  }
+
+  &__hint {
+    color: var(--color-text-muted);
   }
 }
 

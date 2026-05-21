@@ -126,7 +126,8 @@ export const requestPasswordResetSchema = z.object({
  * - Frontend form validation in the CreateCourseModal
  */
 export const createCourseSchema = z.object({
-  name: z.string().min(1, 'Course name is required'),
+  name: z.string().trim().min(1, 'Course name is required'),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Course color is required'),
 });
 
 /**

@@ -44,13 +44,14 @@ describe('CreateCourseModal', () => {
    * The modal is opened.
    *
    * Expected behavior:
-   * - Course name input is displayed
+   * - Course name and color inputs are displayed
    * - Submit button is displayed
    */
   it('renders the course name input and submit button', () => {
     render(<CreateCourseModal onClose={mockOnClose} onCreated={mockOnCreated} />);
 
     expect(screen.getByLabelText(/course name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/course color/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /create course/i })).toBeInTheDocument();
   });
 
@@ -68,6 +69,7 @@ describe('CreateCourseModal', () => {
     const newCourse = {
       id: 'c1',
       name: 'Machine Learning',
+      color: '#6C63FF',
       ownerId: 'u1',
       createdAt: '2026-03-26T12:00:00.000Z',
       updatedAt: '2026-03-26T12:00:00.000Z',
@@ -84,7 +86,10 @@ describe('CreateCourseModal', () => {
     fireEvent.click(screen.getByRole('button', { name: /create course/i }));
 
     await waitFor(() => {
-      expect(api.post).toHaveBeenCalledWith('/courses', { name: 'Machine Learning' });
+      expect(api.post).toHaveBeenCalledWith('/courses', {
+        name: 'Machine Learning',
+        color: '#6C63FF',
+      });
       expect(mockOnCreated).toHaveBeenCalledWith(newCourse);
     });
   });

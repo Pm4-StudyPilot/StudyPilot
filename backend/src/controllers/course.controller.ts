@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { CourseService } from '../services/course.service';
 import { AuthenticatedUser, CreateCourseRequest, UpdateCourseRequest } from '../types';
 import { logger } from '../lib/logger';
+import { isValidCourseColor, normalizeCourseColor } from '../utils/courseColor';
 
 const courseService = new CourseService();
 
@@ -43,7 +44,7 @@ export class CourseController {
 
   async create(req: Request, res: Response): Promise<void> {
     try {
-      const { name } = req.body as CreateCourseRequest;
+      const { name, color } = req.body as CreateCourseRequest;
       const authUser = req.user as AuthenticatedUser;
 
       if (!name?.trim()) {
@@ -51,7 +52,16 @@ export class CourseController {
         return;
       }
 
-      const course = await courseService.create(name.trim(), authUser.id);
+      if (color !== undefined && !isValidCourseColor(color)) {
+        res.status(400).json({ message: 'Course color must be a valid hex color' });
+        return;
+      }
+
+      const course = await courseService.create(
+        name.trim(),
+        authUser.id,
+        normalizeCourseColor(color)
+      );
       res.status(201).json(course);
     } catch (error: unknown) {
       logger.error({ error }, '[CourseController#create]');
@@ -64,7 +74,7 @@ export class CourseController {
       const authUser = req.user as AuthenticatedUser;
       const rawId = req.params.id;
       const id = Array.isArray(rawId) ? rawId[0] : rawId;
-      const { name } = req.body as UpdateCourseRequest;
+      const { name, color } = req.body as UpdateCourseRequest;
 
       if (!id) {
         res.status(400).json({ message: 'Course id is required' });
@@ -76,7 +86,17 @@ export class CourseController {
         return;
       }
 
-      const updatedCourse = await courseService.updateForOwner(id, authUser.id, name.trim());
+      if (color !== undefined && !isValidCourseColor(color)) {
+        res.status(400).json({ message: 'Course color must be a valid hex color' });
+        return;
+      }
+
+      const updatedCourse = await courseService.updateForOwner(
+        id,
+        authUser.id,
+        name.trim(),
+        normalizeCourseColor(color)
+      );
       if (!updatedCourse) {
         res.status(404).json({ message: 'Course not found' });
         return;
