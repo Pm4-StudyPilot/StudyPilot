@@ -485,6 +485,10 @@
   &__fields {
     display: grid;
     gap: 0.85rem;
+    > div {
+      margin-bottom: 0 !important;
+    }
+    margin-bottom: 0.75rem;
   }
 
   &__field {
