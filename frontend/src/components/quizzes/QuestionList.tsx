@@ -102,7 +102,7 @@ export default function QuestionList({
         <QuestionCard
           key={question.id}
           question={question}
-          editable={editable}
+          mode={editable ? 'edit' : 'view'}
           onUpdateQuestion={onUpdateQuestion}
           onDeleteQuestion={onDeleteQuestion}
           onCreateAnswer={onCreateAnswer}

@@ -4,7 +4,7 @@ import { questionTypeOptions } from './types';
 import InputField from '../shared/form/InputField';
 import TextareaField from '../shared/form/TextareaField';
 import SelectField from '../shared/form/SelectField';
-import CheckField from '../shared/form/CheckField';
+import AnswerList from './AnswerList';
 
 interface QuestionFormState {
   title: string;
@@ -19,7 +19,7 @@ interface AnswerFormState {
 
 interface QuestionCardProps {
   question: QuestionWithAnswersDto;
-  editable?: boolean;
+  mode?: 'view' | 'edit' | 'play';
   onUpdateQuestion?: (questionId: string, data: QuestionFormState) => Promise<void> | void;
   onDeleteQuestion?: (questionId: string) => Promise<void> | void;
   onCreateAnswer?: (questionId: string, data: AnswerFormState) => Promise<void> | void;
@@ -41,12 +41,13 @@ function formatQuestionType(type: QuestionWithAnswersDto['type']) {
 
 export default function QuestionCard({
   question,
-  editable = false,
+  mode = 'view',
   onUpdateQuestion,
   onDeleteQuestion,
   onCreateAnswer,
   onUpdateAnswer,
   onDeleteAnswer,
+  onPlayed,
 }: QuestionCardProps) {
   const correctAnswers = question.answers.filter((answer) => answer.isCorrect).length;
   const [draftQuestion, setDraftQuestion] = useState<QuestionFormState>({
@@ -60,7 +61,7 @@ export default function QuestionCard({
         answer.id,
         {
           content: answer.content,
-          isCorrect: answer.isCorrect,
+          isCorrect: answer.isCorrect ?? false,
         },
       ])
     )
@@ -72,6 +73,7 @@ export default function QuestionCard({
   const [savingQuestion, setSavingQuestion] = useState(false);
   const [savingAnswerId, setSavingAnswerId] = useState<string | null>(null);
   const [addingAnswer, setAddingAnswer] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   async function handleSaveQuestion() {
     if (!draftQuestion.title.trim()) return;
@@ -89,8 +91,9 @@ export default function QuestionCard({
     }
   }
 
-  async function handleSaveAnswer(answerId: string) {
-    const draft = draftAnswers[answerId];
+  async function handleSaveAnswer(answerId: string, overrideDraft?: AnswerFormState) {
+    const draft = overrideDraft ?? draftAnswers[answerId];
+
     if (!draft?.content.trim()) return;
 
     setSavingAnswerId(answerId);
@@ -113,7 +116,7 @@ export default function QuestionCard({
     try {
       await onCreateAnswer?.(question.id, {
         content: newAnswer.content.trim(),
-        isCorrect: newAnswer.isCorrect,
+        isCorrect: newAnswer.isCorrect ?? false,
       });
 
       setNewAnswer({
@@ -125,7 +128,7 @@ export default function QuestionCard({
     }
   }
 
-  if (editable) {
+  if (mode === 'edit') {
     return (
       <article className="question-card question-card--editable">
         <header className="question-card__header">
@@ -179,64 +182,14 @@ export default function QuestionCard({
 
         {!!question.answers.length && (
           <div className="answer-list answer-list--editable">
-            {question.answers.map((answer) => {
-              const draft = draftAnswers[answer.id] ?? {
-                content: answer.content,
-                isCorrect: answer.isCorrect,
-              };
-
-              return (
-                <div key={answer.id} className="answer-editor">
-                  <label className="answer-editor__content">
-                    <input
-                      className="form-control"
-                      value={draft.content}
-                      onChange={(event) =>
-                        setDraftAnswers((current) => ({
-                          ...current,
-                          [answer.id]: {
-                            ...draft,
-                            content: event.target.value,
-                          },
-                        }))
-                      }
-                      onBlur={() => handleSaveAnswer(answer.id)}
-                    />
-                  </label>
-
-                  <CheckField
-                    className="inline-form-check"
-                    label="Correct"
-                    type="checkbox"
-                    checked={draft.isCorrect}
-                    onChange={(event) => {
-                      const checked = event.target.checked;
-
-                      setDraftAnswers((current) => ({
-                        ...current,
-                        [answer.id]: {
-                          ...draft,
-                          isCorrect: checked,
-                        },
-                      }));
-
-                      void handleSaveAnswer(answer.id);
-                    }}
-                  />
-
-                  <div className="answer-editor__actions">
-                    <button
-                      type="button"
-                      className="btn btn-outline-danger btn-sm"
-                      onClick={() => onDeleteAnswer?.(question.id, answer.id)}
-                    >
-                      <i className="fa-solid fa-trash  me-1" />
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+            <AnswerList
+              mode="edit"
+              question={question}
+              draftAnswers={draftAnswers}
+              handleSaveAnswer={handleSaveAnswer}
+              setDraftAnswers={setDraftAnswers}
+              onDeleteAnswer={onDeleteAnswer}
+            />
           </div>
         )}
 
@@ -252,7 +205,6 @@ export default function QuestionCard({
                   content: event.target.value,
                 }))
               }
-              onBlur={() => handleSaveAnswer(answer.id)}
               placeholder="Add another possible answer"
             />
           </label>
@@ -262,17 +214,13 @@ export default function QuestionCard({
               type="checkbox"
               checked={newAnswer.isCorrect}
               onChange={(event) => {
-                const checked = event.target.checked;
-
                 setDraftAnswers((current) => ({
                   ...current,
                   [answer.id]: {
                     ...draft,
-                    isCorrect: checked,
+                    isCorrect: event.target.checked,
                   },
                 }));
-
-                void handleSaveAnswer(answer.id);
               }}
             />
             Correct
@@ -303,6 +251,42 @@ export default function QuestionCard({
     );
   }
 
+  if (mode === 'play') {
+    return (
+      <article className="question-card">
+        <header className="question-card__header">
+          <div className="question-card__title-group">
+            <div className="question-card__meta">
+              <span className="question-card__type">{formatQuestionType(question.type)}</span>
+              <span>
+                {question.answers.length} answer{question.answers.length !== 1 ? 's' : ''}
+              </span>
+              <span>
+                {correctAnswers} correct answer{correctAnswers !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            <h3 className="question-card__title">{question.title}</h3>
+
+            {question.description && (
+              <p className="question-card__description">{question.description}</p>
+            )}
+          </div>
+        </header>
+
+        <div className="answer-list">
+          <AnswerList question={question} mode="play" onPlay={onPlayed} />
+        </div>
+      </article>
+    );
+  }
+
+  function handleToggle() {
+    setExpanded((prev) => {
+      return !prev;
+    });
+  }
+
   return (
     <article className="question-card">
       <header className="question-card__header">
@@ -325,24 +309,23 @@ export default function QuestionCard({
         </div>
       </header>
 
-      <div className="answer-list">
-        {question.answers.map((answer) => (
-          <div
-            key={answer.id}
-            className={`answer-card ${answer.isCorrect ? 'answer-card--correct' : 'answer-card--incorrect'}`}
-          >
-            <div className="answer-card__icon" aria-hidden="true">
-              <i
-                className={`fa-solid ${answer.isCorrect ? 'fa-circle-check' : 'fa-circle-xmark'}`}
-              />
-            </div>
+      <button
+        className="question-card__toggle btn btn-sm btn-link text-secondary p-0"
+        onClick={handleToggle}
+        aria-label="Toggle answers"
+        aria-expanded={expanded}
+      >
+        View Answers
+        <i
+          className={`question-card__chevron fa-solid fa-chevron-${expanded ? 'down' : 'right'}`}
+        />
+      </button>
 
-            <p className="answer-card__content">{answer.content}</p>
-
-            <span className="answer-card__badge">{answer.isCorrect ? 'Correct' : 'Incorrect'}</span>
-          </div>
-        ))}
-      </div>
+      {expanded && (
+        <div className="answer-list">
+          <AnswerList question={question} mode="view" />
+        </div>
+      )}
     </article>
   );
 }

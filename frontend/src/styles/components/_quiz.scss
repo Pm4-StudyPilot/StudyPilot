@@ -406,7 +406,13 @@
     display: flex;
     gap: 1rem;
     align-items: flex-start;
-    margin-bottom: 1rem;
+  }
+  &__toggle {
+    margin-top: 0.25rem;
+  }
+  &__chevron {
+    font-size: 0.75rem;
+    margin-left: 0.2rem;
   }
 
   &__title-group {
@@ -512,6 +518,7 @@
 .answer-list {
   display: grid;
   gap: 0.65rem;
+  margin-top: 0.75rem;
   margin-bottom: 1rem;
   &--editable {
     margin-top: 1rem;
