@@ -19,9 +19,9 @@
   &__month h2 {
     margin: 0;
     color: var(--color-text-secondary) !important;
-    font-size: 0.84rem !important;
+    font-size: 0.94rem !important;
     font-weight: 800;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
   }
 
@@ -39,15 +39,15 @@
     display: inline-flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.4rem;
-    max-width: 8.8rem;
-    min-height: 2rem;
-    padding: 0.25rem 0.5rem;
+    gap: 0.5rem;
+    max-width: 10rem;
+    min-height: 2.2rem;
+    padding: 0.3rem 0.55rem;
     border: 0;
     border-radius: 0.45rem;
     background: transparent;
     color: var(--color-text-muted);
-    font-size: 0.78rem;
+    font-size: 0.86rem;
     font-weight: 800;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -154,20 +154,20 @@
   }
 
   &__month-controls {
-    gap: 0.55rem;
+    gap: 0.65rem;
   }
 
   &__nav-button {
     display: grid;
     place-items: center;
-    width: 1.65rem;
-    height: 1.65rem;
+    width: 1.9rem;
+    height: 1.9rem;
     padding: 0;
     border: 0;
     border-radius: 0.35rem;
     background: transparent;
     color: var(--color-text-secondary);
-    font-size: 0.68rem;
+    font-size: 0.78rem;
 
     &:hover,
     &:focus-visible {
