@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import Button from '../components/shared/Button';
 import Form from '../components/shared/form/Form';
@@ -48,6 +48,13 @@ export default function ChangePasswordPage() {
   return (
     <DashboardLayout activeNav="settings" showSearch={false}>
       <section className="dashboard-page-stack">
+        <Link
+          to="/settings"
+          className="course-detail__back-link text-secondary text-decoration-none d-inline-flex align-items-center gap-2"
+        >
+          <i className="fa-solid fa-chevron-left" />
+          Back to Settings
+        </Link>
         <header className="dashboard-page-header">
           <div>
             <p className="dashboard-page-header__eyebrow">Security</p>
@@ -111,11 +118,19 @@ export default function ChangePasswordPage() {
                 )}
 
                 <div className="d-flex gap-2 mt-3">
-                  <Button type="submit" loading={loading}>
+                  <Button
+                    type="submit"
+                    loading={loading}
+                    className="btn btn-primary bold settings-page__button"
+                  >
                     Change Password
                   </Button>
 
-                  <Button type="button" onClick={() => navigate('/settings')}>
+                  <Button
+                    type="button"
+                    onClick={() => navigate('/settings')}
+                    className="btn btn-primary bold settings-page__button"
+                  >
                     Cancel
                   </Button>
                 </div>
