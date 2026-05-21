@@ -99,7 +99,7 @@ export class AnswerController {
 
       const data = req.body as UpdateAnswerRequest;
 
-      if (data.isCorrect !== undefined) {
+      if (data.isCorrect === undefined) {
         res.status(400).json({ message: 'Question isCorrect cannot be empty' });
         return;
       }

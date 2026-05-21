@@ -77,6 +77,12 @@ hr {
   border-color: var(--color-text-muted);
 }
 
+.inline-form-check {
+  margin-bottom: 0 !important;
+  display: inline-block;
+  align-self: center;
+}
+
 .panel,
 .card {
   color: var(--color-text-primary);

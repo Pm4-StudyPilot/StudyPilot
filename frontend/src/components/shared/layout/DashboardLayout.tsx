@@ -19,9 +19,8 @@ import { useAuth } from '../../../context/useAuth';
  * allowing each page to define its own search behavior.
  */
 type DashboardLayoutProps = {
-  activeNav: 'dashboard' | 'courses' | 'settings';
+  activeNav?: 'dashboard' | 'courses' | 'settings' | false;
   children: ReactNode;
-
   showSearch?: boolean;
   searchValue?: string;
   onSearchChange?: (event: string) => void;
@@ -43,8 +42,8 @@ function navItemClass(isActive: boolean) {
  * top navigation, optional search input, and page content.
  */
 export default function DashboardLayout({
-  activeNav,
   children,
+  activeNav = false,
   showSearch = false,
   searchValue = '',
   onSearchChange,
