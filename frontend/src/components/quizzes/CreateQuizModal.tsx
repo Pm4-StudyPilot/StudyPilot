@@ -3,6 +3,7 @@ import Modal from '../shared/layout/Modal';
 import Form from '../shared/form/Form';
 import InputField from '../shared/form/InputField';
 import TextareaField from '../shared/form/TextareaField';
+import CheckField from '../shared/form/CheckField';
 import Button from '../shared/Button';
 import { api } from '../../services/api';
 import { QuizDto } from '../../types/dto';
@@ -82,7 +83,7 @@ export default function CreateQuizModal({ courseId, onClose, onCreated }: Create
           onChange={(e) => handleChange('description', e.target.value)}
           rows={3}
         />
-        <InputField
+        <CheckField
           label="Random question order"
           type="checkbox"
           checked={values.isOrderRandom ?? false}

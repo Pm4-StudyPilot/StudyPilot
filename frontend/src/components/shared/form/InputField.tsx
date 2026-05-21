@@ -17,11 +17,7 @@ export default function InputField({ error, id, label, ...inputProps }: InputFie
       id={finalId}
       className={inputProps.type === 'checkbox' ? 'form-check-layout' : ''}
     >
-      <input
-        {...inputProps}
-        id={finalId}
-        className={`form-control${error ? ' is-invalid' : ''}${inputProps.type === 'checkbox' ? ' form-check-input' : ''}`}
-      />
+      <input {...inputProps} id={finalId} className={`form-control${error ? ' is-invalid' : ''}`} />
     </FormFieldLayout>
   );
 }

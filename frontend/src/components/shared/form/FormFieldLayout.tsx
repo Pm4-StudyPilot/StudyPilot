@@ -21,10 +21,9 @@ export function FormFieldLayout({
   children,
   noMargin,
   id,
-  className = '',
 }: FormFieldLayoutProps) {
   return (
-    <div className={noMargin ? className : 'mb-3 ' + className}>
+    <div className={noMargin ? '' : 'mb-3'}>
       {id && (
         <label className="form-label" htmlFor={id}>
           {label}

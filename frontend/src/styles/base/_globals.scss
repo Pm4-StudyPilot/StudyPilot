@@ -70,10 +70,11 @@ hr {
     margin-left: 0.5em;
     vertical-align: sub;
   }
-  .form-check-input {
-    padding: 0.5rem;
-    margin: 0;
-  }
+}
+.form-check-input {
+  padding: 0.5rem;
+  background-color: unset;
+  border-color: var(--color-text-muted);
 }
 
 .panel,
