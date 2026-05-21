@@ -153,27 +153,32 @@ Bootstrap Overwrites
   filter: invert(1) grayscale(1);
 }
 
+.btn-outline-secondary,
 .btn-outline-secondary.bold {
-  border-color: var(--color-primary-bold);
-  color: var(--color-primary-bold);
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+
+  &:hover,
+  &:focus {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary-accent);
+    color: var(--color-primary);
+  }
 }
+
+.btn-primary,
 .btn-primary.bold {
-  background: var(--color-primary-bold);
-  border-color: var(--color-primary-bold);
-  color: var(--color-text-primary);
-}
-
-.btn-primary {
-  border: 1px solid var(--color-primary);
-  border-width: 1px;
-
+  min-height: 2.5rem;
   padding: 0.5rem 1rem;
-  line-height: 1.5;
+  border-radius: 0.5rem;
 
-  background: linear-gradient(180deg, var(--color-primary), var(--color-primary-bold));
+  border: 1px solid var(--color-primary-bold);
 
+  background: var(--color-primary-bold);
   color: var(--color-text-primary);
+
   font-weight: 700;
+  line-height: 1.5;
 
   transition:
     background-color 0.2s ease,
@@ -182,15 +187,10 @@ Bootstrap Overwrites
 
   &:hover,
   &:focus {
-    border-color: color-mix(in srgb, var(--color-primary) 82%, white);
-
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-primary) 88%, white),
-      var(--color-primary)
-    );
-
+    border-color: var(--color-primary);
+    background: var(--color-primary);
     color: var(--color-text-primary);
+
     transform: translateY(-1px);
   }
 
