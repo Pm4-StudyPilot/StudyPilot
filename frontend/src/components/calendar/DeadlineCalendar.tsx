@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { FocusEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { CourseDto, TaskDto } from '../../types/dto';
@@ -228,6 +229,7 @@ export default function DeadlineCalendar({
 }: DeadlineCalendarProps) {
   const todayDateKey = getTodayDateKey();
   const initialToday = parseDateKey(todayDateKey);
+  const filterSearchRef = useRef<HTMLInputElement>(null);
 
   const courseKey = useMemo(
     () => JSON.stringify(courses.map((course) => [course.id, course.name, course.color])),
@@ -243,6 +245,9 @@ export default function DeadlineCalendar({
     () => new Date(initialToday.getFullYear(), initialToday.getMonth(), 1)
   );
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
+  const [selectedCourseId, setSelectedCourseId] = useState('');
+  const [courseFilterOpen, setCourseFilterOpen] = useState(false);
+  const [courseSearch, setCourseSearch] = useState('');
 
   useEffect(() => {
     if (coursesLoading || coursesError) return;
@@ -282,6 +287,12 @@ export default function DeadlineCalendar({
     };
   }, [courseKey, courses, coursesError, coursesLoading]);
 
+  useEffect(() => {
+    if (courseFilterOpen) {
+      filterSearchRef.current?.focus();
+    }
+  }, [courseFilterOpen]);
+
   const hasCurrentTaskRequest = taskRequest.courseKey === courseKey;
   const loadState: LoadState =
     coursesLoading || (!coursesError && !hasCurrentTaskRequest)
@@ -291,9 +302,25 @@ export default function DeadlineCalendar({
         : 'success';
   const error = coursesError || (hasCurrentTaskRequest ? taskRequest.error : '');
   const tasks = hasCurrentTaskRequest ? taskRequest.tasks : EMPTY_CALENDAR_TASKS;
+  const activeCourseId = courses.some((course) => course.id === selectedCourseId)
+    ? selectedCourseId
+    : '';
+  const activeCourse = courses.find((course) => course.id === activeCourseId) ?? null;
+  const activeCourseLabel = activeCourse?.name ?? 'All courses';
+  const courseOptions = useMemo(() => {
+    const normalizedSearch = courseSearch.trim().toLowerCase();
+
+    if (!normalizedSearch) return courses;
+
+    return courses.filter((course) => course.name.toLowerCase().includes(normalizedSearch));
+  }, [courseSearch, courses]);
+  const filteredTasks = useMemo(
+    () => (activeCourseId ? tasks.filter((task) => task.courseId === activeCourseId) : tasks),
+    [activeCourseId, tasks]
+  );
 
   const tasksByDate = useMemo(() => {
-    return tasks.reduce<Record<string, CalendarTask[]>>((grouped, task) => {
+    return filteredTasks.reduce<Record<string, CalendarTask[]>>((grouped, task) => {
       if (!grouped[task.dueDateKey]) {
         grouped[task.dueDateKey] = [];
       }
@@ -301,7 +328,7 @@ export default function DeadlineCalendar({
       grouped[task.dueDateKey].push(task);
       return grouped;
     }, {});
-  }, [tasks]);
+  }, [filteredTasks]);
 
   const selectedDateTasks = selectedDateKey ? (tasksByDate[selectedDateKey] ?? []) : [];
   const calendarDays = useMemo(() => buildCalendarDays(activeMonth), [activeMonth]);
@@ -309,11 +336,11 @@ export default function DeadlineCalendar({
 
   const upcomingTasks = useMemo(() => {
     return sortCalendarTasks(
-      tasks.filter(
+      filteredTasks.filter(
         (task) => !isTaskCompleted(task) && getDayDifference(task.dueDateKey, todayDateKey) >= 0
       )
     ).slice(0, UPCOMING_LIMIT);
-  }, [tasks, todayDateKey]);
+  }, [filteredTasks, todayDateKey]);
 
   const visibleTasks = selectedDateKey ? selectedDateTasks : upcomingTasks;
   const detailTitle = selectedDateKey ? formatLongDate(selectedDateKey) : 'Upcoming Deadlines';
@@ -338,6 +365,21 @@ export default function DeadlineCalendar({
     setActiveMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
   }
 
+  function handleCourseFilterBlur(event: FocusEvent<HTMLDivElement>) {
+    const nextTarget = event.relatedTarget as Node | null;
+
+    if (event.currentTarget.contains(nextTarget)) return;
+
+    setCourseFilterOpen(false);
+    setCourseSearch('');
+  }
+
+  function handleCourseSelect(courseId: string) {
+    setSelectedCourseId(courseId);
+    setCourseFilterOpen(false);
+    setCourseSearch('');
+  }
+
   return (
     <section className="deadline-calendar">
       {loadState === 'loading' && (
@@ -356,30 +398,120 @@ export default function DeadlineCalendar({
             <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
               <h2 className="text-white fw-bold h5 mb-0">{activeMonthLabel}</h2>
 
-              <div className="d-flex align-items-center gap-2">
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-secondary"
-                  onClick={() => handleMonthShift(-1)}
-                  aria-label="Go to previous month"
+              <div className="deadline-calendar__toolbar d-flex flex-wrap align-items-center gap-2">
+                <div className="deadline-calendar__filter" onBlur={handleCourseFilterBlur}>
+                  <button
+                    type="button"
+                    className="deadline-calendar__filter-toggle"
+                    onClick={() => setCourseFilterOpen((isOpen) => !isOpen)}
+                    aria-haspopup="listbox"
+                    aria-expanded={courseFilterOpen}
+                  >
+                    <span className="deadline-calendar__filter-label">
+                      {activeCourse && (
+                        <span
+                          className="deadline-calendar__filter-dot"
+                          style={{ backgroundColor: normalizeCourseColor(activeCourse.color) }}
+                          aria-hidden="true"
+                        />
+                      )}
+                      {activeCourseLabel}
+                    </span>
+                    <i className="fa-solid fa-chevron-down" aria-hidden="true" />
+                  </button>
+
+                  {courseFilterOpen && (
+                    <div className="deadline-calendar__filter-menu">
+                      <label htmlFor="deadline-calendar-course-search" className="visually-hidden">
+                        Search courses
+                      </label>
+                      <div className="deadline-calendar__filter-search">
+                        <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
+                        <input
+                          id="deadline-calendar-course-search"
+                          ref={filterSearchRef}
+                          type="search"
+                          value={courseSearch}
+                          onChange={(event) => setCourseSearch(event.target.value)}
+                          placeholder="Search courses"
+                        />
+                      </div>
+
+                      <div className="deadline-calendar__filter-list" role="listbox">
+                        <button
+                          type="button"
+                          className={`deadline-calendar__filter-option${
+                            activeCourseId === '' ? ' deadline-calendar__filter-option--active' : ''
+                          }`}
+                          onClick={() => handleCourseSelect('')}
+                          role="option"
+                          aria-selected={activeCourseId === ''}
+                        >
+                          All courses
+                        </button>
+
+                        {courseOptions.map((course) => {
+                          const courseColor = normalizeCourseColor(course.color);
+
+                          return (
+                            <button
+                              key={course.id}
+                              type="button"
+                              className={`deadline-calendar__filter-option${
+                                activeCourseId === course.id
+                                  ? ' deadline-calendar__filter-option--active'
+                                  : ''
+                              }`}
+                              onClick={() => handleCourseSelect(course.id)}
+                              role="option"
+                              aria-selected={activeCourseId === course.id}
+                            >
+                              <span
+                                className="deadline-calendar__filter-dot"
+                                style={{ backgroundColor: courseColor }}
+                                aria-hidden="true"
+                              />
+                              <span>{course.name}</span>
+                            </button>
+                          );
+                        })}
+
+                        {courseOptions.length === 0 && (
+                          <div className="deadline-calendar__filter-empty">No courses found.</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  className="deadline-calendar__month-controls d-flex align-items-center gap-2"
+                  aria-label="Calendar navigation"
                 >
-                  <i className="fa-solid fa-chevron-left" />
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-secondary"
-                  onClick={handleGoToToday}
-                >
-                  Today
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-secondary"
-                  onClick={() => handleMonthShift(1)}
-                  aria-label="Go to next month"
-                >
-                  <i className="fa-solid fa-chevron-right" />
-                </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => handleMonthShift(-1)}
+                    aria-label="Go to previous month"
+                  >
+                    <i className="fa-solid fa-chevron-left" />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={handleGoToToday}
+                  >
+                    Today
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => handleMonthShift(1)}
+                    aria-label="Go to next month"
+                  >
+                    <i className="fa-solid fa-chevron-right" />
+                  </button>
+                </div>
               </div>
             </div>
 

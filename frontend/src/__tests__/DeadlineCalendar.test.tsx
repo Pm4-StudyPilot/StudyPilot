@@ -110,6 +110,7 @@ describe('DeadlineCalendar', () => {
 
     expect(await screen.findByText('May 2026')).toBeInTheDocument();
     expect(await screen.findByText('Upcoming Deadlines')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /all courses/i })).toBeInTheDocument();
     expect(
       await screen.findByRole('button', { name: /may 10, 2026, today, 1 deadline/i })
     ).toBeInTheDocument();
@@ -120,6 +121,34 @@ describe('DeadlineCalendar', () => {
     expect(document.querySelectorAll('.deadline-calendar__day-dot').length).toBeGreaterThan(0);
     expect(document.querySelector('.deadline-calendar__day-count')).not.toBeInTheDocument();
     expect(screen.queryByText('Selected day')).not.toBeInTheDocument();
+  });
+
+  it('filters calendar dots and upcoming deadlines by course', async () => {
+    vi.mocked(api.get).mockImplementation((endpoint: string) => {
+      if (endpoint in tasksByEndpoint) {
+        return Promise.resolve(tasksByEndpoint[endpoint as keyof typeof tasksByEndpoint]);
+      }
+
+      return Promise.reject(new Error(`Unexpected endpoint: ${endpoint}`));
+    });
+
+    render(
+      <MemoryRouter>
+        <DeadlineCalendar courses={courses} />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Upcoming Deadlines');
+    expect(document.querySelectorAll('.deadline-calendar__day-dot')).toHaveLength(3);
+
+    fireEvent.click(screen.getByRole('button', { name: /all courses/i }));
+    fireEvent.change(screen.getByLabelText(/search courses/i), { target: { value: 'bio' } });
+    fireEvent.click(screen.getByRole('option', { name: /biology/i }));
+
+    expect(screen.getByText('Quiz prep')).toBeInTheDocument();
+    expect(screen.queryByText('Read chapter 5')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /computer science/i })).not.toBeInTheDocument();
+    expect(document.querySelectorAll('.deadline-calendar__day-dot')).toHaveLength(1);
   });
 
   it('replaces upcoming deadlines with the selected day after clicking a date', async () => {
@@ -149,6 +178,33 @@ describe('DeadlineCalendar', () => {
     fireEvent.click(screen.getByRole('button', { name: /show upcoming deadlines/i }));
 
     expect(screen.getByText('Upcoming Deadlines')).toBeInTheDocument();
+    expect(screen.queryByText('Lab recap')).not.toBeInTheDocument();
+  });
+
+  it('applies the course filter to the selected day view', async () => {
+    vi.mocked(api.get).mockImplementation((endpoint: string) => {
+      if (endpoint in tasksByEndpoint) {
+        return Promise.resolve(tasksByEndpoint[endpoint as keyof typeof tasksByEndpoint]);
+      }
+
+      return Promise.reject(new Error(`Unexpected endpoint: ${endpoint}`));
+    });
+
+    render(
+      <MemoryRouter>
+        <DeadlineCalendar courses={courses} />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Upcoming Deadlines');
+
+    fireEvent.click(screen.getByRole('button', { name: /all courses/i }));
+    fireEvent.change(screen.getByLabelText(/search courses/i), { target: { value: 'bio' } });
+    fireEvent.click(screen.getByRole('option', { name: /biology/i }));
+    fireEvent.click(screen.getByRole('button', { name: /may 3, 2026/i }));
+
+    expect(screen.getByRole('heading', { name: 'May 3, 2026' })).toBeInTheDocument();
+    expect(screen.getByText('No task deadlines fall on this date.')).toBeInTheDocument();
     expect(screen.queryByText('Lab recap')).not.toBeInTheDocument();
   });
 
