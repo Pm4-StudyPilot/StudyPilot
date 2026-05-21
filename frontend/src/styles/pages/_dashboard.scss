@@ -395,6 +395,7 @@
 
 .dashboard-course-card {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 1.4rem;
   padding: 1.55rem;

@@ -374,7 +374,7 @@ function CompactCourseCard({ data, index }: { data: DashboardCourseData; index: 
       : 'No quizzes';
 
   return (
-    <Link to={`/courses/${data.course.id}`} className="dashboard-course-card">
+    <Link to={`/courses/${data.course.id}`} className="dashboard-course-card card light">
       <div className="dashboard-course-card__ring-wrap">
         <ProgressRing
           openTasks={progress.openTasks}

@@ -281,6 +281,7 @@
 
   &__task-list {
     display: grid;
+    align-content: start;
     gap: 1rem;
   }
 
