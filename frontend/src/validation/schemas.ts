@@ -174,6 +174,25 @@ export const createTaskSchema = z.object({
 });
 
 /**
+ * Create Quiz Schema
+ *
+ * Defines validation rules for creating a new quiz.
+ *
+ * Fields:
+ * - title: the quiz title (required, non-empty)
+ * - description: optional free-text notes
+ * - isOrderRandom: true if the questions will appear in a random order
+ *
+ * This schema is used for:
+ * - Frontend form validation in the CreateQuizModal
+ */
+export const createQuizSchema = z.object({
+  title: z.string().min(1, 'Quiz title is required'),
+  description: z.string().optional(),
+  isOrderRandom: z.boolean(),
+});
+
+/**
  * Reset Password Schema
  *
  * Validates the new password and confirmation on the "Reset Password" form.

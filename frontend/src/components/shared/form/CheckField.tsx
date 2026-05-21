@@ -3,6 +3,7 @@ import { InputHTMLAttributes, useId } from 'react';
 type CheckFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & {
   label: string;
   type: 'checkbox' | 'radio';
+  labelPosition: 'left' | 'right';
   error?: string;
   className?: string;
 };
@@ -13,10 +14,16 @@ export default function CheckField({
   error,
   id,
   className,
+  labelPosition = 'left',
   ...props
 }: CheckFieldProps) {
   const generatedId = useId();
   const finalId = id ?? generatedId;
+  const labelElement = (
+    <label className="form-check-label" htmlFor={finalId}>
+      {label}
+    </label>
+  );
 
   return (
     <div className={'form-check mb-3 ' + className}>
@@ -26,10 +33,9 @@ export default function CheckField({
         type={type}
         className={`form-check-input${error ? ' is-invalid' : ''}`}
       />
-      <label className="form-check-label" htmlFor={finalId}>
-        {label}
-      </label>
+      {labelPosition === 'left' && labelElement}
       {error && <div className="invalid-feedback d-block">{error}</div>}
+      {labelPosition !== 'left' && labelElement}
     </div>
   );
 }
