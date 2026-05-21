@@ -10,6 +10,11 @@ export interface AuthResponse {
   token: string;
 }
 
+export interface AvailabilityResponse {
+  emailExists?: boolean;
+  usernameExists?: boolean;
+}
+
 export interface UpdateProfileDto {
   username: string;
   email: string;
@@ -18,6 +23,7 @@ export interface UpdateProfileDto {
 export interface CourseDto {
   id: string;
   name: string;
+  color: string;
   ownerId: string;
   createdAt: string;
   updatedAt: string;
