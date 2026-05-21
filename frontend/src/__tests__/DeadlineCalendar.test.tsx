@@ -151,6 +151,76 @@ describe('DeadlineCalendar', () => {
     expect(api.get).toHaveBeenCalledWith('/courses/course-2/tasks');
   });
 
+  it('expands the upcoming deadlines preview when more tasks are available', async () => {
+    const extraTasksByCourseId: Record<string, TaskDto[]> = {
+      ...tasksByCourseId,
+      'course-1': [
+        ...tasksByCourseId['course-1'],
+        {
+          id: 'task-4',
+          title: 'Practice exam',
+          description: 'Work through the sample exam.',
+          dueDate: '2026-05-13T00:00:00.000Z',
+          priority: 'HIGH',
+          status: 'OPEN',
+          position: 2,
+          completed: false,
+          courseId: 'course-1',
+          createdAt: '2026-05-01T10:00:00.000Z',
+          updatedAt: '2026-05-01T10:00:00.000Z',
+        },
+        {
+          id: 'task-5',
+          title: 'Final project',
+          description: 'Prepare the project outline.',
+          dueDate: '2026-05-14T00:00:00.000Z',
+          priority: 'HIGH',
+          status: 'OPEN',
+          position: 3,
+          completed: false,
+          courseId: 'course-1',
+          createdAt: '2026-05-01T10:00:00.000Z',
+          updatedAt: '2026-05-01T10:00:00.000Z',
+        },
+        {
+          id: 'task-6',
+          title: 'Essay draft',
+          description: 'Write the first draft.',
+          dueDate: '2026-05-15T00:00:00.000Z',
+          priority: 'MEDIUM',
+          status: 'OPEN',
+          position: 4,
+          completed: false,
+          courseId: 'course-1',
+          createdAt: '2026-05-01T10:00:00.000Z',
+          updatedAt: '2026-05-01T10:00:00.000Z',
+        },
+      ],
+    };
+
+    render(
+      <MemoryRouter>
+        <DeadlineCalendar courses={courses} tasksByCourseId={extraTasksByCourseId} />
+      </MemoryRouter>
+    );
+
+    const showMoreButton = await screen.findByRole('button', {
+      name: /show 2 more deadlines/i,
+    });
+
+    expect(screen.queryByText('Final project')).not.toBeInTheDocument();
+
+    fireEvent.click(showMoreButton);
+
+    expect(screen.getByText('Final project')).toBeInTheDocument();
+    expect(screen.getByText('Essay draft')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /show fewer deadlines/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /show fewer deadlines/i }));
+
+    expect(screen.queryByText('Final project')).not.toBeInTheDocument();
+  });
+
   it('filters calendar dots and upcoming deadlines by course', async () => {
     render(
       <MemoryRouter>

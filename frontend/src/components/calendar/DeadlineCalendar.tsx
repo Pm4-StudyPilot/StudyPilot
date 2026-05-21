@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { FocusEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
@@ -156,13 +156,15 @@ function formatDeadlineTime(value: string | null): string {
   });
 }
 
-function DeadlineTaskCard({ task, todayDateKey }: { task: CalendarTask; todayDateKey: string }) {
-  const flag = getDeadlineFlag(task, todayDateKey);
+function DeadlineTaskCard({ task }: { task: CalendarTask }) {
   const dueDate = parseDateKey(task.dueDateKey);
 
   return (
     <li className="deadline-calendar__task-card">
-      <div className={`deadline-calendar__date-badge deadline-calendar__date-badge--${flag.tone}`}>
+      <div
+        className="deadline-calendar__date-badge"
+        style={{ backgroundColor: normalizeCourseColor(task.courseColor) }}
+      >
         <span>{dueDate.toLocaleDateString('en-US', { month: 'short' })}</span>
         <strong>{dueDate.getDate()}</strong>
       </div>
@@ -187,6 +189,7 @@ export default function DeadlineCalendar({
 }: DeadlineCalendarProps) {
   const todayDateKey = getTodayDateKey();
   const initialToday = parseDateKey(todayDateKey);
+  const upcomingListId = useId();
   const filterSearchRef = useRef<HTMLInputElement>(null);
 
   const courseKey = useMemo(
@@ -212,6 +215,7 @@ export default function DeadlineCalendar({
   const [selectedCourseId, setSelectedCourseId] = useState('');
   const [courseFilterOpen, setCourseFilterOpen] = useState(false);
   const [courseSearch, setCourseSearch] = useState('');
+  const [showAllUpcoming, setShowAllUpcoming] = useState(false);
 
   useEffect(() => {
     if (coursesLoading || coursesError) return;
@@ -305,10 +309,18 @@ export default function DeadlineCalendar({
       filteredTasks.filter(
         (task) => !isTaskCompleted(task) && getDayDifference(task.dueDateKey, todayDateKey) >= 0
       )
-    ).slice(0, UPCOMING_LIMIT);
+    );
   }, [filteredTasks, todayDateKey]);
 
-  const visibleTasks = selectedDateKey ? selectedDateTasks : upcomingTasks;
+  const visibleTasks = selectedDateKey
+    ? selectedDateTasks
+    : showAllUpcoming
+      ? upcomingTasks
+      : upcomingTasks.slice(0, UPCOMING_LIMIT);
+  const hiddenUpcomingCount = selectedDateKey
+    ? 0
+    : Math.max(upcomingTasks.length - UPCOMING_LIMIT, 0);
+  const canToggleUpcoming = !selectedDateKey && hiddenUpcomingCount > 0;
   const detailTitle = selectedDateKey ? formatLongDate(selectedDateKey) : 'Upcoming Deadlines';
   const emptyMessage = selectedDateKey
     ? 'No task deadlines fall on this date.'
@@ -317,11 +329,13 @@ export default function DeadlineCalendar({
   function handleMonthShift(offset: number) {
     setActiveMonth(shiftMonth(activeMonth, offset));
     setSelectedDateKey(null);
+    setShowAllUpcoming(false);
   }
 
   function handleDateSelect(dateKey: string) {
     const selectedDate = parseDateKey(dateKey);
     setSelectedDateKey(dateKey);
+    setShowAllUpcoming(false);
     setActiveMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
   }
 
@@ -336,8 +350,14 @@ export default function DeadlineCalendar({
 
   function handleCourseSelect(courseId: string) {
     setSelectedCourseId(courseId);
+    setShowAllUpcoming(false);
     setCourseFilterOpen(false);
     setCourseSearch('');
+  }
+
+  function handleShowUpcoming() {
+    setSelectedDateKey(null);
+    setShowAllUpcoming(false);
   }
 
   return (
@@ -531,7 +551,7 @@ export default function DeadlineCalendar({
                 <button
                   type="button"
                   className="btn btn-sm btn-link deadline-calendar__reset p-0 text-decoration-none"
-                  onClick={() => setSelectedDateKey(null)}
+                  onClick={handleShowUpcoming}
                 >
                   Show upcoming deadlines
                 </button>
@@ -543,15 +563,39 @@ export default function DeadlineCalendar({
                 {emptyMessage}
               </div>
             ) : (
-              <ul className="deadline-calendar__task-list list-unstyled mb-0">
-                {visibleTasks.map((task) => (
-                  <DeadlineTaskCard
-                    key={`${selectedDateKey ?? 'upcoming'}-${task.id}`}
-                    task={task}
-                    todayDateKey={todayDateKey}
-                  />
-                ))}
-              </ul>
+              <>
+                <ul
+                  id={upcomingListId}
+                  className={`deadline-calendar__task-list list-unstyled mb-0 ${
+                    selectedDateKey || showAllUpcoming
+                      ? 'deadline-calendar__task-list--scrollable'
+                      : 'deadline-calendar__task-list--preview'
+                  }`}
+                >
+                  {visibleTasks.map((task) => (
+                    <DeadlineTaskCard
+                      key={`${selectedDateKey ?? 'upcoming'}-${task.id}`}
+                      task={task}
+                    />
+                  ))}
+                </ul>
+
+                {canToggleUpcoming && (
+                  <button
+                    type="button"
+                    className="deadline-calendar__more-button"
+                    aria-expanded={showAllUpcoming}
+                    aria-controls={upcomingListId}
+                    onClick={() => setShowAllUpcoming((isExpanded) => !isExpanded)}
+                  >
+                    {showAllUpcoming
+                      ? 'Show fewer deadlines'
+                      : `Show ${hiddenUpcomingCount} more deadline${
+                          hiddenUpcomingCount === 1 ? '' : 's'
+                        }`}
+                  </button>
+                )}
+              </>
             )}
           </section>
         </>
