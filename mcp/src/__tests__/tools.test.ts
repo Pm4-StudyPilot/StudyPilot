@@ -1,0 +1,173 @@
+import { describe, it, expect, mock, beforeEach } from 'bun:test';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+
+// --- Mock the backend services barrel so no real DB/Prisma is loaded. ---
+const courseList = mock(async () => []);
+const courseFind = mock(async () => ({ id: 'c1', name: 'Biology' }));
+const courseCreate = mock(async () => ({ id: 'c1', name: 'Biology' }));
+const courseUpdate = mock(async () => ({ id: 'c1', name: 'Bio 2' }));
+const courseDelete = mock(async () => true);
+
+const taskDelete = mock(async () => true);
+
+const quizCreate = mock(async () => ({ id: 'q1', title: 'Midterm' }));
+const quizUpdate = mock(async () => ({ id: 'q1', title: 'Midterm 2' }));
+const quizDelete = mock(async () => true);
+
+class CourseService {
+  listByUser = courseList;
+  findByIdForUser = courseFind;
+  create = courseCreate;
+  updateForOwner = courseUpdate;
+  deleteForOwner = courseDelete;
+}
+class TaskService {
+  listByCourse = mock(async () => []);
+  findByIdForUser = mock(async () => null);
+  findOverdueByUser = mock(async () => []);
+  create = mock(async () => null);
+  updateForUser = mock(async () => null);
+  deleteForUser = taskDelete;
+}
+class QuizService {
+  listByCourse = mock(async () => []);
+  findByIdForOwner = mock(async () => null);
+  create = quizCreate;
+  updateForOwner = quizUpdate;
+  deleteForOwner = quizDelete;
+}
+class DocumentService {
+  listByCourse = mock(async () => []);
+}
+
+mock.module('backend/services', () => ({
+  CourseService,
+  TaskService,
+  QuizService,
+  DocumentService,
+}));
+
+const { registerTools } = await import('../tools');
+
+interface RecordedTool {
+  name: string;
+  handler: (args: Record<string, unknown>) => Promise<CallToolResult>;
+}
+
+function mountTools(): RecordedTool[] {
+  const recorded: RecordedTool[] = [];
+  const server = {
+    registerTool: (name: string, _config: unknown, handler: RecordedTool['handler']) => {
+      recorded.push({ name, handler });
+    },
+  };
+  registerTools(server as unknown as McpServer);
+  return recorded;
+}
+
+function handlerFor(name: string) {
+  const tool = mountTools().find((t) => t.name === name);
+  if (!tool) throw new Error(`Tool ${name} not registered`);
+  return tool.handler;
+}
+
+/** Extracts the text of the first content block, asserting it is a text block. */
+function textOf(result: CallToolResult): string {
+  const block = result.content[0];
+  if (block.type !== 'text') throw new Error('expected a text content block');
+  return block.text;
+}
+
+const EXPECTED_TOOLS = [
+  'list_courses',
+  'get_course',
+  'create_course',
+  'update_course',
+  'delete_course',
+  'list_tasks',
+  'get_task',
+  'list_overdue_tasks',
+  'create_task',
+  'update_task',
+  'delete_task',
+  'list_quizzes',
+  'get_quiz',
+  'create_quiz',
+  'update_quiz',
+  'delete_quiz',
+  'list_documents',
+];
+
+beforeEach(() => {
+  for (const m of [
+    courseList,
+    courseFind,
+    courseCreate,
+    courseUpdate,
+    courseDelete,
+    taskDelete,
+    quizCreate,
+    quizUpdate,
+    quizDelete,
+  ]) {
+    m.mockClear();
+  }
+});
+
+describe('registerTools', () => {
+  it('registers exactly the expected set of tools', () => {
+    const names = mountTools().map((t) => t.name);
+    expect(names.sort()).toEqual([...EXPECTED_TOOLS].sort());
+  });
+
+  it('registers each tool name only once', () => {
+    const names = mountTools().map((t) => t.name);
+    expect(new Set(names).size).toBe(names.length);
+  });
+});
+
+describe('course tools', () => {
+  it('create_course calls CourseService.create(name, userId)', async () => {
+    const result = await handlerFor('create_course')({ userId: 'u1', name: 'Biology' });
+    expect(courseCreate).toHaveBeenCalledWith('Biology', 'u1');
+    expect(textOf(result)).toContain('Biology');
+  });
+
+  it('update_course calls updateForOwner(courseId, userId, name)', async () => {
+    await handlerFor('update_course')({ userId: 'u1', courseId: 'c1', name: 'Bio 2' });
+    expect(courseUpdate).toHaveBeenCalledWith('c1', 'u1', 'Bio 2');
+  });
+
+  it('update_course returns a permission message when the service returns null', async () => {
+    courseUpdate.mockResolvedValueOnce(null as never);
+    const result = await handlerFor('update_course')({ userId: 'u1', courseId: 'x', name: 'n' });
+    expect(textOf(result)).toBe('Not found or you do not have permission.');
+  });
+
+  it('delete_course returns { deleted } from deleteForOwner', async () => {
+    const result = await handlerFor('delete_course')({ userId: 'u1', courseId: 'c1' });
+    expect(courseDelete).toHaveBeenCalledWith('c1', 'u1');
+    expect(textOf(result)).toBe('{"deleted":true}');
+  });
+});
+
+describe('task + quiz write tools', () => {
+  it('delete_task calls deleteForUser(taskId, userId)', async () => {
+    const result = await handlerFor('delete_task')({ userId: 'u1', taskId: 't1' });
+    expect(taskDelete).toHaveBeenCalledWith('t1', 'u1');
+    expect(textOf(result)).toBe('{"deleted":true}');
+  });
+
+  it('create_quiz calls QuizService.create(data, courseId, userId)', async () => {
+    const data = { title: 'Midterm', isOrderRandom: true };
+    const result = await handlerFor('create_quiz')({ userId: 'u1', courseId: 'c1', data });
+    expect(quizCreate).toHaveBeenCalledWith(data, 'c1', 'u1');
+    expect(textOf(result)).toContain('Midterm');
+  });
+
+  it('delete_quiz calls deleteForOwner(quizId, userId)', async () => {
+    await handlerFor('delete_quiz')({ userId: 'u1', quizId: 'q1' });
+    expect(quizDelete).toHaveBeenCalledWith('q1', 'u1');
+  });
+});

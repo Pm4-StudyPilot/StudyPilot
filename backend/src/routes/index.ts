@@ -8,6 +8,7 @@ import { userRouter } from './user.routes';
 import { quizRouter } from './quiz.routes';
 import { questionRouter } from './question.routes';
 import { answerRouter } from './answers.routes';
+import { chatRouter } from './chat.routes';
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use('/documents', documentRouter);
 router.use('/courses/:courseId/tasks', taskRouter);
 router.use('/storage', storageRouter);
 router.use('/users', userRouter);
+router.use('/chat', chatRouter);
 
 export { router };

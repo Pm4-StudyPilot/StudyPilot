@@ -1,0 +1,324 @@
+.ai-input {
+  position: fixed;
+  bottom: var(--space-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  width: min(600px, calc(100vw - 2 * var(--space-lg)));
+
+  &__panel {
+    display: flex;
+    flex-direction: column;
+    // Fixed height, but never taller than the screen (leaving room for the
+    // input row and surrounding margins). Content scrolls when it overflows.
+    height: min(800px, calc(100vh - 8rem));
+    padding: var(--space-md);
+    background: var(--background-shiny);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-soft);
+    animation: ai-input-panel-open 0.18s ease-out;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+
+  &__panel-header {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: var(--space-sm);
+  }
+
+  &__close {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+
+    &:hover {
+      background: var(--color-glow-soft);
+      color: var(--color-text-primary);
+    }
+
+    svg {
+      display: block;
+    }
+  }
+
+  &__messages {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-sm);
+    overflow-y: auto;
+  }
+
+  &__message {
+    max-width: 85%;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-card);
+    font-size: var(--font-size-base);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+
+    &--user {
+      align-self: flex-end;
+      background: var(--color-secondary-accent);
+      color: var(--color-text-primary);
+    }
+
+    &--assistant {
+      align-self: flex-start;
+      background: var(--color-card-bg);
+      color: var(--color-text-primary);
+    }
+  }
+
+  &__markdown {
+    // Collapse the outer margins of the markdown block so the bubble stays tight.
+    > :first-child {
+      margin-top: 0;
+    }
+
+    > :last-child {
+      margin-bottom: 0;
+    }
+
+    p {
+      margin: 0 0 var(--space-sm);
+    }
+
+    ul,
+    ol {
+      margin: 0 0 var(--space-sm);
+      padding-left: var(--space-lg);
+    }
+
+    li {
+      margin-bottom: 0.2rem;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      margin: var(--space-sm) 0 var(--space-sm);
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+    }
+
+    a {
+      color: var(--color-secondary-light);
+      text-decoration: underline;
+    }
+
+    code {
+      padding: 0.1rem 0.3rem;
+      border-radius: 0.3rem;
+      background: var(--color-input-bg);
+      font-size: 0.85em;
+    }
+
+    pre {
+      margin: 0 0 var(--space-sm);
+      padding: var(--space-sm);
+      overflow-x: auto;
+      border-radius: 0.5rem;
+      background: var(--color-input-bg);
+
+      code {
+        padding: 0;
+        background: none;
+      }
+    }
+
+    blockquote {
+      margin: 0 0 var(--space-sm);
+      padding-left: var(--space-sm);
+      border-left: 2px solid var(--color-border);
+      color: var(--color-text-secondary);
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 0 0 var(--space-sm);
+    }
+
+    th,
+    td {
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--color-border);
+    }
+  }
+
+  &__tools {
+    margin-top: var(--space-sm);
+    font-size: var(--font-size-xs);
+  }
+
+  &__tools-summary {
+    color: var(--color-text-muted);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::before {
+      content: '▸';
+      display: inline-block;
+      margin-right: 0.35rem;
+      transition: transform 0.15s ease;
+    }
+
+    &:hover {
+      color: var(--color-text-secondary);
+    }
+  }
+
+  &__tools[open] &__tools-summary::before {
+    transform: rotate(90deg);
+  }
+
+  &__tools-list {
+    margin: var(--space-sm) 0 0;
+    padding-left: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    color: var(--color-text-secondary);
+    font-family: monospace;
+  }
+
+  &__typing {
+    display: inline-flex;
+    gap: 0.3rem;
+    align-items: center;
+  }
+
+  &__typing-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-text-muted);
+    animation: ai-input-typing 1.2s infinite ease-in-out;
+
+    &:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+
+  &__form {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    background: var(--background-shiny);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-soft);
+  }
+
+  &__field {
+    flex: 1;
+    min-width: 0;
+    padding: 0 var(--space-sm);
+    border: none;
+    background: transparent;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+
+    &::placeholder {
+      color: var(--color-text-muted);
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &__send {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: var(--color-primary-bold);
+    color: var(--color-white);
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      opacity 0.15s ease;
+
+    &:hover:not(:disabled) {
+      background: var(--color-primary);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    svg {
+      display: block;
+      // Optical nudge: the paper-plane glyph sits slightly low-left in its
+      // viewBox, so geometric centering looks off-center without this.
+      transform: translateX(1px);
+    }
+  }
+}
+
+@keyframes ai-input-panel-open {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ai-input-typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
