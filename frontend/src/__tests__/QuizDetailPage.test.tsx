@@ -29,6 +29,34 @@ vi.mock('../context/useAuth', () => ({
 }));
 
 /**
+ * Mock DeleteQuizModal — isolates QuizDetailPage from the modal internals.
+ *
+ * Exposes two buttons:
+ * - "Confirm delete in modal" → triggers onDeleted (success path)
+ * - "Close modal" → triggers onClose (cancel path)
+ *
+ * Visibility of these buttons in the rendered tree is the proof that the
+ * modal is open.
+ */
+vi.mock('../components/quizzes/DeleteQuizModal.tsx', () => ({
+  default: ({
+    quiz,
+    onClose,
+    onDeleted,
+  }: {
+    quiz: { id: string; courseId: string; title: string };
+    onClose: () => void;
+    onDeleted: (id: string) => void;
+  }) => (
+    <div data-testid="delete-quiz-modal">
+      <span>About to delete: {quiz.title}</span>
+      <button onClick={() => onDeleted(quiz.id)}>Confirm delete in modal</button>
+      <button onClick={onClose}>Close modal</button>
+    </div>
+  ),
+}));
+
+/**
  * Mock QuestionList (IMPORTANT: isolates QuizDetailPage behavior)
  *
  * Behavior:
@@ -589,6 +617,72 @@ describe('QuizDetailPage', () => {
       fireEvent.click(editBtn);
 
       expect(screen.getByRole('button', { name: /play/i })).toBeDisabled();
+    });
+  });
+
+  /**
+   * Delete Quiz (KAN-150) tests
+   *
+   * Covers the integration between the Delete button, the confirmation
+   * modal (mocked above), and the post-delete navigation back to the
+   * parent course page.
+   */
+  describe('delete quiz', () => {
+    it('does not render the delete modal until the Delete button is clicked', async () => {
+      mockQuizDetailApi();
+      renderWithRoute();
+
+      await screen.findByRole('button', { name: /delete quiz/i });
+      expect(screen.queryByTestId('delete-quiz-modal')).not.toBeInTheDocument();
+    });
+
+    it('opens the delete modal when the Delete button is clicked', async () => {
+      mockQuizDetailApi();
+      renderWithRoute();
+
+      const deleteBtn = await screen.findByRole('button', { name: /delete quiz/i });
+      fireEvent.click(deleteBtn);
+
+      expect(screen.getByTestId('delete-quiz-modal')).toBeInTheDocument();
+      expect(screen.getByText(/About to delete: European Capitals/)).toBeInTheDocument();
+    });
+
+    it('closes the modal when the user cancels', async () => {
+      mockQuizDetailApi();
+      renderWithRoute();
+
+      const deleteBtn = await screen.findByRole('button', { name: /delete quiz/i });
+      fireEvent.click(deleteBtn);
+
+      fireEvent.click(screen.getByText('Close modal'));
+
+      expect(screen.queryByTestId('delete-quiz-modal')).not.toBeInTheDocument();
+    });
+
+    it('navigates back to the course page after a successful delete', async () => {
+      mockQuizDetailApi();
+
+      // Render with a sibling route so we can assert navigation happened
+      render(
+        <MemoryRouter initialEntries={['/courses/course-1/quizzes/quiz-1']}>
+          <Routes>
+            <Route path="/courses/:courseId/quizzes/:quizId" element={<QuizDetailPage />} />
+            <Route
+              path="/courses/:courseId"
+              element={<div data-testid="course-page">Course page</div>}
+            />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const deleteBtn = await screen.findByRole('button', { name: /delete quiz/i });
+      fireEvent.click(deleteBtn);
+
+      fireEvent.click(screen.getByText('Confirm delete in modal'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('course-page')).toBeInTheDocument();
+      });
     });
   });
 });

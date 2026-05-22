@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api.ts';
 import { QuestionWithAnswersDto, QuizDto } from '../types/dto.ts';
@@ -7,6 +7,7 @@ import DashboardLayout from '../components/shared/layout/DashboardLayout.tsx';
 import InputField from '../components/shared/form/InputField.tsx';
 import TextareaField from '../components/shared/form/TextareaField.tsx';
 import CheckField from '../components/shared/form/CheckField.tsx';
+import DeleteQuizModal from '../components/quizzes/DeleteQuizModal.tsx';
 
 /**
  * Editable subset of the quiz used by the inline editor.
@@ -20,6 +21,7 @@ interface QuizDraftState {
 
 export default function QuizDetailPage() {
   const { courseId, quizId } = useParams<{ courseId: string; quizId: string }>();
+  const navigate = useNavigate();
   const [quiz, setQuiz] = useState<QuizDto | null>(null);
   const [questions, setQuestions] = useState<QuestionWithAnswersDto[]>([]);
   const [questionsError, setQuestionsError] = useState('');
@@ -32,6 +34,21 @@ export default function QuizDetailPage() {
   });
   const [quizError, setQuizError] = useState<string | null>(null);
   const [savingQuiz, setSavingQuiz] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+  /**
+   * Called by DeleteQuizModal after a successful delete.
+   * Sends the user back to the parent course detail page so they don't
+   * land on a 404 trying to view the quiz that was just removed.
+   */
+  function handleQuizDeleted() {
+    setDeleteModalOpen(false);
+    if (courseId) {
+      navigate(`/courses/${courseId}`);
+    } else {
+      navigate('/');
+    }
+  }
 
   useEffect(() => {
     if (!courseId) return;
@@ -370,6 +387,16 @@ export default function QuizDetailPage() {
                     <i className="fa-solid fa-play" />
                     Play
                   </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger quiz-detail__delete-button"
+                    onClick={() => setDeleteModalOpen(true)}
+                    disabled={!quiz}
+                    aria-label="Delete quiz"
+                  >
+                    <i className="fa-solid fa-trash me-1" />
+                    Delete
+                  </button>
                   <span className="quiz-detail__updated">
                     <i className="fa-regular fa-clock" />
                     Updated {formattedUpdatedDate || 'recently'}
@@ -452,6 +479,14 @@ export default function QuizDetailPage() {
               />
             </section>
           </div>
+        )}
+
+        {deleteModalOpen && quiz && (
+          <DeleteQuizModal
+            quiz={{ id: quiz.id, courseId: quiz.courseId, title: quiz.title }}
+            onClose={() => setDeleteModalOpen(false)}
+            onDeleted={handleQuizDeleted}
+          />
         )}
       </section>
     </DashboardLayout>
