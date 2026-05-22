@@ -4,6 +4,19 @@ import { api } from '../services/api.ts';
 import { QuestionWithAnswersDto, QuizDto } from '../types/dto.ts';
 import QuestionList from '../components/quizzes/QuestionList.tsx';
 import DashboardLayout from '../components/shared/layout/DashboardLayout.tsx';
+import InputField from '../components/shared/form/InputField.tsx';
+import TextareaField from '../components/shared/form/TextareaField.tsx';
+import CheckField from '../components/shared/form/CheckField.tsx';
+
+/**
+ * Editable subset of the quiz used by the inline editor.
+ * Booleans/strings only — no nullables — so the form fields stay simple.
+ */
+interface QuizDraftState {
+  title: string;
+  description: string;
+  isOrderRandom: boolean;
+}
 
 export default function QuizDetailPage() {
   const { courseId, quizId } = useParams<{ courseId: string; quizId: string }>();
@@ -12,6 +25,13 @@ export default function QuizDetailPage() {
   const [questionsError, setQuestionsError] = useState('');
   const [questionsLoading, setQuestionsLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
+  const [quizDraft, setQuizDraft] = useState<QuizDraftState>({
+    title: '',
+    description: '',
+    isOrderRandom: false,
+  });
+  const [quizError, setQuizError] = useState<string | null>(null);
+  const [savingQuiz, setSavingQuiz] = useState(false);
 
   useEffect(() => {
     if (!courseId) return;
@@ -24,12 +44,69 @@ export default function QuizDetailPage() {
       .then(([quizResponse, questionResponse]) => {
         setQuiz(quizResponse);
         setQuestions(questionResponse);
+        // Seed the draft from the loaded quiz so the editor fields are pre-filled.
+        setQuizDraft({
+          title: quizResponse.title,
+          description: quizResponse.description ?? '',
+          isOrderRandom: quizResponse.isOrderRandom,
+        });
       })
       .catch((err) => {
         setQuestionsError(err instanceof Error ? err.message : 'Failed to load quiz');
       })
       .finally(() => setQuestionsLoading(false));
   }, [courseId, quizId]);
+
+  /**
+   * Persists a partial update to the quiz.
+   *
+   * Called from auto-save handlers (blur on inputs, change on checkbox).
+   * Only sends fields that actually changed so the backend's partial-update
+   * semantics stay honest and we don't overwrite untouched fields.
+   *
+   * On failure: surfaces an error message but does not revert local state —
+   * the user can fix the value and the next blur retries the save.
+   */
+  async function handleUpdateQuiz(patch: Partial<QuizDraftState>) {
+    if (!courseId || !quizId || !quiz) return;
+
+    setQuizError(null);
+    setSavingQuiz(true);
+
+    try {
+      const updated = await api.patch<QuizDto>(`/courses/${courseId}/quizzes/${quizId}`, patch);
+      setQuiz(updated);
+    } catch (err) {
+      setQuizError(err instanceof Error ? err.message : 'Failed to save quiz');
+    } finally {
+      setSavingQuiz(false);
+    }
+  }
+
+  /**
+   * Saves the title on blur if it changed and is not empty.
+   * Empty titles are rejected client-side because the backend would
+   * either reject them or silently keep the old value — both bad UX.
+   */
+  function handleSaveTitle() {
+    const trimmed = quizDraft.title.trim();
+    if (!trimmed) {
+      setQuizError('Quiz title is required');
+      return;
+    }
+    if (quiz && trimmed === quiz.title) return;
+    handleUpdateQuiz({ title: trimmed });
+  }
+
+  /**
+   * Saves the description on blur if it changed. Empty descriptions are
+   * allowed — the backend stores them as null.
+   */
+  function handleSaveDescription() {
+    const trimmed = quizDraft.description.trim();
+    if (quiz && trimmed === (quiz.description ?? '')) return;
+    handleUpdateQuiz({ description: trimmed });
+  }
 
   async function handleCreateQuestion(data: {
     title: string;
@@ -222,15 +299,74 @@ export default function QuizDetailPage() {
                   </span>
                 </div>
 
-                <h1 className="quiz-detail__title">{quiz?.title ?? 'Quiz Detail'}</h1>
+                {editMode ? (
+                  <div className="quiz-detail__editor question-editor__fields">
+                    <InputField
+                      label="Quiz title"
+                      value={quizDraft.title}
+                      onChange={(event) =>
+                        setQuizDraft((current) => ({
+                          ...current,
+                          title: event.target.value,
+                        }))
+                      }
+                      onBlur={handleSaveTitle}
+                      aria-label="Quiz title"
+                    />
 
-                <p className="quiz-detail__description">
-                  {quiz?.description?.trim() ||
-                    'Review the questions and answers before starting this quiz.'}
-                </p>
+                    <TextareaField
+                      label="Description"
+                      value={quizDraft.description}
+                      onChange={(event) =>
+                        setQuizDraft((current) => ({
+                          ...current,
+                          description: event.target.value,
+                        }))
+                      }
+                      onBlur={handleSaveDescription}
+                      rows={3}
+                      aria-label="Quiz description"
+                    />
+
+                    <CheckField
+                      label="Randomize question order"
+                      type="checkbox"
+                      checked={quizDraft.isOrderRandom}
+                      onChange={(event) => {
+                        const next = event.target.checked;
+                        setQuizDraft((current) => ({ ...current, isOrderRandom: next }));
+                        // Checkboxes don't blur the way text inputs do — persist
+                        // the change immediately so the user sees the result.
+                        handleUpdateQuiz({ isOrderRandom: next });
+                      }}
+                    />
+
+                    {savingQuiz && (
+                      <span className="quiz-detail__editor-status text-secondary">Saving...</span>
+                    )}
+                    {quizError && (
+                      <div className="quiz-detail__editor-error text-danger" role="alert">
+                        {quizError}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <h1 className="quiz-detail__title">{quiz?.title ?? 'Quiz Detail'}</h1>
+
+                    <p className="quiz-detail__description">
+                      {quiz?.description?.trim() ||
+                        'Review the questions and answers before starting this quiz.'}
+                    </p>
+                  </>
+                )}
 
                 <div className="quiz-detail__actions">
-                  <button type="button" className="btn btn-primary quiz-detail__play-button">
+                  <button
+                    type="button"
+                    className="btn btn-primary quiz-detail__play-button"
+                    disabled={editMode}
+                  >
                     <i className="fa-solid fa-play" />
                     Play
                   </button>
