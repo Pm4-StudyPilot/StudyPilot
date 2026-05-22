@@ -27,6 +27,10 @@ const PII_PATHS = [
 export const logger = pino({
   level: isDev ? 'debug' : 'info',
   redact: { paths: PII_PATHS, censor: '[REDACTED]' },
+  serializers: {
+    err: pino.stdSerializers.err,
+    error: pino.stdSerializers.err,
+  },
   transport: isDev
     ? {
         target: 'pino-pretty',

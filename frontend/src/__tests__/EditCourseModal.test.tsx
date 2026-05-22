@@ -19,6 +19,7 @@ vi.mock('../services/api', () => ({
 const mockCourse = {
   id: 'c1',
   name: 'Machine Learning',
+  color: '#6C63FF',
   ownerId: 'u1',
   createdAt: '2026-03-26T12:00:00.000Z',
   updatedAt: '2026-03-26T12:00:00.000Z',
@@ -58,6 +59,7 @@ describe('EditCourseModal', () => {
     render(<EditCourseModal course={mockCourse} onClose={mockOnClose} onUpdated={mockOnUpdated} />);
 
     expect(screen.getByLabelText(/course name/i)).toHaveValue('Machine Learning');
+    expect(screen.getByLabelText(/course color/i)).toHaveValue('#6c63ff');
   });
 
   /**
@@ -83,7 +85,28 @@ describe('EditCourseModal', () => {
     fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
     await waitFor(() => {
-      expect(api.patch).toHaveBeenCalledWith('/courses/c1', { name: 'Advanced Machine Learning' });
+      expect(api.patch).toHaveBeenCalledWith('/courses/c1', {
+        name: 'Advanced Machine Learning',
+        color: '#6C63FF',
+      });
+      expect(mockOnUpdated).toHaveBeenCalledWith(updatedCourse);
+    });
+  });
+
+  it('submits updated course colors', async () => {
+    const updatedCourse = { ...mockCourse, color: '#00C2A8' };
+    vi.mocked(api.patch).mockResolvedValueOnce(updatedCourse);
+
+    render(<EditCourseModal course={mockCourse} onClose={mockOnClose} onUpdated={mockOnUpdated} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /select #00c2a8/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(api.patch).toHaveBeenCalledWith('/courses/c1', {
+        name: 'Machine Learning',
+        color: '#00C2A8',
+      });
       expect(mockOnUpdated).toHaveBeenCalledWith(updatedCourse);
     });
   });

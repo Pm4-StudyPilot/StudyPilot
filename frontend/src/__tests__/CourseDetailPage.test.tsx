@@ -17,6 +17,46 @@ vi.mock('../services/api', () => ({
   },
 }));
 
+vi.mock('../components/quizzes/CreateQuizModal', () => ({
+  default: ({
+    onClose,
+    onCreated,
+  }: {
+    onClose: () => void;
+    onCreated: (quiz: {
+      id: string;
+      title: string;
+      description: string | null;
+      isOrderRandom: boolean;
+      courseId: string;
+      createdAt: string;
+      updatedAt: string;
+    }) => void;
+  }) => (
+    <div role="dialog" aria-label="New Quiz">
+      <button
+        type="button"
+        onClick={() =>
+          onCreated({
+            id: 'q2',
+            title: 'Newly created quiz',
+            description: null,
+            isOrderRandom: false,
+            courseId: 'c1',
+            createdAt: '2026-03-28T12:00:00.000Z',
+            updatedAt: '2026-03-28T12:00:00.000Z',
+          })
+        }
+      >
+        Mock create quiz
+      </button>
+      <button type="button" onClick={onClose}>
+        Mock close quiz modal
+      </button>
+    </div>
+  ),
+}));
+
 /**
  * Mock AuthContext.
  *
@@ -32,6 +72,7 @@ vi.mock('../context/useAuth', () => ({
 const courseFixture = {
   id: 'c1',
   name: 'Machine Learning Fundamentals',
+  color: '#6C63FF',
   ownerId: 'u1',
   createdAt: '2026-03-26T12:00:00.000Z',
   updatedAt: '2026-03-26T12:00:00.000Z',
@@ -342,5 +383,131 @@ describe('CourseDetailPage', () => {
 
     expect(screen.queryByText('Lecture Notes.pdf')).not.toBeInTheDocument();
     expect(screen.getByText('Project Brief.pdf')).toBeInTheDocument();
+  });
+  /**
+   * Test case: Course feed request error state
+   *
+   * Scenario:
+   * The course and tasks load, but the quiz/course feed request fails with an Error.
+   *
+   * Expected behavior:
+   * - The course feed error message is rendered
+   */
+  it('shows a course feed error when loading quizzes fails', async () => {
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/courses/c1') {
+        return Promise.resolve(courseFixture);
+      }
+
+      if (url === '/courses/c1/tasks') {
+        return Promise.resolve(taskFixtures);
+      }
+
+      if (url === '/courses/c1/quizzes') {
+        return Promise.reject(new Error('Failed to load quizzes'));
+      }
+
+      if (url.startsWith('/documents/course/c1')) {
+        return Promise.resolve(documentFixtures);
+      }
+
+      return Promise.resolve([]);
+    });
+
+    renderWithRoute('c1');
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to load quizzes')).toBeInTheDocument();
+    });
+  });
+
+  /**
+   * Test case: Course feed fallback error state
+   *
+   * Scenario:
+   * The quiz/course feed request rejects with a non-Error value.
+   *
+   * Expected behavior:
+   * - The fallback course feed error message is rendered
+   */
+  it('shows fallback course feed error when quiz loading rejects with a non-error value', async () => {
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/courses/c1') {
+        return Promise.resolve(courseFixture);
+      }
+
+      if (url === '/courses/c1/tasks') {
+        return Promise.resolve(taskFixtures);
+      }
+
+      if (url === '/courses/c1/quizzes') {
+        return Promise.reject('Quiz request failed');
+      }
+
+      if (url.startsWith('/documents/course/c1')) {
+        return Promise.resolve(documentFixtures);
+      }
+
+      return Promise.resolve([]);
+    });
+
+    renderWithRoute('c1');
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to load course feed')).toBeInTheDocument();
+    });
+  });
+  /**
+   * Test case: Quiz creation callback
+   *
+   * Scenario:
+   * The user opens the create quiz modal and creates a quiz.
+   *
+   * Expected behavior:
+   * - The new quiz is appended to the course feed
+   * - The create quiz modal is closed
+   */
+  it('adds a newly created quiz and closes the create quiz modal', async () => {
+    mockCourseDetailApi();
+
+    renderWithRoute('c1');
+
+    await waitFor(() => {
+      expect(screen.getByText('Course Materials')).toBeInTheDocument();
+      expect(screen.getByText('Neural Networks Quiz')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add quiz' }));
+
+    expect(screen.getByRole('dialog', { name: 'New Quiz' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mock create quiz' }));
+
+    expect(screen.getByText('Newly created quiz')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'New Quiz' })).not.toBeInTheDocument();
+  });
+
+  /**
+   * Test case: Create quiz modal close callback
+   *
+   * Scenario:
+   * The user opens and closes the create quiz modal.
+   *
+   * Expected behavior:
+   * - The modal is removed from the page
+   */
+  it('closes the create quiz modal without creating a quiz', async () => {
+    mockCourseDetailApi();
+
+    renderWithRoute('c1');
+
+    await waitFor(() => {
+      expect(screen.getByText('Course Materials')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Mock close quiz modal' }));
+
+    expect(screen.queryByRole('dialog', { name: 'New Quiz' })).not.toBeInTheDocument();
   });
 });

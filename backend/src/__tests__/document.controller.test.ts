@@ -833,3 +833,152 @@ describe('DocumentController.download', () => {
     expect(res.json).toHaveBeenCalledWith({ message: 'Failed to download document.' });
   });
 });
+
+/**
+ * Test cases for DocumentController.deleteById
+ */
+describe('DocumentController.deleteById', () => {
+  it('should return 204 when the document is deleted successfully', async () => {
+    const mockDocumentService = {
+      upload: mock(),
+      listByCourse: mock(),
+      deleteForOwner: mock(async () => undefined),
+    };
+
+    const controller = createController(mockDocumentService as unknown as DocumentService);
+
+    const res = createMockResponse();
+    const sendSpy = mock(() => res as Response);
+    (res as unknown as { send: typeof sendSpy }).send = sendSpy;
+
+    const req = {
+      params: { id: 'doc-1' },
+      user: { id: 'user-1' },
+    } as unknown as Request;
+
+    await controller.deleteById(req, res);
+
+    expect(mockDocumentService.deleteForOwner).toHaveBeenCalledWith('doc-1', 'user-1');
+    expect(res.status).toHaveBeenCalledWith(204);
+    expect(sendSpy).toHaveBeenCalled();
+  });
+
+  it('should return 400 if id is missing', async () => {
+    const mockDocumentService = {
+      upload: mock(),
+      listByCourse: mock(),
+      deleteForOwner: mock(),
+    };
+
+    const controller = createController(mockDocumentService as unknown as DocumentService);
+
+    const req = {
+      params: {},
+      user: { id: 'user-1' },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.deleteById(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'id is required.' });
+    expect(mockDocumentService.deleteForOwner).not.toHaveBeenCalled();
+  });
+
+  it('should return 401 if the user is not authenticated', async () => {
+    const mockDocumentService = {
+      upload: mock(),
+      listByCourse: mock(),
+      deleteForOwner: mock(),
+    };
+
+    const controller = createController(mockDocumentService as unknown as DocumentService);
+
+    const req = {
+      params: { id: 'doc-1' },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.deleteById(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Unauthorized.' });
+    expect(mockDocumentService.deleteForOwner).not.toHaveBeenCalled();
+  });
+
+  it('should return 404 when the document does not exist', async () => {
+    const mockDocumentService = {
+      upload: mock(),
+      listByCourse: mock(),
+      deleteForOwner: mock(async () => {
+        throw new Error('DOCUMENT_NOT_FOUND');
+      }),
+    };
+
+    const controller = createController(mockDocumentService as unknown as DocumentService);
+
+    const req = {
+      params: { id: 'doc-missing' },
+      user: { id: 'user-1' },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.deleteById(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Document not found.' });
+  });
+
+  it('should return 403 when the user is not the course owner', async () => {
+    const mockDocumentService = {
+      upload: mock(),
+      listByCourse: mock(),
+      deleteForOwner: mock(async () => {
+        throw new Error('DOCUMENT_FORBIDDEN');
+      }),
+    };
+
+    const controller = createController(mockDocumentService as unknown as DocumentService);
+
+    const req = {
+      params: { id: 'doc-1' },
+      user: { id: 'user-x' },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.deleteById(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'You do not have permission to delete this document.',
+    });
+  });
+
+  it('should return 500 for unexpected errors', async () => {
+    const mockDocumentService = {
+      upload: mock(),
+      listByCourse: mock(),
+      deleteForOwner: mock(async () => {
+        throw new Error('Database meltdown');
+      }),
+    };
+
+    const controller = createController(mockDocumentService as unknown as DocumentService);
+
+    const req = {
+      params: { id: 'doc-1' },
+      user: { id: 'user-1' },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.deleteById(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Failed to delete document.' });
+  });
+});

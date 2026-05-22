@@ -143,8 +143,40 @@ describe('QuestionService', () => {
 
   it('should list questions ordered by position for an owned quiz', async () => {
     const questions = [
-      createMockQuestion({ id: 't1', position: 0 }),
-      createMockQuestion({ id: 't2', position: 1 }),
+      {
+        ...createMockQuestion({ id: 't1', position: 0 }),
+        answers: [
+          {
+            id: 'a1',
+            content: 'Paris',
+            isCorrect: true,
+            position: 0,
+            createdAt: now,
+            updatedAt: now,
+          },
+        ],
+      },
+      {
+        ...createMockQuestion({ id: 't2', position: 1 }),
+        answers: [
+          {
+            id: 'a2',
+            content: 'Berlin',
+            isCorrect: false,
+            position: 0,
+            createdAt: now,
+            updatedAt: now,
+          },
+          {
+            id: 'a3',
+            content: 'Madrid',
+            isCorrect: false,
+            position: 1,
+            createdAt: now,
+            updatedAt: now,
+          },
+        ],
+      },
     ];
     const findMany = mock(async () => questions);
 
@@ -162,6 +194,11 @@ describe('QuestionService', () => {
     expect(result).toEqual(questions);
     expect(findMany).toHaveBeenCalledWith({
       where: { quizId: 'qz1', quiz: { course: { ownerId: 'u1' } } },
+      include: {
+        answers: {
+          orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
+        },
+      },
       orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
     });
   });

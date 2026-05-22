@@ -5,6 +5,7 @@ import { api } from '../../services/api';
 import EditCourseModal from './EditCourseModal';
 import DeleteCourseModal from './DeleteCourseModal';
 import ProgressRing from '../shared/ProgressRing';
+import { withOpacity } from '../../utils/courseColors';
 
 type CourseCardProps = {
   course: CourseDto;
@@ -82,9 +83,14 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
     setEditOpen(false);
   }
 
+  const courseAccentStyle = {
+    borderColor: withOpacity(course.color, 0.2),
+    boxShadow: `inset 3px 0 0 ${course.color}`,
+  };
+
   return (
     <>
-      <div className="course-card panel mb-2">
+      <div className="course-card panel mb-2" style={courseAccentStyle}>
         <div className="d-flex align-items-center justify-content-between p-3">
           <div className="d-flex align-items-center gap-3">
             <ProgressRing
@@ -97,12 +103,19 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
               label={`${progress.openTasks} open, ${progress.inProgressTasks} in progress, ${progress.completedTasks} completed`}
             />
             <div>
-              <Link
-                to={`/courses/${course.id}`}
-                className="course-card__name fw-semibold text-white text-decoration-none"
-              >
-                {course.name}
-              </Link>
+              <div className="d-flex align-items-center gap-2 mb-1">
+                <span
+                  className="course-card__color-dot"
+                  style={{ backgroundColor: course.color }}
+                  aria-hidden="true"
+                />
+                <Link
+                  to={`/courses/${course.id}`}
+                  className="course-card__name fw-semibold text-white text-decoration-none"
+                >
+                  {course.name}
+                </Link>
+              </div>
               <div className="course-card__date text-secondary">Added {formattedDate}</div>
               <div className="course-card__progress-text text-secondary">
                 {progress.openTasks} open · {progress.inProgressTasks} in progress ·{' '}

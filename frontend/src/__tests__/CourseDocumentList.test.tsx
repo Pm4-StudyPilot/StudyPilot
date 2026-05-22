@@ -14,6 +14,7 @@ vi.mock('../services/api', () => ({
   api: {
     get: vi.fn(),
     getBlob: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
@@ -139,7 +140,11 @@ describe('CourseDocumentsList', () => {
       expect(screen.getByText('04 - DevOps.pdf')).toBeInTheDocument();
     });
 
-    expect(screen.getAllByText(/Type: PDF/i).length).toBe(2);
+    expect(screen.getByText('5.31 MB')).toBeInTheDocument();
+    expect(screen.getByText('2.37 MB')).toBeInTheDocument();
+    expect(screen.getAllByText(/Updated Apr 20, 2026/i)).toHaveLength(2);
+
+    expect(document.querySelectorAll('.fa-file-pdf')).toHaveLength(2);
   });
 
   /**
@@ -296,7 +301,7 @@ describe('CourseDocumentsList', () => {
    * - The file size is displayed in KB
    * - The unknown file type is displayed as provided
    */
-  it('renders small file sizes and unknown file types', async () => {
+  it('renders small file sizes and fallback file icon for unknown file types', async () => {
     vi.mocked(api.get).mockResolvedValueOnce([
       {
         id: 'doc-1',
@@ -313,8 +318,10 @@ describe('CourseDocumentsList', () => {
       expect(screen.getByText('notes.unknown')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Type: application/custom')).toBeInTheDocument();
-    expect(screen.getByText('Size: 0.5 KB')).toBeInTheDocument();
+    expect(screen.getByText('0.5 KB')).toBeInTheDocument();
+    expect(screen.getByText(/Updated Apr 20, 2026/i)).toBeInTheDocument();
+
+    expect(document.querySelector('.fa-file.text-secondary')).toBeInTheDocument();
   });
 
   /**
@@ -530,5 +537,81 @@ describe('CourseDocumentsList', () => {
     await waitFor(() => {
       expect(screen.getByText(/do not have access/i)).toBeInTheDocument();
     });
+  });
+
+  /**
+   * Test case: Delete button opens confirmation modal
+   *
+   * Scenario:
+   * The user clicks the trash-icon button on a document row.
+   *
+   * Expected behavior:
+   * - The DeleteDocumentModal is rendered with the document filename
+   */
+  it('opens the delete confirmation modal when the delete button is clicked', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([
+      {
+        id: 'doc-1',
+        filename: 'Slides.pdf',
+        fileType: 'application/pdf',
+        fileSize: 1024,
+        createdAt: '2026-04-20T10:00:00.000Z',
+      },
+    ]);
+
+    render(<CourseDocumentsList courseId="course-1" refreshKey={0} />);
+
+    const deleteButton = await screen.findByRole('button', { name: /Delete Slides\.pdf/i });
+    fireEvent.click(deleteButton);
+
+    expect(screen.getByText(/Are you sure you want to delete/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Delete Document/i })).toBeInTheDocument();
+  });
+
+  /**
+   * Test case: Successful delete removes the row from the list
+   *
+   * Scenario:
+   * The user confirms the deletion in the modal.
+   *
+   * Expected behavior:
+   * - The api.delete request is sent
+   * - The deleted document disappears from the list
+   * - The modal closes
+   */
+  it('removes the document from the list after a successful delete', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([
+      {
+        id: 'doc-1',
+        filename: 'Slides.pdf',
+        fileType: 'application/pdf',
+        fileSize: 1024,
+        createdAt: '2026-04-20T10:00:00.000Z',
+      },
+      {
+        id: 'doc-2',
+        filename: 'Notes.pdf',
+        fileType: 'application/pdf',
+        fileSize: 2048,
+        createdAt: '2026-04-21T10:00:00.000Z',
+      },
+    ]);
+    vi.mocked(api.delete).mockResolvedValueOnce(undefined);
+
+    render(<CourseDocumentsList courseId="course-1" refreshKey={0} />);
+
+    await screen.findByText('Slides.pdf');
+
+    const deleteButton = screen.getByRole('button', { name: /Delete Slides\.pdf/i });
+    fireEvent.click(deleteButton);
+
+    fireEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+
+    await waitFor(() => {
+      expect(api.delete).toHaveBeenCalledWith('/documents/doc-1');
+      expect(screen.queryByText('Slides.pdf')).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Notes.pdf')).toBeInTheDocument();
   });
 });

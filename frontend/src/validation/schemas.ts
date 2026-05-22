@@ -126,7 +126,8 @@ export const requestPasswordResetSchema = z.object({
  * - Frontend form validation in the CreateCourseModal
  */
 export const createCourseSchema = z.object({
-  name: z.string().min(1, 'Course name is required'),
+  name: z.string().trim().min(1, 'Course name is required'),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Course color is required'),
 });
 
 /**
@@ -171,6 +172,25 @@ export const createTaskSchema = z.object({
   description: z.string().optional(),
   dueDate: z.string().optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
+});
+
+/**
+ * Create Quiz Schema
+ *
+ * Defines validation rules for creating a new quiz.
+ *
+ * Fields:
+ * - title: the quiz title (required, non-empty)
+ * - description: optional free-text notes
+ * - isOrderRandom: true if the questions will appear in a random order
+ *
+ * This schema is used for:
+ * - Frontend form validation in the CreateQuizModal
+ */
+export const createQuizSchema = z.object({
+  title: z.string().min(1, 'Quiz title is required'),
+  description: z.string().optional(),
+  isOrderRandom: z.boolean(),
 });
 
 /**
