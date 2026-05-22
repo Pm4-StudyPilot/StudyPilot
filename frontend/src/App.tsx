@@ -10,6 +10,7 @@ import RequestPasswordResetPage from './pages/RequestPasswordResetPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import CourseDetailPage from './pages/CourseDetailPage';
 import QuizDetailPage from './pages/QuizDetailPage';
+import PlayQuizPage from './pages/PlayQuizPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
@@ -71,6 +72,7 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route path="/courses/:courseId/quizzes/:quizId/play" element={<PlayQuizPage />} />
     </Routes>
   );
 }

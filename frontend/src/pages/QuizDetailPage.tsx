@@ -230,10 +230,13 @@ export default function QuizDetailPage() {
                 </p>
 
                 <div className="quiz-detail__actions">
-                  <button type="button" className="btn btn-primary quiz-detail__play-button">
+                  <Link
+                    to={`/courses/${courseId}/quizzes/${quizId}/play`}
+                    className="btn btn-primary quiz-detail__play-button"
+                  >
                     <i className="fa-solid fa-play" />
                     Play
-                  </button>
+                  </Link>
                   <span className="quiz-detail__updated">
                     <i className="fa-regular fa-clock" />
                     Updated {formattedUpdatedDate || 'recently'}

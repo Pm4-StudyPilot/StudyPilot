@@ -21,6 +21,8 @@ interface AnswerFormState {
 interface QuestionCardProps {
   question: QuestionWithAnswersDto;
   mode?: 'view' | 'edit' | 'play';
+  revealed?: boolean;
+  onPlayed?: (answerId?: string) => void;
   onUpdateQuestion?: (questionId: string, data: QuestionFormState) => Promise<void> | void;
   onDeleteQuestion?: (questionId: string) => Promise<void> | void;
   onCreateAnswer?: (questionId: string, data: AnswerFormState) => Promise<void> | void;
@@ -41,14 +43,15 @@ function formatQuestionType(type: QuestionWithAnswersDto['type']) {
 }
 
 export default function QuestionCard({
-  question,
   mode = 'view',
+  question,
   onUpdateQuestion,
   onDeleteQuestion,
   onCreateAnswer,
   onUpdateAnswer,
   onDeleteAnswer,
   onPlayed,
+  revealed = false,
 }: QuestionCardProps) {
   const correctAnswers = question.answers.filter((answer) => answer.isCorrect).length;
   const [draftQuestion, setDraftQuestion] = useState<QuestionFormState>({
@@ -266,18 +269,15 @@ export default function QuestionCard({
   }
 
   if (mode === 'play') {
+    const isChoiceQuestion =
+      question.type === 'SINGLE_CHOICE' || question.type === 'MULTIPLE_CHOICE';
+
     return (
-      <article className="question-card">
+      <article className="question-card question-card--play">
         <header className="question-card__header">
           <div className="question-card__title-group">
             <div className="question-card__meta">
               <span className="question-card__type">{formatQuestionType(question.type)}</span>
-              <span>
-                {question.answers.length} answer{question.answers.length !== 1 ? 's' : ''}
-              </span>
-              <span>
-                {correctAnswers} correct answer{correctAnswers !== 1 ? 's' : ''}
-              </span>
             </div>
 
             <h3 className="question-card__title">{question.title}</h3>
@@ -289,8 +289,18 @@ export default function QuestionCard({
         </header>
 
         <div className="answer-list">
-          <AnswerList question={question} mode="play" onPlay={onPlayed} />
+          <AnswerList question={question} mode="play" revealed={revealed} onPlay={onPlayed} />
         </div>
+
+        {!isChoiceQuestion && !revealed && (
+          <button
+            type="button"
+            className="btn btn-outline-primary mt-4"
+            onClick={() => onPlayed?.()}
+          >
+            Reveal answer
+          </button>
+        )}
       </article>
     );
   }

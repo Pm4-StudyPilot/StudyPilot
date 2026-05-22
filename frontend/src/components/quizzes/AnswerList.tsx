@@ -1,14 +1,15 @@
-import { AnswerDto } from '../../types/dto';
+import { QuestionWithAnswersDto } from '../../types/dto';
 import CheckField from '../shared/form/CheckField';
 
 interface AnswerListProps {
+  question: QuestionWithAnswersDto;
   mode?: 'view' | 'edit' | 'play';
-  answers: AnswerDto[];
+  revealed?: boolean;
   draftAnswers?: Record<string, { content: string; isCorrect: boolean }>;
-  handleSaveAnswer?: (answerId: string) => void;
   setDraftAnswers?: (draftAnswers: Record<string, { content: string; isCorrect: boolean }>) => void;
+  handleSaveAnswer?: (answerId: string) => void;
   onDeleteAnswer?: (questionId: string, answerId: string) => void;
-  onPlay?: (questionId: string) => void;
+  onPlay?: (answerId?: string) => void;
 }
 
 export default function AnswerList({
@@ -19,7 +20,8 @@ export default function AnswerList({
   handleSaveAnswer,
   onDeleteAnswer,
   onPlay,
-}): AnswerListProps {
+  revealed = false,
+}: AnswerListProps) {
   if (mode === 'edit') {
     return (
       <>
@@ -86,18 +88,52 @@ export default function AnswerList({
   }
 
   if (mode === 'play') {
+    const isChoiceQuestion =
+      question.type === 'SINGLE_CHOICE' || question.type === 'MULTIPLE_CHOICE';
+
+    if (!isChoiceQuestion) {
+      return (
+        <>
+          {revealed &&
+            question.answers
+              .filter((answer) => answer.isCorrect)
+              .map((answer) => (
+                <div key={answer.id} className="answer-card answer-card--correct">
+                  <div className="answer-card__icon">
+                    <i className="fa-solid fa-circle-check" />
+                  </div>
+
+                  <p className="answer-card__content">{answer.content}</p>
+                </div>
+              ))}
+        </>
+      );
+    }
+
+    let answerStateClass = '';
+
+    if (revealed) {
+      answerStateClass = answer.isCorrect ? 'answer-card--correct' : 'answer-card--incorrect';
+    }
+
     return (
       <>
         {question.answers.map((answer) => (
-          <div
+          <button
             key={answer.id}
-            className={`answer-card ${answer.isCorrect ? 'answer-card' : 'answer-card'}`}
+            type="button"
+            className={`answer-card answer-card--play ${answerStateClass}`}
             onClick={() => onPlay?.(answer.id)}
+            disabled={revealed}
           >
             <p className="answer-card__content">{answer.content}</p>
 
-            <span className="answer-card__badge">{answer.isCorrect ? 'Correct' : 'Incorrect'}</span>
-          </div>
+            {revealed && (
+              <span className="answer-card__badge">
+                {answer.isCorrect ? 'Correct' : 'Incorrect'}
+              </span>
+            )}
+          </button>
         ))}
       </>
     );
