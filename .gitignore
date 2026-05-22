@@ -150,3 +150,6 @@ dist/
 
 # Claude Code
 .claude
+
+# Dozzle auth (prod) — generate from dozzle/users.yml.example
+dozzle/users.yml

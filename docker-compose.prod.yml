@@ -27,6 +27,16 @@ services:
       - caddy_data:/data
     depends_on:
       - app
+      - dozzle
+    restart: unless-stopped
+
+  dozzle:
+    image: amir20/dozzle:latest
+    environment:
+      DOZZLE_AUTH_PROVIDER: simple
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./dozzle/users.yml:/data/users.yml:ro
     restart: unless-stopped
 
   postgres:
