@@ -30,7 +30,7 @@ async function main() {
       role: Role.ADMIN,
     },
   });
-  logger.info({ email: admin.email }, 'Created admin user');
+  logger.info({ id: admin.id }, 'Created admin user');
 
   const regularUser = await prisma.user.upsert({
     where: { email: 'user@example.com' },
@@ -42,7 +42,7 @@ async function main() {
       role: Role.USER,
     },
   });
-  logger.info({ email: regularUser.email }, 'Created regular user');
+  logger.info({ id: regularUser.id }, 'Created regular user');
 
   const courses = [
     { name: 'Introduction to Computer Science', color: '#6C63FF', ownerId: admin.id },
