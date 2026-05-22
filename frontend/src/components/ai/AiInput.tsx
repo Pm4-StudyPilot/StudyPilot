@@ -14,8 +14,8 @@ export default function AiInput() {
   // One thread per chat session — reset on close so a fresh chat starts fresh.
   const threadIdRef = useRef<string | null>(null);
 
-  function appendMessage(role: ChatMessage['role'], content: string) {
-    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, content }]);
+  function appendMessage(role: ChatMessage['role'], content: string, tools?: string[]) {
+    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, content, tools }]);
   }
 
   function handleClose() {
@@ -42,11 +42,11 @@ export default function AiInput() {
     setIsLoading(true);
 
     try {
-      const { reply } = await api.post<{ reply: string }>('/chat', {
+      const { reply, tools } = await api.post<{ reply: string; tools: string[] }>('/chat', {
         message,
         threadId: threadIdRef.current,
       });
-      appendMessage('assistant', reply);
+      appendMessage('assistant', reply, tools);
     } catch {
       appendMessage('assistant', 'Sorry, something went wrong reaching TARS. Please try again.');
     } finally {

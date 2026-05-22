@@ -56,6 +56,17 @@ describe('AiInput', () => {
     expect(getInput()).toHaveValue('');
   });
 
+  it('renders the used-tools disclosure from the response', async () => {
+    mockedPost.mockResolvedValueOnce({ reply: 'You have 2 courses.', tools: ['list_courses'] });
+    render(<AiInput />);
+
+    await userEvent.type(getInput(), 'My courses?{Enter}');
+
+    expect(await screen.findByText('You have 2 courses.')).toBeInTheDocument();
+    expect(screen.getByText('1 tool used')).toBeInTheDocument();
+    expect(screen.getByText('list_courses')).toBeInTheDocument();
+  });
+
   it('submits when pressing Enter in the input', async () => {
     render(<AiInput />);
 

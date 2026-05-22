@@ -21,7 +21,25 @@ describe('AiChatPanel', () => {
     render(<AiChatPanel messages={messages} onClose={vi.fn()} />);
 
     expect(screen.getByText('Hello TARS')).toHaveClass('ai-input__message--user');
-    expect(screen.getByText('Hi there')).toHaveClass('ai-input__message--assistant');
+    // Assistant content is rendered as markdown, so resolve the bubble wrapper.
+    expect(screen.getByText('Hi there').closest('.ai-input__message')).toHaveClass(
+      'ai-input__message--assistant'
+    );
+  });
+
+  it('renders assistant content as markdown', () => {
+    const md: ChatMessage[] = [
+      {
+        id: '1',
+        role: 'assistant',
+        content: 'Here is a **bold** point and a [link](https://example.com).',
+      },
+    ];
+    render(<AiChatPanel messages={md} onClose={vi.fn()} />);
+
+    expect(screen.getByText('bold').tagName).toBe('STRONG');
+    const link = screen.getByRole('link', { name: 'link' });
+    expect(link).toHaveAttribute('href', 'https://example.com');
   });
 
   it('renders nothing in the message area when there are no messages', () => {
@@ -49,5 +67,31 @@ describe('AiChatPanel', () => {
   it('does not show the typing indicator when not loading', () => {
     render(<AiChatPanel messages={messages} onClose={vi.fn()} />);
     expect(screen.queryByLabelText(/tars is typing/i)).not.toBeInTheDocument();
+  });
+
+  it('shows an expandable used-tools summary with the tool names', () => {
+    const withTools: ChatMessage[] = [
+      { id: '1', role: 'user', content: 'Whats due?' },
+      { id: '2', role: 'assistant', content: 'Two tasks.', tools: ['list_courses', 'list_tasks'] },
+    ];
+    render(<AiChatPanel messages={withTools} onClose={vi.fn()} />);
+
+    expect(screen.getByText('2 tools used')).toBeInTheDocument();
+    expect(screen.getByText('list_courses')).toBeInTheDocument();
+    expect(screen.getByText('list_tasks')).toBeInTheDocument();
+  });
+
+  it('uses the singular form for a single tool', () => {
+    const withTool: ChatMessage[] = [
+      { id: '1', role: 'assistant', content: 'Here.', tools: ['list_courses'] },
+    ];
+    render(<AiChatPanel messages={withTool} onClose={vi.fn()} />);
+
+    expect(screen.getByText('1 tool used')).toBeInTheDocument();
+  });
+
+  it('omits the used-tools summary when no tools were used', () => {
+    render(<AiChatPanel messages={messages} onClose={vi.fn()} />);
+    expect(screen.queryByText(/tools? used/i)).not.toBeInTheDocument();
   });
 });
