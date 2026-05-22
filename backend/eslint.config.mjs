@@ -27,6 +27,7 @@ export default tseslint.config(
       'linting-rules/require-console-error-in-catch': 'error',
       'linting-rules/no-console': 'error',
       'linting-rules/no-pii-in-logs': 'error',
+      'no-nested-ternary': 'error',
     },
   },
   prettierConfig
