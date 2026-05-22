@@ -75,8 +75,7 @@ export default function CourseFeed({ items }: CourseFeedProps) {
 
   return (
     <div className="panel course-feed p-4">
-      <div className="course-feed__header">
-        <h3 className="course-feed__title">Course Materials</h3>
+      <div className="course-feed__header flex-row-reverse">
         <div className="dropdown position-relative" ref={dropdownRef}>
           <button
             className="btn btn-outline-secondary btn-sm dropdown-toggle text-white"

@@ -44,6 +44,7 @@ model User {
 model Course {
   id        String   @id @default(uuid())
   name      String
+  color     String?
   ownerId   String
   owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   documents Document[]

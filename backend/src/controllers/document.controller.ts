@@ -207,6 +207,60 @@ class DocumentController {
       res.status(500).json({ message: 'Failed to download document.' });
     }
   }
+
+  /**
+   * Deletes a document owned by the authenticated user.
+   *
+   * Workflow:
+   * 1. Validate document id and authenticated user
+   * 2. Ask the service to delete the document (DB + storage)
+   * 3. Respond with 204 No Content on success
+   *
+   * Error mapping:
+   * - 400: missing id
+   * - 401: no authenticated user
+   * - 404: document not found
+   * - 403: user is not the course owner
+   * - 500: unexpected errors
+   *
+   * @param req Express request with `id` in params
+   * @param res Express response
+   */
+  async deleteById(req: Request, res: Response): Promise<void> {
+    try {
+      const rawId = req.params.id;
+      const id = Array.isArray(rawId) ? rawId[0] : rawId;
+      const userId = (req.user as { id: string } | undefined)?.id;
+
+      if (!id) {
+        res.status(400).json({ message: 'id is required.' });
+        return;
+      }
+
+      if (!userId) {
+        res.status(401).json({ message: 'Unauthorized.' });
+        return;
+      }
+
+      await this.documentService.deleteForOwner(id, userId);
+
+      res.status(204).send();
+    } catch (error) {
+      logger.error({ err: error }, 'Failed to delete document');
+
+      if (error instanceof Error && error.message === 'DOCUMENT_NOT_FOUND') {
+        res.status(404).json({ message: 'Document not found.' });
+        return;
+      }
+
+      if (error instanceof Error && error.message === 'DOCUMENT_FORBIDDEN') {
+        res.status(403).json({ message: 'You do not have permission to delete this document.' });
+        return;
+      }
+
+      res.status(500).json({ message: 'Failed to delete document.' });
+    }
+  }
 }
 
 export { DocumentController };

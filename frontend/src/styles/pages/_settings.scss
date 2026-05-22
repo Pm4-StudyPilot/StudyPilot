@@ -37,6 +37,14 @@
   }
 }
 
+.settings-page__button {
+  min-width: 12rem;
+}
+
+.settings-page__button-row {
+  flex-wrap: wrap;
+}
+
 .settings-card-stack {
   display: grid;
   gap: 1.5rem;
@@ -49,7 +57,7 @@
   border: 1px solid var(--color-border);
   border-radius: 1.5rem;
 
-  background: linear-gradient(180deg, rgba(35, 35, 41, 0.98), rgba(32, 32, 37, 0.94));
+  background: var(--color-panel-bg);
 
   box-shadow: var(--shadow-soft);
 
@@ -87,7 +95,7 @@
   &--themed {
     border: 1px solid var(--color-border);
 
-    background: linear-gradient(180deg, rgba(35, 35, 41, 0.98), rgba(32, 32, 37, 0.94));
+    background: var(--color-panel-bg);
 
     box-shadow: var(--shadow-soft);
   }

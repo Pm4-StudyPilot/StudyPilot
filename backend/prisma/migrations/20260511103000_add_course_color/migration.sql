@@ -1,0 +1,2 @@
+ALTER TABLE "Course"
+ADD COLUMN "color" TEXT;

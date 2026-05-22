@@ -7,6 +7,8 @@ import { api } from '../../services/api';
 import { CourseDto } from '../../types/dto';
 import { useForm } from '../../hooks/useForm';
 import { createCourseSchema } from '../../validation/schemas';
+import CourseColorField from './CourseColorField';
+import { COURSE_COLOR_PALETTE } from '../../utils/courseColors';
 
 interface CreateCourseModalProps {
   onClose: () => void;
@@ -35,7 +37,10 @@ export default function CreateCourseModal({ onClose, onCreated }: CreateCourseMo
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { values, errors, handleChange, validate } = useForm(createCourseSchema, { name: '' });
+  const { values, errors, handleChange, validate } = useForm(createCourseSchema, {
+    name: '',
+    color: COURSE_COLOR_PALETTE[0],
+  });
 
   /**
    * Handles form submission.
@@ -52,7 +57,10 @@ export default function CreateCourseModal({ onClose, onCreated }: CreateCourseMo
     setLoading(true);
 
     try {
-      const course = await api.post<CourseDto>('/courses', { name: values.name.trim() });
+      const course = await api.post<CourseDto>('/courses', {
+        name: values.name.trim(),
+        color: values.color,
+      });
       onCreated(course);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -71,6 +79,11 @@ export default function CreateCourseModal({ onClose, onCreated }: CreateCourseMo
           onChange={(e) => handleChange('name', e.target.value)}
           error={errors.name}
           autoFocus
+        />
+        <CourseColorField
+          value={values.color}
+          error={errors.color}
+          onChange={(color) => handleChange('color', color)}
         />
         <Button type="submit" className="w-100" loading={loading}>
           Create Course

@@ -24,6 +24,7 @@ const courseFixtures = [
   {
     id: 'c1',
     name: 'Machine Learning',
+    color: '#6C63FF',
     ownerId: 'u1',
     createdAt: '2026-03-26T12:00:00.000Z',
     updatedAt: '2026-03-26T12:00:00.000Z',
@@ -31,6 +32,7 @@ const courseFixtures = [
   {
     id: 'c2',
     name: 'Physics Engines',
+    color: '#4DA3FF',
     ownerId: 'u1',
     createdAt: '2026-03-25T12:00:00.000Z',
     updatedAt: '2026-03-25T12:00:00.000Z',
@@ -426,6 +428,7 @@ describe('CourseList', () => {
     vi.mocked(api.post).mockResolvedValueOnce({
       id: 'c3',
       name: 'Computer Vision',
+      color: '#00C2A8',
       ownerId: 'u1',
       createdAt: '2026-03-27T12:00:00.000Z',
       updatedAt: '2026-03-27T12:00:00.000Z',

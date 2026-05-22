@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getSortIcon } from '../../utils/sort';
 import { api } from '../../services/api';
+import DeleteDocumentModal from './DeleteDocumentModal';
 
 // Props for the CourseDocumentsList component.
 type CourseDocumentsListProps = {
@@ -75,39 +76,60 @@ function formatFileSize(bytes?: number | null): string {
 }
 
 /**
- * Converts MIME types into short readable labels for display in the UI.
- */
-function formatFileType(fileType?: string | null): string {
-  if (!fileType) return 'Unknown';
-
-  const map: Record<string, string> = {
-    'application/pdf': 'PDF',
-    'application/msword': 'DOC',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
-    'application/vnd.ms-powerpoint': 'PPT',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'PPTX',
-    'text/plain': 'TXT',
-  };
-
-  return map[fileType] || fileType;
-}
-
-/**
  * Returns a Font Awesome icon class for the given document MIME type.
  */
-function getFileIcon(fileType?: string | null): string {
-  const map: Record<string, string> = {
-    'application/pdf': 'fa-regular fa-file-pdf',
-    'application/msword': 'fa-regular fa-file-word',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-      'fa-regular fa-file-word',
-    'application/vnd.ms-powerpoint': 'fa-regular fa-file-powerpoint',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation':
-      'fa-regular fa-file-powerpoint',
-    'text/plain': 'fa-regular fa-file-lines',
+function getFileIcon(fileType?: string | null): {
+  icon: string;
+  colorClass: string;
+} {
+  const map: Record<string, { icon: string; colorClass: string }> = {
+    'application/pdf': {
+      icon: 'fa-regular fa-file-pdf',
+      colorClass: 'text-danger',
+    },
+
+    'application/msword': {
+      icon: 'fa-regular fa-file-word',
+      colorClass: 'text-primary',
+    },
+
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': {
+      icon: 'fa-regular fa-file-word',
+      colorClass: 'text-primary',
+    },
+
+    'application/vnd.ms-powerpoint': {
+      icon: 'fa-regular fa-file-powerpoint',
+      colorClass: 'text-warning',
+    },
+
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': {
+      icon: 'fa-regular fa-file-powerpoint',
+      colorClass: 'text-warning',
+    },
+
+    'application/vnd.ms-excel': {
+      icon: 'fa-regular fa-file-excel',
+      colorClass: 'text-success',
+    },
+
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
+      icon: 'fa-regular fa-file-excel',
+      colorClass: 'text-success',
+    },
+
+    'text/plain': {
+      icon: 'fa-regular fa-file-lines',
+      colorClass: 'text-secondary',
+    },
   };
 
-  return map[fileType ?? ''] || 'fa-regular fa-file';
+  return (
+    map[fileType ?? ''] ?? {
+      icon: 'fa-regular fa-file',
+      colorClass: 'text-secondary',
+    }
+  );
 }
 
 /**
@@ -154,6 +176,7 @@ export default function CourseDocumentsList({
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [actionError, setActionError] = useState('');
   const [pendingActionDocId, setPendingActionDocId] = useState<string | null>(null);
+  const [documentToDelete, setDocumentToDelete] = useState<DocumentDto | null>(null);
 
   /**
    * Opens a document in a new browser tab.
@@ -217,6 +240,18 @@ export default function CourseDocumentsList({
     } finally {
       setPendingActionDocId(null);
     }
+  }
+
+  /**
+   * Removes a deleted document from local state.
+   *
+   * The list is updated in-place rather than by refetching, since the
+   * backend has already confirmed the delete and we want immediate
+   * feedback for the user.
+   */
+  function handleDocumentDeleted(deletedId: string) {
+    setDocuments((prev) => prev.filter((d) => d.id !== deletedId));
+    setDocumentToDelete(null);
   }
 
   const sort = buildSortOption(sortField, sortDirection);
@@ -396,49 +431,66 @@ export default function CourseDocumentsList({
 
             const isPending = pendingActionDocId === doc.id;
 
+            const fileIcon = getFileIcon(doc.fileType);
+
             return (
-              <div
-                key={doc.id}
-                className="course-document-item rounded px-3 py-3 border border-secondary-subtle d-flex align-items-center justify-content-between gap-2"
-              >
-                <div className="d-flex align-items-center gap-2 min-w-0">
-                  <i className={`${getFileIcon(doc.fileType)} text-secondary`} />
-                  <span className="text-white fw-semibold text-truncate">{doc.filename}</span>
+              <div key={doc.id} className="course-document-item">
+                <div className="course-document-item__header">
+                  <div className="course-document-item__file">
+                    <i className={`${fileIcon.icon} ${fileIcon.colorClass}`} />
+                    <span className="text-white fw-semibold text-truncate">{doc.filename}</span>
+                  </div>
                 </div>
 
-                <div className="d-flex align-items-center gap-3 flex-wrap justify-content-md-end">
-                  <span className="text-secondary small">Type: {formatFileType(doc.fileType)}</span>
-                  <span className="text-secondary small">Uploaded: {formattedDate}</span>
-                  <span className="text-secondary small">Size: {formatFileSize(doc.fileSize)}</span>
+                <div className="course-document-item__meta">
+                  <span>{formatFileSize(doc.fileSize)}</span>
+                  <span>•</span>
+                  <span>Updated {formattedDate}</span>
+                </div>
 
-                  <div className="d-flex align-items-center gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-primary"
-                      onClick={() => handleOpen(doc)}
-                      disabled={isPending}
-                      aria-label={`Open ${doc.filename}`}
-                    >
-                      <i className="fa-solid fa-up-right-from-square me-1" aria-hidden="true" />
-                      Open
-                    </button>
+                <div className="course-document-item__actions">
+                  <button
+                    type="button"
+                    className="course-document-item__icon-button"
+                    onClick={() => handleOpen(doc)}
+                    disabled={isPending}
+                    aria-label={`Open ${doc.filename}`}
+                  >
+                    <i className="fa-solid fa-up-right-from-square" aria-hidden="true" />
+                  </button>
 
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-primary"
-                      onClick={() => handleDownload(doc)}
-                      disabled={isPending}
-                      aria-label={`Download ${doc.filename}`}
-                    >
-                      <i className="fa-solid fa-download me-1" aria-hidden="true" />
-                      Download
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    className="course-document-item__icon-button"
+                    onClick={() => handleDownload(doc)}
+                    disabled={isPending}
+                    aria-label={`Download ${doc.filename}`}
+                  >
+                    <i className="fa-solid fa-download" aria-hidden="true" />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="course-document-item__icon-button course-document-item__icon-button--danger"
+                    onClick={() => setDocumentToDelete(doc)}
+                    disabled={isPending}
+                    aria-label={`Delete ${doc.filename}`}
+                  >
+                    <i className="fa-solid fa-trash" aria-hidden="true" />
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {documentToDelete && (
+        <DeleteDocumentModal
+          document={documentToDelete}
+          onClose={() => setDocumentToDelete(null)}
+          onDeleted={handleDocumentDeleted}
+        />
       )}
     </div>
   );

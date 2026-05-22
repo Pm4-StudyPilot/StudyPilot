@@ -7,6 +7,7 @@ import { api } from '../../services/api';
 import { CourseDto } from '../../types/dto';
 import { useForm } from '../../hooks/useForm';
 import { createCourseSchema } from '../../validation/schemas';
+import CourseColorField from './CourseColorField';
 
 interface EditCourseModalProps {
   course: CourseDto;
@@ -39,6 +40,7 @@ export default function EditCourseModal({ course, onClose, onUpdated }: EditCour
   // Pre-fill the form with the current course name
   const { values, errors, handleChange, validate } = useForm(createCourseSchema, {
     name: course.name,
+    color: course.color,
   });
 
   /**
@@ -55,6 +57,7 @@ export default function EditCourseModal({ course, onClose, onUpdated }: EditCour
     try {
       const updated = await api.patch<CourseDto>(`/courses/${course.id}`, {
         name: values.name.trim(),
+        color: values.color,
       });
       onUpdated(updated);
     } catch (err: unknown) {
@@ -74,6 +77,11 @@ export default function EditCourseModal({ course, onClose, onUpdated }: EditCour
           onChange={(e) => handleChange('name', e.target.value)}
           error={errors.name}
           autoFocus
+        />
+        <CourseColorField
+          value={values.color}
+          error={errors.color}
+          onChange={(color) => handleChange('color', color)}
         />
         <Button type="submit" className="w-100" loading={loading}>
           Save Changes

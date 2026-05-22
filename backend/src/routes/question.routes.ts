@@ -34,7 +34,7 @@ const questionController = new QuestionController();
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/Question'
+ *                 $ref: '#/components/schemas/QuestionWithAnswers'
  *       401:
  *         description: Unauthorized.
  *   post:
