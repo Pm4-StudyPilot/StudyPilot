@@ -110,31 +110,32 @@ export default function AnswerList({
       );
     }
 
-    let answerStateClass = '';
-
-    if (revealed) {
-      answerStateClass = answer.isCorrect ? 'answer-card--correct' : 'answer-card--incorrect';
-    }
-
     return (
       <>
-        {question.answers.map((answer) => (
-          <button
-            key={answer.id}
-            type="button"
-            className={`answer-card answer-card--play ${answerStateClass}`}
-            onClick={() => onPlay?.(answer.id)}
-            disabled={revealed}
-          >
-            <p className="answer-card__content">{answer.content}</p>
+        {question.answers.map((answer) => {
+          let answerStateClass = '';
 
-            {revealed && (
-              <span className="answer-card__badge">
-                {answer.isCorrect ? 'Correct' : 'Incorrect'}
-              </span>
-            )}
-          </button>
-        ))}
+          if (revealed) {
+            answerStateClass = answer.isCorrect ? 'answer-card--correct' : 'answer-card--incorrect';
+          }
+          return (
+            <button
+              key={answer.id}
+              type="button"
+              className={`answer-card answer-card--play ${answerStateClass}`}
+              onClick={() => onPlay?.(answer.id)}
+              disabled={revealed}
+            >
+              <p className="answer-card__content">{answer.content}</p>
+
+              {revealed && (
+                <span className="answer-card__badge">
+                  {answer.isCorrect ? 'Correct' : 'Incorrect'}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </>
     );
   }
