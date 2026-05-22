@@ -1,0 +1,17 @@
+# Dozzle simple-auth users file (used by docker-compose.prod.yml).
+#
+# Copy this to dozzle/users.yml and replace the credentials before deploying —
+# the prod logs UI (logs.studypilot.aneshodza.ch) is publicly reachable.
+#
+# Generate an entry (bcrypt-hashed password) with:
+#   docker run --rm amir20/dozzle:latest generate <username> \
+#     --password '<password>' --name '<Display Name>' --email <you@example.com>
+#
+# Default below is admin / admin — DO NOT ship this unchanged.
+users:
+    admin:
+        email: admin@studypilot.local
+        name: Admin
+        password: $2a$11$5BeLNQ7C667XnScY80z/BuSbIXxI8iL6uNP9X3bOFNPM2hkcfOgKi
+        filter: ""
+        roles: ""
