@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import Modal from '../shared/layout/Modal';
 import Button from '../shared/Button';
 import { api } from '../../services/api';
@@ -35,6 +36,7 @@ interface DeleteQuizModalProps {
 export default function DeleteQuizModal({ quiz, onClose, onDeleted }: DeleteQuizModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useTranslation();
 
   async function handleDelete() {
     setError('');
@@ -44,17 +46,20 @@ export default function DeleteQuizModal({ quiz, onClose, onDeleted }: DeleteQuiz
       await api.delete(`/courses/${quiz.courseId}/quizzes/${quiz.id}`);
       onDeleted(quiz.id);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof Error ? err.message : t('common.somethingWentWrong'));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <Modal title="Delete Quiz" onClose={onClose}>
+    <Modal title={t('quizzes.delete.title')} onClose={onClose}>
       <p className="text-center mb-4">
-        Are you sure you want to delete <span className="fw-semibold text-white">{quiz.title}</span>
-        ? This action cannot be undone.
+        <Trans
+          i18nKey="quizzes.delete.confirm"
+          values={{ title: quiz.title }}
+          components={{ strong: <span className="fw-semibold text-white" /> }}
+        />
       </p>
 
       {error && <div className="alert alert-danger py-2 mb-3">{error}</div>}
@@ -67,10 +72,10 @@ export default function DeleteQuizModal({ quiz, onClose, onDeleted }: DeleteQuiz
           loading={loading}
           onClick={handleDelete}
         >
-          Delete
+          {t('common.buttons.delete')}
         </Button>
         <Button type="button" variant="secondary" className="w-100" onClick={onClose}>
-          Cancel
+          {t('common.buttons.cancel')}
         </Button>
       </div>
     </Modal>
