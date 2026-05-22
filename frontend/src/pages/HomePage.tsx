@@ -219,6 +219,15 @@ function collectDashboardWarnings(data: DashboardCourseData[]) {
 }
 
 /**
+ * Extracts an error message from a rejected settled result, or undefined when it fulfilled.
+ */
+function getSettledErrorMessage(result: PromiseSettledResult<unknown>, fallback: string) {
+  if (result.status !== 'rejected') return undefined;
+
+  return result.reason instanceof Error ? result.reason.message : fallback;
+}
+
+/**
  * Loads tasks, documents, and quizzes for every course displayed on the dashboard.
  */
 async function loadDashboardCourseData(courses: CourseDto[]) {
@@ -235,24 +244,9 @@ async function loadDashboardCourseData(courses: CourseDto[]) {
         tasks: tasksResult.status === 'fulfilled' ? tasksResult.value : [],
         documents: documentsResult.status === 'fulfilled' ? documentsResult.value : [],
         quizzes: quizzesResult.status === 'fulfilled' ? quizzesResult.value : [],
-        taskError:
-          tasksResult.status === 'rejected'
-            ? tasksResult.reason instanceof Error
-              ? tasksResult.reason.message
-              : 'Failed to load tasks'
-            : undefined,
-        documentError:
-          documentsResult.status === 'rejected'
-            ? documentsResult.reason instanceof Error
-              ? documentsResult.reason.message
-              : 'Failed to load documents'
-            : undefined,
-        quizError:
-          quizzesResult.status === 'rejected'
-            ? quizzesResult.reason instanceof Error
-              ? quizzesResult.reason.message
-              : 'Failed to load quizzes'
-            : undefined,
+        taskError: getSettledErrorMessage(tasksResult, 'Failed to load tasks'),
+        documentError: getSettledErrorMessage(documentsResult, 'Failed to load documents'),
+        quizError: getSettledErrorMessage(quizzesResult, 'Failed to load quizzes'),
       } satisfies DashboardCourseData;
     })
   );

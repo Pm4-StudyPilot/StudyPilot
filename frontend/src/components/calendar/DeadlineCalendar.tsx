@@ -254,12 +254,12 @@ export default function DeadlineCalendar({
   }, [courseFilterOpen]);
 
   const hasCurrentTaskRequest = taskRequest.courseKey === courseKey;
-  const loadState: LoadState =
-    coursesLoading || (!coursesError && !hasCurrentTaskRequest)
-      ? 'loading'
-      : coursesError || taskRequest.status === 'error'
-        ? 'error'
-        : 'success';
+  let loadState: LoadState = 'success';
+  if (coursesLoading || (!coursesError && !hasCurrentTaskRequest)) {
+    loadState = 'loading';
+  } else if (coursesError || taskRequest.status === 'error') {
+    loadState = 'error';
+  }
   const error = coursesError || (hasCurrentTaskRequest ? taskRequest.error : '');
   const tasks = hasCurrentTaskRequest ? taskRequest.tasks : EMPTY_CALENDAR_TASKS;
   const activeCourseId = courses.some((course) => course.id === selectedCourseId)
@@ -302,11 +302,12 @@ export default function DeadlineCalendar({
     );
   }, [filteredTasks, todayDateKey]);
 
-  const visibleTasks = selectedDateKey
-    ? selectedDateTasks
-    : showAllUpcoming
-      ? upcomingTasks
-      : upcomingTasks.slice(0, UPCOMING_LIMIT);
+  let visibleTasks = upcomingTasks.slice(0, UPCOMING_LIMIT);
+  if (selectedDateKey) {
+    visibleTasks = selectedDateTasks;
+  } else if (showAllUpcoming) {
+    visibleTasks = upcomingTasks;
+  }
   const hiddenUpcomingCount = selectedDateKey
     ? 0
     : Math.max(upcomingTasks.length - UPCOMING_LIMIT, 0);
