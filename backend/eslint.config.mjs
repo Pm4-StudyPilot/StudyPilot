@@ -24,6 +24,7 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'linting-rules/require-console-error-in-catch': 'error',
       'linting-rules/no-console': 'error',
+      'no-nested-ternary': 'error',
     },
   },
   prettierConfig
