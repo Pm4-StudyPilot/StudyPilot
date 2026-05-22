@@ -3,7 +3,7 @@ import { MemorySaver } from '@langchain/langgraph';
 import { getModel } from './model';
 import { getMcpTools } from './mcp';
 import { buildAgentTools } from './tools';
-import { TARS_SYSTEM_PROMPT } from './prompt';
+import { buildSystemPrompt } from './prompt';
 
 async function build() {
   const tools = buildAgentTools(await getMcpTools());
@@ -11,7 +11,9 @@ async function build() {
     llm: getModel(),
     tools,
     checkpointer: new MemorySaver(),
-    prompt: TARS_SYSTEM_PROMPT,
+    // Function form: re-evaluated each LLM call so the current date stays fresh
+    // and is never persisted into the checkpointed message history.
+    prompt: (state) => [{ role: 'system', content: buildSystemPrompt() }, ...state.messages],
   });
 }
 
