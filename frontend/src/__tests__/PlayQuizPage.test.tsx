@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, type MockedFunction } from 'vitest';
+import { describe, it, expect, vi, type MockedFunction, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import PlayQuizPage from '../pages/PlayQuizPage';
@@ -11,43 +11,9 @@ const mockNavigate = vi.fn();
 
 const mockedUseParams = router.useParams as MockedFunction<typeof router.useParams>;
 const mockedUseNavigate = router.useNavigate as MockedFunction<typeof router.useNavigate>;
-mockedUseParams.mockReturnValue({
-  courseId: 'course1',
-  quizId: 'quiz1',
-});
 
 mockedUseNavigate.mockReturnValue(mockNavigate);
 const mockedApi = api as Mocked<typeof api>;
-mockedApi.get.mockImplementation((url: string) => {
-  if (url.includes('/quizzes/quiz1/questions')) {
-    return Promise.resolve(mockQuestions);
-  }
-
-  return Promise.resolve(mockQuiz);
-});
-
-vi.mock('../services/api', () => ({
-  api: {
-    get: vi.fn(),
-  },
-}));
-
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
-
-  return {
-    ...actual,
-    useParams: vi.fn(),
-    useNavigate: vi.fn(),
-  };
-});
-
-vi.mock('../context/useAuth', () => ({
-  useAuth: () => ({
-    user: { username: 'testuser', email: 'test@example.com' },
-    logout: vi.fn(),
-  }),
-}));
 
 const mockQuiz = {
   id: 'quiz1',
@@ -55,6 +21,16 @@ const mockQuiz = {
   description: 'desc',
   courseId: 'course1',
   isOrderRandom: false,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
+
+const randomMockQuiz = {
+  id: 'quiz2',
+  title: 'Sample Quiz 2',
+  description: 'desc 2',
+  courseId: 'course2',
+  isOrderRandom: true,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
@@ -82,7 +58,47 @@ const mockQuestions = [
   },
 ];
 
+vi.mock('../services/api', () => ({
+  api: {
+    get: vi.fn(),
+  },
+}));
+
 describe('PlayQuizPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedUseParams.mockReturnValue({
+      courseId: 'course1',
+      quizId: 'quiz1',
+    });
+    mockedApi.get.mockImplementation((url: string) => {
+      if (url.includes('/quizzes/quiz1/questions') || url.includes('/quizzes/quiz2/questions')) {
+        return Promise.resolve(mockQuestions);
+      }
+      if (url.includes('/quizzes/quiz2')) {
+        return Promise.resolve(randomMockQuiz);
+      }
+
+      return Promise.resolve(mockQuiz);
+    });
+
+    vi.mock('react-router-dom', async () => {
+      const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+
+      return {
+        ...actual,
+        useParams: vi.fn(),
+        useNavigate: vi.fn(),
+      };
+    });
+
+    vi.mock('../context/useAuth', () => ({
+      useAuth: () => ({
+        user: { username: 'testuser', email: 'test@example.com' },
+        logout: vi.fn(),
+      }),
+    }));
+  });
   it('renders quiz title', async () => {
     render(
       <MemoryRouter>
@@ -163,5 +179,33 @@ describe('PlayQuizPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: /quiz finished/i }));
 
     expect(mockNavigate).toHaveBeenCalledWith('/courses/course1/quizzes/quiz1');
+  });
+  it('orders questions in a random order if the quiz is specified to do so', async () => {
+    mockedUseParams.mockReturnValue({
+      courseId: 'course2',
+      quizId: 'quiz2',
+    });
+
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0).mockReturnValueOnce(1);
+
+    render(
+      <MemoryRouter>
+        <PlayQuizPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Question 2')).toBeInTheDocument();
+  });
+  it('indicates when there was a server error while loading the quiz', async () => {
+    mockedApi.get.mockImplementation(() => {
+      return Promise.reject(new Error('Internal Server Error'));
+    });
+    render(
+      <MemoryRouter>
+        <PlayQuizPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Internal Server Error')).toBeInTheDocument();
   });
 });
