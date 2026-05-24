@@ -218,7 +218,7 @@ describe('AnswerList', () => {
     expect(screen.queryByText('Answer 1')).not.toBeInTheDocument();
   });
 
-  it('renders play when the question type is card and the question was revealed', async () => {
+  it('renders play when the question type is card and the question was not revealed', async () => {
     render(
       <AnswerList
         mode="play"
@@ -229,6 +229,19 @@ describe('AnswerList', () => {
     );
 
     expect(screen.getByText('Answer 1')).toBeInTheDocument();
+  });
+
+  it('renders play when the question type is card and the question was revealed', async () => {
+    render(
+      <AnswerList
+        mode="play"
+        question={cardQuestion as QuestionWithAnswersDto}
+        revealed={true}
+        onPlay={onPlay}
+      />
+    );
+
+    expect(screen.queryByText('Answer 1')).toBeInTheDocument();
   });
 
   it('defaults to view mode when mode is not provided', () => {
