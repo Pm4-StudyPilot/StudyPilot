@@ -162,6 +162,9 @@
     border-radius: 0.95rem;
     font-weight: 800;
     box-shadow: var(--glow-primary);
+    &:disabled {
+      box-shadow: unset;
+    }
   }
 
   &__updated {

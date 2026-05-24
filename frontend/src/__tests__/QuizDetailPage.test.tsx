@@ -455,4 +455,159 @@ describe('QuizDetailPage', () => {
       expect(api.delete).toHaveBeenCalled();
     });
   });
+
+  /**
+   * Edit Quiz (KAN-149) tests
+   *
+   * Covers the inline editor for the quiz-level fields (title, description,
+   * isOrderRandom) that appears when edit mode is toggled on. Editing uses
+   * auto-save: text fields persist on blur, the checkbox persists on change.
+   */
+  describe('edit quiz', () => {
+    it('pre-fills the editor with the loaded quiz when entering edit mode', async () => {
+      mockQuizDetailApi();
+      renderWithRoute();
+
+      const editBtn = await screen.findByRole('button', { name: /edit/i });
+      fireEvent.click(editBtn);
+
+      const titleInput = await screen.findByLabelText('Quiz title');
+      const descriptionInput = screen.getByLabelText('Quiz description');
+      const randomCheckbox = screen.getByLabelText(/randomize question order/i);
+
+      expect(titleInput).toHaveValue(quizFixture.title);
+      expect(descriptionInput).toHaveValue(quizFixture.description);
+      expect(randomCheckbox).toBeChecked();
+    });
+
+    it('saves the title on blur when it changes', async () => {
+      mockQuizDetailApi();
+      vi.mocked(api.patch).mockResolvedValue({
+        ...quizFixture,
+        title: 'Updated Quiz Title',
+      });
+
+      renderWithRoute();
+
+      const editBtn = await screen.findByRole('button', { name: /edit/i });
+      fireEvent.click(editBtn);
+
+      const titleInput = await screen.findByLabelText('Quiz title');
+      fireEvent.change(titleInput, { target: { value: 'Updated Quiz Title' } });
+      fireEvent.blur(titleInput);
+
+      await waitFor(() => {
+        expect(api.patch).toHaveBeenCalledWith('/courses/course-1/quizzes/quiz-1', {
+          title: 'Updated Quiz Title',
+        });
+      });
+    });
+
+    it('does not call the API on blur when the title is unchanged', async () => {
+      mockQuizDetailApi();
+      renderWithRoute();
+
+      const editBtn = await screen.findByRole('button', { name: /edit/i });
+      fireEvent.click(editBtn);
+
+      const titleInput = await screen.findByLabelText('Quiz title');
+      fireEvent.blur(titleInput);
+
+      // Patch should not have been called — value unchanged, so no save needed
+      expect(api.patch).not.toHaveBeenCalled();
+    });
+
+    it('shows an error and skips the API when the title is emptied', async () => {
+      mockQuizDetailApi();
+      renderWithRoute();
+
+      const editBtn = await screen.findByRole('button', { name: /edit/i });
+      fireEvent.click(editBtn);
+
+      const titleInput = await screen.findByLabelText('Quiz title');
+      fireEvent.change(titleInput, { target: { value: '   ' } });
+      fireEvent.blur(titleInput);
+
+      expect(await screen.findByText(/quiz title is required/i)).toBeInTheDocument();
+      expect(api.patch).not.toHaveBeenCalled();
+    });
+
+    it('saves the description on blur when it changes', async () => {
+      mockQuizDetailApi();
+      vi.mocked(api.patch).mockResolvedValue({
+        ...quizFixture,
+        description: 'A new description.',
+      });
+
+      renderWithRoute();
+
+      const editBtn = await screen.findByRole('button', { name: /edit/i });
+      fireEvent.click(editBtn);
+
+      const descriptionInput = await screen.findByLabelText('Quiz description');
+      fireEvent.change(descriptionInput, { target: { value: 'A new description.' } });
+      fireEvent.blur(descriptionInput);
+
+      await waitFor(() => {
+        expect(api.patch).toHaveBeenCalledWith('/courses/course-1/quizzes/quiz-1', {
+          description: 'A new description.',
+        });
+      });
+    });
+
+    it('persists the randomize-order toggle immediately on change', async () => {
+      mockQuizDetailApi();
+      vi.mocked(api.patch).mockResolvedValue({
+        ...quizFixture,
+        isOrderRandom: false,
+      });
+
+      renderWithRoute();
+
+      const editBtn = await screen.findByRole('button', { name: /edit/i });
+      fireEvent.click(editBtn);
+
+      const randomCheckbox = await screen.findByLabelText(/randomize question order/i);
+      fireEvent.click(randomCheckbox);
+
+      await waitFor(() => {
+        expect(api.patch).toHaveBeenCalledWith('/courses/course-1/quizzes/quiz-1', {
+          isOrderRandom: false,
+        });
+      });
+    });
+
+    it('shows a server error when the save fails', async () => {
+      mockQuizDetailApi();
+      vi.mocked(api.patch).mockRejectedValueOnce(
+        new Error('You do not have permission to edit this quiz.')
+      );
+
+      renderWithRoute();
+
+      const editBtn = await screen.findByRole('button', { name: /edit/i });
+      fireEvent.click(editBtn);
+
+      const titleInput = await screen.findByLabelText('Quiz title');
+      fireEvent.change(titleInput, { target: { value: 'New Title' } });
+      fireEvent.blur(titleInput);
+
+      expect(
+        await screen.findByText(/you do not have permission to edit this quiz/i)
+      ).toBeInTheDocument();
+    });
+
+    it('disables the play button while in edit mode', async () => {
+      mockQuizDetailApi();
+      renderWithRoute();
+
+      const playBeforeEdit = await screen.findByRole('button', { name: /play/i });
+      expect(playBeforeEdit).not.toBeDisabled();
+
+      const editBtn = screen.getByRole('button', { name: /edit/i });
+      fireEvent.click(editBtn);
+
+      expect(screen.getByRole('button', { name: /play/i })).toBeDisabled();
+    });
+  });
 });

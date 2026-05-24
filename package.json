@@ -4,7 +4,9 @@
   "packageManager": "npm@10.9.0",
   "workspaces": [
     "frontend",
-    "backend"
+    "backend",
+    "mcp",
+    "agent"
   ],
   "scripts": {
     "dev": "node scripts/start-services.js",

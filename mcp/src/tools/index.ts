@@ -1,0 +1,42 @@
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { registerListCourses } from './list-courses';
+import { registerGetCourse } from './get-course';
+import { registerCreateCourse } from './create-course';
+import { registerUpdateCourse } from './update-course';
+import { registerDeleteCourse } from './delete-course';
+import { registerListTasks } from './list-tasks';
+import { registerGetTask } from './get-task';
+import { registerListOverdueTasks } from './list-overdue-tasks';
+import { registerCreateTask } from './create-task';
+import { registerUpdateTask } from './update-task';
+import { registerDeleteTask } from './delete-task';
+import { registerListQuizzes } from './list-quizzes';
+import { registerGetQuiz } from './get-quiz';
+import { registerCreateQuiz } from './create-quiz';
+import { registerUpdateQuiz } from './update-quiz';
+import { registerDeleteQuiz } from './delete-quiz';
+import { registerListDocuments } from './list-documents';
+
+export function registerTools(server: McpServer): void {
+  // Courses
+  registerListCourses(server);
+  registerGetCourse(server);
+  registerCreateCourse(server);
+  registerUpdateCourse(server);
+  registerDeleteCourse(server);
+  // Tasks
+  registerListTasks(server);
+  registerGetTask(server);
+  registerListOverdueTasks(server);
+  registerCreateTask(server);
+  registerUpdateTask(server);
+  registerDeleteTask(server);
+  // Quizzes
+  registerListQuizzes(server);
+  registerGetQuiz(server);
+  registerCreateQuiz(server);
+  registerUpdateQuiz(server);
+  registerDeleteQuiz(server);
+  // Documents (read-only)
+  registerListDocuments(server);
+}
