@@ -231,6 +231,20 @@ describe('AnswerList', () => {
     expect(screen.getByText('Answer 1')).toBeInTheDocument();
   });
 
+  it('renders play when the question type is card and the question was revealed', async () => {
+    render(
+      <AnswerList
+        mode="play"
+        question={cardQuestion as QuestionWithAnswersDto}
+        revealed={true}
+        onPlay={onPlay}
+      />
+    );
+
+    expect(screen.queryByText('Answer 1')).toBeInTheDocument();
+    expect(screen.queryByText('Answer 2')).toBeInTheDocument();
+  });
+
   it('defaults to view mode when mode is not provided', () => {
     render(<AnswerList question={choiceQuestion as QuestionWithAnswersDto} />);
 
