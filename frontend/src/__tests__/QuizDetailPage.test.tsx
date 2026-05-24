@@ -601,10 +601,9 @@ describe('QuizDetailPage', () => {
       mockQuizDetailApi();
       renderWithRoute();
 
-      const playBeforeEdit = await screen.findByRole('button', { name: /play/i });
-      expect(playBeforeEdit).not.toBeDisabled();
+      const editBtn = await screen.findByRole('button', { name: /edit/i });
 
-      const editBtn = screen.getByRole('button', { name: /edit/i });
+      expect(screen.getByRole('link', { name: /play/i })).toBeInTheDocument();
       fireEvent.click(editBtn);
 
       expect(screen.getByRole('button', { name: /play/i })).toBeDisabled();
