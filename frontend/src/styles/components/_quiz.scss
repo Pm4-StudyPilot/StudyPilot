@@ -447,11 +447,6 @@
     font-size: 0.93rem;
     line-height: 1.5;
   }
-
-  &--play {
-    max-width: 900px;
-    margin: 0 auto;
-  }
 }
 
 .question-editor {
@@ -516,9 +511,7 @@
 
 .answer-list--editable,
 .answer-editor--new {
-  padding: 0.85rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--color-divider);
+  padding: 1rem 0.85rem 0.85rem;
   border: 1px solid var(--color-divider);
   border-radius: 0.95rem;
   background-color: var(--color-card-bg);
@@ -544,6 +537,9 @@
   border: 1px solid var(--color-divider);
   border-radius: 0.95rem;
   background-color: var(--color-card-bg);
+  & > * {
+    font-size: inherit;
+  }
 
   &--correct {
     border-color: rgba(76, 175, 80, 0.28);
@@ -565,15 +561,11 @@
     }
   }
 
-  &__icon {
-    font-size: 1.05rem;
-  }
-
   &__content {
     margin: 0;
     color: var(--color-text-primary);
-    line-height: 1.45;
     overflow-wrap: anywhere;
+    text-align: start;
   }
 
   .answer-card__badge {
@@ -702,7 +694,6 @@
   width: 100%;
   cursor: pointer;
   transition:
-    transform 0.15s ease,
     border-color 0.15s ease,
     background-color 0.15s ease;
 
@@ -720,7 +711,6 @@
     }
 
     &:hover {
-      transform: translateY(-2px);
       border-color: var(--color-primary);
       background-color: var(--color-item);
     }
@@ -731,8 +721,11 @@
   }
 }
 .play-quiz {
-  padding: clamp(1.5rem, 3vw, 2.2rem);
-
+  padding: clamp(1.5rem, 3vw, 3.2rem) clamp(1.5rem, 3vw, 2.2rem) clamp(1.5rem, 3vw, 2.2rem);
+  & > * {
+    max-width: 900px;
+    margin: 0 auto;
+  }
   &__header {
     display: flex;
     justify-content: space-between;

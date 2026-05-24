@@ -2,55 +2,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import QuestionCard from '../components/quizzes/QuestionCard';
-import { AnswerDto, QuestionWithAnswersDto } from '../types/dto';
+import { QuestionWithAnswersDto } from '../types/dto';
+import { QuestionFormState } from '../components/quizzes/types.ts';
+import userEvent from '@testing-library/user-event';
 
 const mockUpdateQuestion = vi.fn();
 const mockDeleteQuestion = vi.fn();
 const mockCreateAnswer = vi.fn();
 const mockUpdateAnswer = vi.fn();
 const mockDeleteAnswer = vi.fn();
-/**
- * Mock AnswerList so tests are not dependent on its internal implementation.
- * We simply render the answers passed via props.
- */
-vi.mock('../components/quizzes/AnswerList', () => ({
-  default: (props: {
-    mode?: 'view' | 'edit' | 'play';
-    answers: AnswerDto[];
-    draftAnswers?: Record<string, { content: string; isCorrect: boolean }>;
-    handleSaveAnswer?: (answerId: string) => void;
-    setDraftAnswers?: (
-      draftAnswers: Record<string, { content: string; isCorrect: boolean }>
-    ) => void;
-    onDeleteAnswer?: (questionId: string, answerId: string) => void;
-    onPlay?: (questionId: string) => void;
-  }) => {
-    const answers = props.question?.answers ?? [];
+const mockOnPlay = vi.fn();
 
-    return (
-      <div data-testid="answer-list">
-        {answers.map((a: QuestionWithAnswersDto) => (
-          <div key={a.id}>
-            <span>{a.content}</span>
-
-            {/* trigger save from test */}
-            <button
-              data-testid={`save-${a.id}`}
-              onClick={() =>
-                props.handleSaveAnswer?.(a.id, {
-                  content: '   ', // whitespace input
-                  isCorrect: false,
-                })
-              }
-            >
-              save
-            </button>
-          </div>
-        ))}
-      </div>
-    );
-  },
-}));
 const questionFixture: QuestionWithAnswersDto = {
   id: 'question-1',
   title: 'What is the capital of France?',
@@ -78,7 +40,35 @@ const questionFixture: QuestionWithAnswersDto = {
     },
   ],
 };
-
+const oneAnswerQuestionFixture: QuestionWithAnswersDto = {
+  id: 'question-1',
+  title: 'What is the capital of France?',
+  description: 'Choose the correct capital city.',
+  type: 'MULTIPLE_CHOICE',
+  quizId: 'quiz-1',
+  createdAt: '2026-05-01T12:00:00.000Z',
+  updatedAt: '2026-05-01T12:00:00.000Z',
+  answers: [
+    {
+      id: 'answer-2',
+      content: 'Berlin',
+      isCorrect: false,
+      questionId: 'question-1',
+      createdAt: '2026-05-01T12:00:00.000Z',
+      updatedAt: '2026-05-01T12:00:00.000Z',
+    },
+  ],
+};
+const noAnswerQuestionFixture: QuestionWithAnswersDto = {
+  id: 'question-1',
+  title: 'What is the capital of France?',
+  description: 'Choose the correct capital city.',
+  type: 'MULTIPLE_CHOICE',
+  quizId: 'quiz-1',
+  createdAt: '2026-05-01T12:00:00.000Z',
+  updatedAt: '2026-05-01T12:00:00.000Z',
+  answers: [],
+};
 describe('QuestionCard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -133,7 +123,17 @@ describe('QuestionCard', () => {
     expect(mockUpdateQuestion).toHaveBeenCalled();
   });
   it('shows validation error when saving empty question title', async () => {
-    render(<QuestionCard question={questionFixture} mode="edit" />);
+    render(
+      <QuestionCard
+        question={questionFixture}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={mockUpdateQuestion}
+        onCreateAnswer={mockCreateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
+    );
 
     const input = screen.getByDisplayValue('What is the capital of France?');
 
@@ -143,7 +143,17 @@ describe('QuestionCard', () => {
     expect(await screen.findByText('Question title is required')).toBeInTheDocument();
   });
   it('enables add answer button only when input has content', () => {
-    render(<QuestionCard question={questionFixture} mode="edit" />);
+    render(
+      <QuestionCard
+        question={questionFixture}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={mockUpdateQuestion}
+        onCreateAnswer={mockCreateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
+    );
 
     const input = screen.getByPlaceholderText('Add another possible answer');
     const button = screen.getByRole('button', { name: /add answer/i });
@@ -156,7 +166,15 @@ describe('QuestionCard', () => {
   });
   it('calls delete question handler', () => {
     render(
-      <QuestionCard question={questionFixture} mode="edit" onDeleteQuestion={mockDeleteQuestion} />
+      <QuestionCard
+        question={noAnswerQuestionFixture}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={mockUpdateQuestion}
+        onCreateAnswer={mockCreateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
     );
 
     fireEvent.click(screen.getByText('Delete'));
@@ -164,13 +182,23 @@ describe('QuestionCard', () => {
     expect(mockDeleteQuestion).toHaveBeenCalledWith('question-1');
   });
   it('renders play mode correctly', () => {
-    render(<QuestionCard question={questionFixture} mode="play" />);
+    render(<QuestionCard question={questionFixture} mode="play" onPlayed={mockOnPlay} />);
 
     expect(screen.getByText('Multiple Choice')).toBeInTheDocument();
     expect(screen.getByText('What is the capital of France?')).toBeInTheDocument();
   });
   it('keeps add answer button disabled for whitespace-only input', () => {
-    render(<QuestionCard question={questionFixture} mode="edit" />);
+    render(
+      <QuestionCard
+        question={questionFixture}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={mockUpdateQuestion}
+        onCreateAnswer={mockCreateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
+    );
 
     const input = screen.getByPlaceholderText('Add another possible answer');
     const button = screen.getByRole('button', { name: /add answer/i });
@@ -179,29 +207,19 @@ describe('QuestionCard', () => {
 
     expect(button).toBeDisabled();
   });
-  it('prevents saving answer with whitespace content', async () => {
-    render(
-      <QuestionCard question={questionFixture} mode="edit" onUpdateAnswer={mockUpdateAnswer} />
-    );
-
-    // trigger save from mocked AnswerList
-    const saveButton = screen.getByTestId('save-answer-1');
-
-    await act(async () => {
-      fireEvent.click(saveButton);
-    });
-
-    // validation should block update call
-    expect(mockUpdateAnswer).not.toHaveBeenCalled();
-
-    // error message should be shown
-    expect(screen.getByText('Answer content is required')).toBeInTheDocument();
-  });
   it('shows error when question update fails', async () => {
     const failingUpdate = vi.fn().mockRejectedValue(new Error('fail'));
 
     render(
-      <QuestionCard question={questionFixture} mode="edit" onUpdateQuestion={failingUpdate} />
+      <QuestionCard
+        question={questionFixture}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={failingUpdate}
+        onCreateAnswer={mockCreateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
     );
 
     fireEvent.blur(screen.getByDisplayValue(questionFixture.title));
@@ -211,7 +229,17 @@ describe('QuestionCard', () => {
   it('shows error when creating answer fails', async () => {
     const failingCreate = vi.fn().mockRejectedValue(new Error('fail'));
 
-    render(<QuestionCard question={questionFixture} mode="edit" onCreateAnswer={failingCreate} />);
+    render(
+      <QuestionCard
+        question={questionFixture}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={mockUpdateQuestion}
+        onCreateAnswer={failingCreate}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
+    );
 
     const input = screen.getByPlaceholderText('Add another possible answer');
     fireEvent.change(input, { target: { value: 'Rome' } });
@@ -221,21 +249,45 @@ describe('QuestionCard', () => {
     expect(await screen.findByText('Failed to create question')).toBeInTheDocument();
   });
   it('shows saving indicator during question update', async () => {
-    let resolve: (unknown) => void;
-    const slowUpdate = new Promise((res) => (resolve = res));
+    let resolve = () => {};
+    const slowUpdate = new Promise<void>((res) => (resolve = res));
 
-    const onUpdate = vi.fn(() => slowUpdate);
+    const onUpdate = (questionId: string, data: QuestionFormState) => {
+      data.title = 'test' + questionId;
+      return slowUpdate;
+    };
 
-    render(<QuestionCard question={questionFixture} mode="edit" onUpdateQuestion={onUpdate} />);
+    render(
+      <QuestionCard
+        question={questionFixture}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={onUpdate}
+        onCreateAnswer={mockCreateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
+    );
 
     fireEvent.blur(screen.getByDisplayValue(questionFixture.title));
 
     expect(screen.getByText('Saving...')).toBeInTheDocument();
 
-    resolve();
+    await act(async () => {
+      resolve();
+    });
   });
   it('toggles answers open and closed', () => {
-    render(<QuestionCard question={questionFixture} />);
+    render(
+      <QuestionCard
+        question={questionFixture}
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={mockUpdateQuestion}
+        onCreateAnswer={mockCreateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
+    );
 
     const button = screen.getByRole('button', { name: /toggle answers/i });
 
@@ -246,14 +298,34 @@ describe('QuestionCard', () => {
     expect(screen.queryByTestId('answer-list')).not.toBeInTheDocument();
   });
   it('does not render AnswerList when no answers exist', () => {
-    render(<QuestionCard question={{ ...questionFixture, answers: [] }} mode="edit" />);
+    render(
+      <QuestionCard
+        question={{ ...questionFixture, answers: [] }}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={mockUpdateQuestion}
+        onCreateAnswer={mockCreateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
+    );
 
     expect(screen.queryByTestId('answer-list')).not.toBeInTheDocument();
   });
   it('calls update question and clears saving state', async () => {
     const updateMock = vi.fn().mockResolvedValueOnce(undefined);
 
-    render(<QuestionCard question={questionFixture} mode="edit" onUpdateQuestion={updateMock} />);
+    render(
+      <QuestionCard
+        question={questionFixture}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={updateMock}
+        onCreateAnswer={mockCreateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
+    );
 
     fireEvent.blur(screen.getByDisplayValue(questionFixture.title));
 
@@ -272,7 +344,17 @@ describe('QuestionCard', () => {
   it('creates answer and clears input field', async () => {
     const createMock = vi.fn().mockResolvedValueOnce(undefined);
 
-    render(<QuestionCard question={questionFixture} mode="edit" onCreateAnswer={createMock} />);
+    render(
+      <QuestionCard
+        question={questionFixture}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={mockUpdateQuestion}
+        onCreateAnswer={createMock}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
+    );
 
     const input = screen.getByPlaceholderText('Add another possible answer');
 
@@ -288,13 +370,144 @@ describe('QuestionCard', () => {
       expect(input).toHaveValue('');
     });
   });
-  it('toggles answers open and closed', () => {
+  it('prevents saving answer with whitespace content', async () => {
+    render(
+      <QuestionCard
+        question={questionFixture}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={mockUpdateQuestion}
+        onCreateAnswer={mockCreateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
+    );
+
+    const answerContent = screen.getByDisplayValue('Berlin');
+
+    await act(async () => {
+      await userEvent.clear(answerContent);
+      fireEvent.blur(answerContent);
+    });
+
+    expect(screen.getByText('Answer content is required')).toBeInTheDocument();
+  });
+  it('saves a questions description and type', async () => {
+    render(
+      <QuestionCard
+        question={noAnswerQuestionFixture}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={mockUpdateQuestion}
+        onCreateAnswer={mockCreateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
+    );
+    const questionDescription = screen.getByDisplayValue('Choose the correct capital city.');
+
+    await act(async () => {
+      await userEvent.clear(questionDescription);
+      await userEvent.type(questionDescription, 'New description');
+      fireEvent.blur(questionDescription);
+    });
+
+    expect(mockUpdateQuestion).toHaveBeenCalledWith(noAnswerQuestionFixture.id, {
+      title: noAnswerQuestionFixture.title.trim(),
+      description: 'New description',
+      type: noAnswerQuestionFixture.type,
+    });
+
+    const questionType = screen.getByRole('combobox');
+
+    await act(async () => {
+      await userEvent.selectOptions(questionType, 'CARD');
+      fireEvent.blur(questionType);
+    });
+
+    expect(mockUpdateQuestion).toHaveBeenCalledWith(noAnswerQuestionFixture.id, {
+      title: noAnswerQuestionFixture.title.trim(),
+      description: 'New description',
+      type: 'CARD',
+    });
+  });
+  it('saves an answers description and correctness', async () => {
+    render(
+      <QuestionCard
+        question={oneAnswerQuestionFixture}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={mockUpdateQuestion}
+        onCreateAnswer={mockCreateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
+    );
+
+    const answerContent = screen.getByDisplayValue('Berlin');
+
+    await act(async () => {
+      await userEvent.clear(answerContent);
+      await userEvent.type(answerContent, 'Zurich');
+      fireEvent.blur(answerContent);
+    });
+
+    expect(mockUpdateAnswer).toHaveBeenCalledWith(
+      questionFixture.id,
+      questionFixture.answers[1].id,
+      {
+        content: 'Zurich',
+        isCorrect: false,
+      }
+    );
+
+    const checkboxes = screen.getAllByRole('checkbox');
+
+    await act(async () => {
+      await userEvent.click(checkboxes[0]);
+    });
+
+    expect(mockUpdateAnswer).toHaveBeenCalledWith(
+      questionFixture.id,
+      questionFixture.answers[1].id,
+      {
+        content: 'Zurich',
+        isCorrect: true,
+      }
+    );
+  });
+  it('indicates when saveAnswer failed', async () => {
+    const failingUpdate = vi.fn().mockRejectedValue(new Error('fail'));
+
+    render(
+      <QuestionCard
+        question={oneAnswerQuestionFixture}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={mockUpdateQuestion}
+        onCreateAnswer={mockCreateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={failingUpdate}
+      />
+    );
+
+    const answerContent = screen.getByDisplayValue('Berlin');
+
+    await act(async () => {
+      await userEvent.clear(answerContent);
+      await userEvent.type(answerContent, 'Zurich');
+      fireEvent.blur(answerContent);
+    });
+
+    expect(await screen.findByText('Failed to save answer')).toBeInTheDocument();
+  });
+  it('toggles answers open and closed in view mode', () => {
     render(<QuestionCard question={questionFixture} />);
 
     const button = screen.getByRole('button', { name: /toggle answers/i });
 
     fireEvent.click(button);
-    expect(screen.getByTestId('answer-list')).toBeInTheDocument();
+    expect(screen.queryByTestId('answer-list')).toBeInTheDocument();
 
     fireEvent.click(button);
     expect(screen.queryByTestId('answer-list')).not.toBeInTheDocument();

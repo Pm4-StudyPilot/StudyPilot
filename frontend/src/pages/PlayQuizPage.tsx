@@ -66,26 +66,6 @@ export default function PlayQuizPage() {
     setRevealed(false);
   }
 
-  if (loading) {
-    return (
-      <DashboardLayout activeNav="courses" showSearch={false}>
-        <div className="dashboard-state panel p-4">
-          <div className="spinner-border text-secondary" role="status" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (error || !quiz || !currentQuestion) {
-    return (
-      <DashboardLayout activeNav="courses" showSearch={false}>
-        <div className="dashboard-state panel dashboard-state--error">
-          {error || 'Quiz not found'}
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   return (
     <DashboardLayout activeNav="courses" showSearch={false}>
       <section className="dashboard-page-stack">
@@ -96,40 +76,57 @@ export default function PlayQuizPage() {
           <i className="fa-solid fa-chevron-left" />
           Back to quiz
         </Link>
+        {(() => {
+          if (loading)
+            return (
+              <section className="dashboard-page-stack">
+                <div className="dashboard-state panel p-4 course-detail__section-card">
+                  <div className="spinner-border text-secondary" role="status" />
+                </div>
+              </section>
+            );
+          if (error || !quiz || !currentQuestion)
+            return (
+              <div className="dashboard-state panel dashboard-state--error">
+                {error || 'Quiz not found'}
+              </div>
+            );
+          return (
+            <div className="panel play-quiz">
+              <div className="play-quiz__header">
+                <div>
+                  <span className="play-quiz__progress">
+                    Question {currentQuestionIndex + 1} / {questions.length}
+                  </span>
 
-        <section className="panel play-quiz">
-          <div className="play-quiz__header">
-            <div>
-              <span className="play-quiz__progress">
-                Question {currentQuestionIndex + 1} / {questions.length}
-              </span>
+                  <h1 className="play-quiz__title">{quiz.title}</h1>
+                </div>
+              </div>
 
-              <h1 className="play-quiz__title">{quiz.title}</h1>
+              <QuestionCard
+                question={currentQuestion}
+                mode="play"
+                revealed={revealed}
+                onPlayed={handlePlay}
+              />
+
+              <div className="play-quiz__footer">
+                {!revealed ? (
+                  <p className="text-secondary mb-0">Select an answer or reveal the solution.</p>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-primary play-quiz__next-button"
+                    onClick={handleNextQuestion}
+                  >
+                    <i className="fa-solid fa-arrow-right" />
+                    {isLastQuestion ? 'Quiz finished' : 'Next question'}
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-
-          <QuestionCard
-            question={currentQuestion}
-            mode="play"
-            revealed={revealed}
-            onPlayed={handlePlay}
-          />
-
-          <div className="play-quiz__footer">
-            {!revealed ? (
-              <p className="text-secondary mb-0">Select an answer or reveal the solution.</p>
-            ) : (
-              <button
-                type="button"
-                className="btn btn-primary play-quiz__next-button"
-                onClick={handleNextQuestion}
-              >
-                <i className="fa-solid fa-arrow-right" />
-                {isLastQuestion ? 'Quiz finished' : 'Next question'}
-              </button>
-            )}
-          </div>
-        </section>
+          );
+        })()}
       </section>
     </DashboardLayout>
   );

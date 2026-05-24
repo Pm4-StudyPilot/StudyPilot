@@ -105,18 +105,22 @@ export default function QuestionList({
         </div>
       )}
 
-      {questions.map((question) => (
-        <QuestionCard
-          key={question.id}
-          question={question}
-          mode={editable ? 'edit' : 'view'}
-          onUpdateQuestion={onUpdateQuestion}
-          onDeleteQuestion={onDeleteQuestion}
-          onCreateAnswer={onCreateAnswer}
-          onUpdateAnswer={onUpdateAnswer}
-          onDeleteAnswer={onDeleteAnswer}
-        />
-      ))}
+      {questions.map((question) => {
+        if (editable) {
+          return (
+            <QuestionCard
+              mode="edit"
+              question={question}
+              onUpdateQuestion={onUpdateQuestion!}
+              onDeleteQuestion={onDeleteQuestion!}
+              onCreateAnswer={onCreateAnswer!}
+              onUpdateAnswer={onUpdateAnswer!}
+              onDeleteAnswer={onDeleteAnswer!}
+            />
+          );
+        }
+        return <QuestionCard mode="view" question={question} />;
+      })}
 
       {editable && (
         <section className="question-list__new-question">

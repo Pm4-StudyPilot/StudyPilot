@@ -1,9 +1,8 @@
-import { describe, it, expect, vi, beforeEach, type MockedFunction } from 'vitest';
+import { describe, it, expect, vi, type MockedFunction } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import PlayQuizPage from '../pages/PlayQuizPage';
 import { api } from '../services/api';
-import { useAuth } from '../context/useAuth';
 import * as router from 'react-router-dom';
 import type { Mocked } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
@@ -27,12 +26,6 @@ mockedApi.get.mockImplementation((url: string) => {
   return Promise.resolve(mockQuiz);
 });
 
-const mockedUseAuth = useAuth as MockedFunction<typeof useAuth>;
-mockedUseAuth.mockReturnValue({
-  user: { id: 'user1', name: 'Test User' },
-  isAuthenticated: true,
-});
-
 vi.mock('../services/api', () => ({
   api: {
     get: vi.fn(),
@@ -50,7 +43,10 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('../context/useAuth', () => ({
-  useAuth: vi.fn(),
+  useAuth: () => ({
+    user: { username: 'testuser', email: 'test@example.com' },
+    logout: vi.fn(),
+  }),
 }));
 
 const mockQuiz = {
@@ -87,29 +83,6 @@ const mockQuestions = [
 ];
 
 describe('PlayQuizPage', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    mockedUseParams.mockReturnValue({
-      courseId: 'course1',
-      quizId: 'quiz1',
-    });
-
-    mockedUseNavigate.mockReturnValue(mockNavigate);
-
-    mockedApi.get.mockImplementation((url: string) => {
-      if (url.includes('/quizzes/quiz1/questions')) {
-        return Promise.resolve(mockQuestions);
-      }
-
-      return Promise.resolve(mockQuiz);
-    });
-
-    mockedUseAuth.mockReturnValue({
-      user: { id: 'user1', name: 'Test User' },
-      isAuthenticated: true,
-    });
-  });
   it('renders quiz title', async () => {
     render(
       <MemoryRouter>
@@ -142,6 +115,28 @@ describe('PlayQuizPage', () => {
 
     await waitFor(() => {
       expect(answerButton).toBeInTheDocument();
+    });
+  });
+  it('shows the next question when clicking on next question', async () => {
+    render(
+      <MemoryRouter>
+        <PlayQuizPage />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Question 1');
+
+    const answerButton = screen.getByText('AnswerButton');
+    fireEvent.click(answerButton);
+
+    const nextButton = await screen.findByRole('button', {
+      name: /next question/i,
+    });
+
+    fireEvent.click(nextButton);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Question 2')).toBeInTheDocument();
     });
   });
   it('navigates back when quiz is finished', async () => {
