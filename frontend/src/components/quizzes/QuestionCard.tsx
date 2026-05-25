@@ -155,8 +155,12 @@ function EditQuestionCard({
         description: draftQuestion.description.trim(),
         type: draftQuestion.type,
       });
-    } catch {
-      setQuestionError('Failed to save question');
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setQuestionError(e.message);
+      } else {
+        setQuestionError('Failed to save question');
+      }
     } finally {
       setSavingQuestion(false);
     }
@@ -177,8 +181,12 @@ function EditQuestionCard({
         content: draft.content.trim(),
         isCorrect: draft.isCorrect,
       });
-    } catch {
-      setQuestionError('Failed to save answer');
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setQuestionError(e.message);
+      } else {
+        setQuestionError('Failed to save answer');
+      }
     } finally {
       setSavingAnswerId(null);
     }
