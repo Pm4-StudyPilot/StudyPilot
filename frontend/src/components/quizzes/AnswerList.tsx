@@ -1,14 +1,18 @@
-import { AnswerDto } from '../../types/dto';
+import { Dispatch, SetStateAction } from 'react';
+import { useTranslation } from 'react-i18next';
 import CheckField from '../shared/form/CheckField';
+import { QuestionWithAnswersDto } from '../../types/dto';
+
+type AnswerDraft = { content: string; isCorrect: boolean };
 
 interface AnswerListProps {
   mode?: 'view' | 'edit' | 'play';
-  answers: AnswerDto[];
-  draftAnswers?: Record<string, { content: string; isCorrect: boolean }>;
-  handleSaveAnswer?: (answerId: string) => void;
-  setDraftAnswers?: (draftAnswers: Record<string, { content: string; isCorrect: boolean }>) => void;
+  question: QuestionWithAnswersDto;
+  draftAnswers?: Record<string, AnswerDraft>;
+  handleSaveAnswer?: (answerId: string, draft?: AnswerDraft) => void;
+  setDraftAnswers?: Dispatch<SetStateAction<Record<string, AnswerDraft>>>;
   onDeleteAnswer?: (questionId: string, answerId: string) => void;
-  onPlay?: (questionId: string) => void;
+  onPlay?: (answerId: string) => void;
 }
 
 export default function AnswerList({
@@ -19,12 +23,14 @@ export default function AnswerList({
   handleSaveAnswer,
   onDeleteAnswer,
   onPlay,
-}): AnswerListProps {
+}: AnswerListProps) {
+  const { t } = useTranslation();
   if (mode === 'edit') {
+    const drafts = draftAnswers ?? {};
     return (
       <>
         {question.answers.map((answer) => {
-          const draft = draftAnswers[answer.id] ?? {
+          const draft = drafts[answer.id] ?? {
             content: answer.content,
             isCorrect: answer.isCorrect ?? false,
           };
@@ -36,7 +42,7 @@ export default function AnswerList({
                   className="form-control"
                   value={draft.content}
                   onChange={(event) =>
-                    setDraftAnswers((current) => ({
+                    setDraftAnswers?.((current) => ({
                       ...current,
                       [answer.id]: {
                         ...draft,
@@ -44,13 +50,13 @@ export default function AnswerList({
                       },
                     }))
                   }
-                  onBlur={() => handleSaveAnswer(answer.id)}
+                  onBlur={() => handleSaveAnswer?.(answer.id)}
                 />
               </label>
 
               <CheckField
                 className="inline-form-check"
-                label="Correct"
+                label={t('quizzes.answers.correctCheckbox')}
                 type="checkbox"
                 checked={draft.isCorrect ?? false}
                 onChange={(event) => {
@@ -59,12 +65,12 @@ export default function AnswerList({
                     isCorrect: event.target.checked,
                   };
 
-                  setDraftAnswers((current) => ({
+                  setDraftAnswers?.((current) => ({
                     ...current,
                     [answer.id]: updatedDraft,
                   }));
 
-                  void handleSaveAnswer(answer.id, updatedDraft);
+                  void handleSaveAnswer?.(answer.id, updatedDraft);
                 }}
               />
 
@@ -72,10 +78,10 @@ export default function AnswerList({
                 <button
                   type="button"
                   className="btn btn-outline-danger btn-sm"
-                  onClick={() => onDeleteAnswer(question.id, answer.id)}
+                  onClick={() => onDeleteAnswer?.(question.id, answer.id)}
                 >
                   <i className="fa-solid fa-trash  me-1" />
-                  Delete
+                  {t('quizzes.answers.deleteButton')}
                 </button>
               </div>
             </div>
@@ -96,7 +102,9 @@ export default function AnswerList({
           >
             <p className="answer-card__content">{answer.content}</p>
 
-            <span className="answer-card__badge">{answer.isCorrect ? 'Correct' : 'Incorrect'}</span>
+            <span className="answer-card__badge">
+              {answer.isCorrect ? t('quizzes.answers.correct') : t('quizzes.answers.incorrect')}
+            </span>
           </div>
         ))}
       </>
@@ -116,7 +124,9 @@ export default function AnswerList({
 
           <p className="answer-card__content">{answer.content}</p>
 
-          <span className="answer-card__badge">{answer.isCorrect ? 'Correct' : 'Incorrect'}</span>
+          <span className="answer-card__badge">
+            {answer.isCorrect ? t('quizzes.answers.correct') : t('quizzes.answers.incorrect')}
+          </span>
         </div>
       ))}
     </>

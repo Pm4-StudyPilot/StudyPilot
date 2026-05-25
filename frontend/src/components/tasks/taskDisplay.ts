@@ -11,9 +11,3 @@ export const TASK_STATUS_BADGE_CLASS: Record<TaskDto['status'], string> = {
   IN_PROGRESS: 'bg-primary',
   DONE: 'bg-success',
 };
-
-export const TASK_STATUS_LABEL: Record<TaskDto['status'], string> = {
-  OPEN: 'Open',
-  IN_PROGRESS: 'In Progress',
-  DONE: 'Done',
-};

@@ -1,3 +1,5 @@
+import { formatDate, formatMonthLabel as formatLocalizedMonthLabel } from './formatDate';
+
 export interface CalendarDay {
   date: Date;
   dateKey: string;
@@ -31,26 +33,16 @@ export function parseDateKey(dateKey: string): Date {
   return new Date(year, month - 1, day);
 }
 
-export function formatMonthLabel(month: Date): string {
-  return month.toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-  });
+export function formatMonthLabel(month: Date, lang: string): string {
+  return formatLocalizedMonthLabel(month, lang);
 }
 
 export function formatLongDate(dateKey: string): string {
-  return parseDateKey(dateKey).toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  return formatDate(parseDateKey(dateKey));
 }
 
 export function formatShortDate(dateKey: string): string {
-  return parseDateKey(dateKey).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  });
+  return formatDate(parseDateKey(dateKey));
 }
 
 export function shiftMonth(month: Date, offset: number): Date {

@@ -1,0 +1,29 @@
+{
+  "eyebrow": "Kontoverwaltung",
+  "title": "Kontoeinstellungen",
+  "subline": "Verwalte dein Profil und deine Sicherheitseinstellungen.",
+  "profile": {
+    "title": "Profilinformationen",
+    "subtitle": "Aktualisiere deine sichtbaren Kontoinformationen.",
+    "usernameLabel": "Benutzername",
+    "emailLabel": "E-Mail",
+    "save": "Profil speichern",
+    "successUpdated": "Profil erfolgreich aktualisiert"
+  },
+  "security": {
+    "title": "Sicherheit",
+    "subtitle": "Aktualisiere dein Passwort, um dein Konto zu schützen.",
+    "change": "Passwort ändern"
+  },
+  "changePassword": {
+    "back": "Zurück zu den Einstellungen",
+    "eyebrow": "Sicherheit",
+    "title": "Passwort ändern",
+    "subline": "Aktualisiere dein Passwort, um dein Konto zu schützen.",
+    "currentLabel": "Aktuelles Passwort",
+    "newLabel": "Neues Passwort",
+    "confirmLabel": "Neues Passwort bestätigen",
+    "submit": "Passwort ändern",
+    "cancel": "Abbrechen"
+  }
+}

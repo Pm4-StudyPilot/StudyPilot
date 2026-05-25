@@ -1,0 +1,11 @@
+{
+  "placeholder": "How can TARS help you?",
+  "ariaLabel": "Ask TARS",
+  "sendAria": "Send",
+  "closeAria": "Close chat",
+  "chatAria": "Chat with TARS",
+  "typingAria": "TARS is typing",
+  "errorReply": "Sorry, something went wrong reaching TARS. Please try again.",
+  "toolsUsed": "{{count}} tool used",
+  "toolsUsed_other": "{{count}} tools used"
+}

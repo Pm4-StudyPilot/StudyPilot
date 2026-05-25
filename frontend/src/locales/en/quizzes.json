@@ -1,0 +1,81 @@
+{
+  "card": {
+    "added": "Added {{date}}",
+    "noDescription": "No description provided."
+  },
+  "create": {
+    "title": "New Quiz",
+    "titleLabel": "Title",
+    "descriptionLabel": "Description",
+    "randomOrderLabel": "Random question order",
+    "submit": "Create Quiz"
+  },
+  "detail": {
+    "backToCourse": "Back to course",
+    "loadFailed": "Failed to load quiz",
+    "saveFailed": "Failed to save quiz",
+    "fallbackTitle": "Quiz Detail",
+    "fallbackDescription": "Review the questions and answers before starting this quiz.",
+    "fixedOrder": "Fixed question order",
+    "randomOrder": "Randomized question order",
+    "loadingQuiz": "Loading quiz...",
+    "titleField": "Quiz title",
+    "descriptionField": "Description",
+    "randomizeField": "Randomize question order",
+    "savingStatus": "Saving...",
+    "overviewHeading": "Overview",
+    "question": "Question",
+    "question_other": "Questions",
+    "answer": "Answer",
+    "answer_other": "Answers",
+    "correct": "Correct",
+    "play": "Play",
+    "updated": "Updated {{date}}",
+    "updatedRecently": "Updated recently",
+    "questionsAndAnswers": "Questions and answers",
+    "itemsCount": "{{count}} item",
+    "itemsCount_other": "{{count}} items",
+    "preview": "Preview",
+    "edit": "Edit",
+    "summaryAria": "Quiz summary"
+  },
+  "questions": {
+    "noneViewTitle": "No questions yet",
+    "noneViewHint": "Once questions are added, they will appear here.",
+    "noneEditTitle": "No questions yet",
+    "noneEditHint": "Create the first question below.",
+    "addHeading": "Add a new question",
+    "titleLabel": "Question title",
+    "titlePlaceholder": "e.g. What is the capital of France?",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Additional explanation or hint",
+    "typeLabel": "Question type",
+    "adding": "Adding...",
+    "addButton": "Add question",
+    "typeOptions": {
+      "SINGLE_CHOICE": "Single Choice",
+      "MULTIPLE_CHOICE": "Multiple Choice",
+      "CARD": "Card"
+    },
+    "card": {
+      "toggleAria": "Toggle answers",
+      "viewAnswers": "View Answers",
+      "answersCount": "{{count}} answer",
+      "answersCount_other": "{{count}} answers",
+      "correctCount": "{{count}} correct answer",
+      "correctCount_other": "{{count}} correct answers",
+      "answersHeading": "Answers",
+      "delete": "Delete"
+    }
+  },
+  "answers": {
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "newLabel": "New answer",
+    "newPlaceholder": "Add another possible answer",
+    "correctCheckbox": "Correct",
+    "addButton": "Add answer",
+    "addingButton": "Adding...",
+    "deleteButton": "Delete"
+  }
+}

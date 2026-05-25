@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Trans } from 'react-i18next';
 import {
   DndContext,
   closestCenter,
@@ -34,13 +36,7 @@ interface TaskListProps {
 const PRIORITY_ORDER: Record<TaskDto['priority'], number> = { LOW: 0, MEDIUM: 1, HIGH: 2 };
 const STATUS_ORDER: Record<TaskDto['status'], number> = { OPEN: 0, IN_PROGRESS: 1, DONE: 2 };
 
-const SORT_LABELS: Record<SortField, string> = {
-  manual: 'Manual',
-  title: 'Title',
-  dueDate: 'Due Date',
-  priority: 'Priority',
-  status: 'Status',
-};
+const SORT_FIELDS: SortField[] = ['manual', 'title', 'dueDate', 'priority', 'status'];
 
 function sortTasks(tasks: TaskDto[], field: SortField): TaskDto[] {
   if (field === 'manual') return tasks;
@@ -93,21 +89,6 @@ function SortableTaskCard({ task, onEdit, onDelete }: SortableTaskCardProps) {
   );
 }
 
-/**
- * TaskList
- *
- * Displays all tasks for a course with sort controls and manual drag-and-drop
- * reordering. In manual mode, tasks can be rearranged via drag handles and
- * the new order is persisted to the backend. In sort mode, tasks are ordered
- * in memory by the selected field without affecting the stored position.
- *
- * Responsibilities:
- * - Render tasks using TaskCard
- * - Provide sort controls (Title, Due Date, Priority, Status, Manual)
- * - Enable drag-and-drop reordering in manual mode via dnd-kit
- * - Persist manual order to PATCH /courses/:courseId/tasks/order
- * - Open EditTaskModal and DeleteTaskModal on user actions
- */
 export default function TaskList({
   courseId,
   tasks,
@@ -119,6 +100,7 @@ export default function TaskList({
   const [editingTask, setEditingTask] = useState<TaskDto | null>(null);
   const [deletingTask, setDeletingTask] = useState<TaskDto | null>(null);
   const [reorderError, setReorderError] = useState('');
+  const { t } = useTranslation();
 
   const sensors = useSensors(useSensor(PointerSensor));
   const displayedTasks = sortTasks(tasks, sortField);
@@ -143,7 +125,7 @@ export default function TaskList({
       });
     } catch {
       onTasksReordered(tasks);
-      setReorderError('Failed to save order. Please try again.');
+      setReorderError(t('tasks.list.reorderError'));
     }
   }
 
@@ -160,7 +142,7 @@ export default function TaskList({
   if (tasks.length === 0) {
     return (
       <div className="task-list__empty rounded p-3 text-secondary text-center">
-        No tasks yet. Add one to get started.
+        {t('tasks.list.empty')}
       </div>
     );
   }
@@ -168,14 +150,14 @@ export default function TaskList({
   return (
     <div className="task-list">
       <div className="d-flex align-items-center gap-2 mb-3">
-        <span className="task-list__label text-secondary">Sort by:</span>
-        {(Object.keys(SORT_LABELS) as SortField[]).map((field) => (
+        <span className="task-list__label text-secondary">{t('tasks.list.sortBy')}</span>
+        {SORT_FIELDS.map((field) => (
           <button
             key={field}
             className={`btn btn-sm ${sortField === field ? 'btn-primary' : 'btn-outline-secondary'}`}
             onClick={() => setSortField(field)}
           >
-            {SORT_LABELS[field]}
+            {t(`tasks.list.sortLabels.${field}`)}
           </button>
         ))}
       </div>
@@ -183,13 +165,17 @@ export default function TaskList({
       {sortField !== 'manual' && (
         <div className="task-list__sorted-alert alert alert-secondary py-1 px-3 mb-3 d-flex align-items-center justify-content-between">
           <span>
-            Sorted by <strong>{SORT_LABELS[sortField]}</strong>
+            <Trans
+              i18nKey="tasks.list.sortedBy"
+              values={{ label: t(`tasks.list.sortLabels.${sortField}`) }}
+              components={{ strong: <strong /> }}
+            />
           </span>
           <button
             className="btn btn-link btn-sm p-0 text-secondary"
             onClick={() => setSortField('manual')}
           >
-            Switch to manual order
+            {t('tasks.list.switchToManual')}
           </button>
         </div>
       )}

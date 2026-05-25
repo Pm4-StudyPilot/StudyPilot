@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import QuizCard from '../quizzes/QuizCard';
 import { QuizDto } from '../../types/dto';
 
@@ -10,11 +11,6 @@ interface CourseFeedProps {
 
 type SortField = 'title' | 'dateAdded';
 
-const SORT_LABELS: Record<SortField, string> = {
-  title: 'Title',
-  dateAdded: 'Date Added',
-};
-
 function sortItems(items: CourseFeedItem[], field: SortField): CourseFeedItem[] {
   return [...items].sort((a, b) => {
     switch (field) {
@@ -25,7 +21,7 @@ function sortItems(items: CourseFeedItem[], field: SortField): CourseFeedItem[] 
         const dateA = new Date(a.data.createdAt).getTime();
         const dateB = new Date(b.data.createdAt).getTime();
         return dateB - dateA;
-      } // Newest first
+      }
       default:
         return 0;
     }
@@ -47,6 +43,9 @@ export default function CourseFeed({ items }: CourseFeedProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const sortedItems = sortItems(items, sortField);
+  const { t } = useTranslation();
+
+  const sortFields: SortField[] = ['title', 'dateAdded'];
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -68,7 +67,7 @@ export default function CourseFeed({ items }: CourseFeedProps) {
   if (items.length === 0) {
     return (
       <div className="panel course-feed__empty rounded p-4 text-secondary text-center">
-        No course materials yet. Add quizzes or other items to get started.
+        {t('courses.feed.empty')}
       </div>
     );
   }
@@ -83,11 +82,11 @@ export default function CourseFeed({ items }: CourseFeedProps) {
             onClick={() => setIsDropdownOpen((prev) => !prev)}
             aria-expanded={isDropdownOpen}
           >
-            Sort by: {SORT_LABELS[sortField]}
+            {t('courses.feed.sortBy', { label: t(`courses.feed.sortLabels.${sortField}`) })}
           </button>
           {isDropdownOpen && (
             <ul className="dropdown-menu show position-absolute">
-              {(Object.keys(SORT_LABELS) as SortField[]).map((field) => (
+              {sortFields.map((field) => (
                 <li key={field}>
                   <button
                     className="dropdown-item"
@@ -96,7 +95,7 @@ export default function CourseFeed({ items }: CourseFeedProps) {
                       setIsDropdownOpen(false);
                     }}
                   >
-                    {SORT_LABELS[field]}
+                    {t(`courses.feed.sortLabels.${field}`)}
                   </button>
                 </li>
               ))}

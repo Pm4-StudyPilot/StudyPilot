@@ -1,0 +1,51 @@
+{
+  "list": {
+    "empty": "No tasks yet. Add one to get started.",
+    "sortBy": "Sort by:",
+    "sortedBy": "Sorted by <strong>{{label}}</strong>",
+    "switchToManual": "Switch to manual order",
+    "reorderError": "Failed to save order. Please try again.",
+    "sortLabels": {
+      "manual": "Manual",
+      "title": "Title",
+      "dueDate": "Due Date",
+      "priority": "Priority",
+      "status": "Status"
+    }
+  },
+  "card": {
+    "dragHandleAria": "drag handle",
+    "editAria": "edit task",
+    "deleteAria": "delete task",
+    "noDescription": "No description."
+  },
+  "priority": {
+    "LOW": "Low",
+    "MEDIUM": "Medium",
+    "HIGH": "High"
+  },
+  "status": {
+    "OPEN": "Open",
+    "IN_PROGRESS": "In Progress",
+    "DONE": "Done"
+  },
+  "fields": {
+    "title": "Title",
+    "description": "Description",
+    "dueDate": "Due Date",
+    "priority": "Priority",
+    "status": "Status"
+  },
+  "create": {
+    "title": "New Task",
+    "submit": "Create Task"
+  },
+  "edit": {
+    "title": "Edit Task",
+    "submit": "Save Changes"
+  },
+  "delete": {
+    "title": "Delete Task",
+    "confirm": "Are you sure you want to delete <strong>{{title}}</strong>? This action cannot be undone."
+  }
+}

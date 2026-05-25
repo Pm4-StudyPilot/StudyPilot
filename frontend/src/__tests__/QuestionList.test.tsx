@@ -72,10 +72,7 @@ vi.mock('../components/shared/form/SelectField', () => ({
 }));
 
 vi.mock('../components/quizzes/types', () => ({
-  questionTypeOptions: [
-    { value: 'SINGLE_CHOICE', label: 'Single' },
-    { value: 'MULTIPLE_CHOICE', label: 'Multiple' },
-  ],
+  questionTypes: ['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'CARD'],
 }));
 
 const questionFixtures: QuestionWithAnswersDto[] = [

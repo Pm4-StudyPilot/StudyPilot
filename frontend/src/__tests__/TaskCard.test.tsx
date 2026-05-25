@@ -39,7 +39,7 @@ describe('TaskCard', () => {
     render(<TaskCard task={mockTask} onEdit={mockOnEdit} onDelete={mockOnDelete} />);
 
     expect(screen.getByText('Write lab report')).toBeInTheDocument();
-    expect(screen.getByText('HIGH')).toBeInTheDocument();
+    expect(screen.getByText('High')).toBeInTheDocument();
     expect(screen.getByText('In Progress')).toBeInTheDocument();
   });
 
