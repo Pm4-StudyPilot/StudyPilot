@@ -65,7 +65,10 @@
       "correctCount": "{{count}} correct answer",
       "correctCount_other": "{{count}} correct answers",
       "answersHeading": "Answers",
-      "delete": "Delete"
+      "delete": "Delete",
+      "revealAnswer": "Reveal answer",
+      "scorePoints": "{{count}} Point",
+      "scorePoints_other": "{{count}} Points"
     }
   },
   "answers": {

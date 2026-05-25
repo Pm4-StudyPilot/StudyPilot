@@ -65,7 +65,10 @@
       "correctCount": "{{count}} richtige Antwort",
       "correctCount_other": "{{count}} richtige Antworten",
       "answersHeading": "Antworten",
-      "delete": "Löschen"
+      "delete": "Löschen",
+      "revealAnswer": "Antwort anzeigen",
+      "scorePoints": "{{count}} Punkt",
+      "scorePoints_other": "{{count}} Punkte"
     }
   },
   "answers": {

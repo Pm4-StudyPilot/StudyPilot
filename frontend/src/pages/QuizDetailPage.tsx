@@ -337,14 +337,24 @@ export default function QuizDetailPage() {
                 )}
 
                 <div className="quiz-detail__actions">
-                  <button
-                    type="button"
-                    className="btn btn-primary quiz-detail__play-button"
-                    disabled={editMode}
-                  >
-                    <i className="fa-solid fa-play" />
-                    {t('quizzes.detail.play')}
-                  </button>
+                  {editMode ? (
+                    <button
+                      type="button"
+                      className="btn btn-primary quiz-detail__play-button"
+                      disabled
+                    >
+                      <i className="fa-solid fa-play" />
+                      {t('quizzes.detail.play')}
+                    </button>
+                  ) : (
+                    <Link
+                      to={`/courses/${courseId}/quizzes/${quizId}/play`}
+                      className="btn btn-primary quiz-detail__play-button"
+                    >
+                      <i className="fa-solid fa-play" />
+                      {t('quizzes.detail.play')}
+                    </Link>
+                  )}
                   <span className="quiz-detail__updated">
                     <i className="fa-regular fa-clock" />
                     {formattedUpdatedDate
@@ -358,7 +368,9 @@ export default function QuizDetailPage() {
                 className="quiz-detail__summary-card panel"
                 aria-label={t('quizzes.detail.summaryAria')}
               >
-                <h1 className="quiz-detail__summary-title">{t('quizzes.detail.overviewHeading')}</h1>
+                <h1 className="quiz-detail__summary-title">
+                  {t('quizzes.detail.overviewHeading')}
+                </h1>
 
                 <div className="quiz-detail__summary-grid">
                   <div className="quiz-detail__stat">
