@@ -77,6 +77,16 @@ const cardMockQuestions = [
       { id: 'a2', content: 'B', isCorrect: false },
     ],
   },
+  {
+    id: 'q1',
+    title: 'Question 2',
+    description: '',
+    type: 'CARD',
+    answers: [
+      { id: 'a1', content: 'AnswerButton', isCorrect: true },
+      { id: 'a2', content: 'B', isCorrect: false },
+    ],
+  },
 ];
 vi.mock('../services/api', () => ({
   api: {
@@ -274,8 +284,12 @@ describe('PlayQuizPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: /reveal answer/i }));
     fireEvent.click(await screen.findByRole('button', { name: /^correct/i }));
 
-    expect(await screen.findByText(/1 \/ 1 Points/)).toBeInTheDocument();
-    expect(screen.queryByText(/0 \/ 1 Points/)).not.toBeInTheDocument();
+    await screen.findByText('Question 2');
+    fireEvent.click(await screen.findByRole('button', { name: /reveal answer/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /^correct/i }));
+
+    expect(await screen.findByText(/2 \/ 2 Points/)).toBeInTheDocument();
+    expect(screen.queryByText(/0 \/ 2 Points/)).not.toBeInTheDocument();
   });
   it('lets the user decide that the answer was incorrect when the question type is card', async () => {
     mockedUseParams.mockReturnValue({
@@ -291,8 +305,12 @@ describe('PlayQuizPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: /reveal answer/i }));
     fireEvent.click(await screen.findByRole('button', { name: /^incorrect/i }));
 
-    expect(await screen.findByText(/0 \/ 1 Points/)).toBeInTheDocument();
-    expect(screen.queryByText(/1 \/ 1 Points/)).not.toBeInTheDocument();
+    await screen.findByText('Question 2');
+    fireEvent.click(await screen.findByRole('button', { name: /reveal answer/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /^incorrect/i }));
+
+    expect(await screen.findByText(/0 \/ 2 Points/)).toBeInTheDocument();
+    expect(screen.queryByText(/2 \/ 2 Points/)).not.toBeInTheDocument();
   });
   it('calculates partial points when a multiple choice question was partially corect', async () => {
     render(
