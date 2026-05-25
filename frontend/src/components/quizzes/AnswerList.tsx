@@ -63,7 +63,7 @@ function EditAnswerList({
         };
 
         return (
-          <div className="answer-editor">
+          <div className="answer-editor" key={answer.id}>
             <label className="answer-editor__content">
               <input
                 className="form-control"
@@ -125,22 +125,21 @@ function PlayAnswerList({ question, revealed = false, onPlayed, selectedAnswers 
     return (
       <>
         {revealed &&
-          question.answers
-            .filter((answer) => answer.isCorrect)
-            .map((answer) => (
-              <div
-                className={
-                  'answer-card answer-card--correct' +
-                  (selectedAnswers.find((a) => a.id === answer.id) ? ' answer-card--selected' : '')
-                }
-              >
-                <div className="answer-card__icon">
-                  <i className="fa-solid fa-circle-check" />
-                </div>
-
-                <p className="answer-card__content">{answer.content}</p>
+          question.answers.map((answer) => (
+            <div
+              className={
+                'answer-card answer-card--correct' +
+                (selectedAnswers.find((a) => a.id === answer.id) ? ' answer-card--selected' : '')
+              }
+              key={answer.id}
+            >
+              <div className="answer-card__icon">
+                <i className="fa-solid fa-circle-check" />
               </div>
-            ))}
+
+              <p className="answer-card__content">{answer.content}</p>
+            </div>
+          ))}
       </>
     );
   }

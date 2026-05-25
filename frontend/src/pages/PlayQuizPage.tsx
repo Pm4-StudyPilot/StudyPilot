@@ -208,6 +208,7 @@ export default function PlayQuizPage() {
                           revealed={true}
                           score={scores[index]}
                           selectedAnswers={history.selectedAnswers}
+                          key={history.question.id}
                         />
                       ))}
                     </div>

@@ -116,6 +116,7 @@ export default function QuestionList({
               onCreateAnswer={onCreateAnswer!}
               onUpdateAnswer={onUpdateAnswer!}
               onDeleteAnswer={onDeleteAnswer!}
+              key={question.id}
             />
           );
         }

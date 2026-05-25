@@ -78,7 +78,7 @@ const cardMockQuestions = [
     ],
   },
   {
-    id: 'q1',
+    id: 'q2',
     title: 'Question 2',
     description: '',
     type: 'CARD',
