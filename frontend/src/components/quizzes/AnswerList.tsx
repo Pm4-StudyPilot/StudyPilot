@@ -1,4 +1,4 @@
-import { QuestionWithAnswersDto } from '../../types/dto';
+import { AnswerDto, QuestionWithAnswersDto } from '../../types/dto';
 import CheckField from '../shared/form/CheckField';
 import React from 'react';
 
@@ -9,6 +9,7 @@ type BaseProps = {
 
 type ViewProps = BaseProps & {
   mode?: 'view';
+  selectedAnswers?: AnswerDto[];
 };
 
 type EditProps = BaseProps & {
@@ -27,7 +28,8 @@ type EditProps = BaseProps & {
 type PlayProps = BaseProps & {
   mode: 'play';
   revealed?: boolean;
-  onPlay: (answerId?: string) => void;
+  onPlayed: (answerId?: string) => void;
+  selectedAnswers?: AnswerDto[];
 };
 
 type AnswerListProps = ViewProps | EditProps | PlayProps;
@@ -61,7 +63,7 @@ function EditAnswerList({
         };
 
         return (
-          <div key={answer.id} className="answer-editor">
+          <div className="answer-editor">
             <label className="answer-editor__content">
               <input
                 className="form-control"
@@ -116,7 +118,8 @@ function EditAnswerList({
   );
 }
 
-function PlayAnswerList({ question, revealed = false, onPlay }: PlayProps) {
+function PlayAnswerList({ question, revealed = false, onPlayed, selectedAnswers = [] }: PlayProps) {
+  console.log(selectedAnswers);
   const isChoiceQuestion = question.type === 'SINGLE_CHOICE' || question.type === 'MULTIPLE_CHOICE';
 
   if (!isChoiceQuestion) {
@@ -126,7 +129,12 @@ function PlayAnswerList({ question, revealed = false, onPlay }: PlayProps) {
           question.answers
             .filter((answer) => answer.isCorrect)
             .map((answer) => (
-              <div key={answer.id} className="answer-card answer-card--correct">
+              <div
+                className={
+                  'answer-card answer-card--correct' +
+                  (selectedAnswers.find((a) => a.id === answer.id) ? ' answer-card--selected' : '')
+                }
+              >
                 <div className="answer-card__icon">
                   <i className="fa-solid fa-circle-check" />
                 </div>
@@ -150,8 +158,8 @@ function PlayAnswerList({ question, revealed = false, onPlay }: PlayProps) {
           <button
             key={answer.id}
             type="button"
-            className={`answer-card answer-card--play ${answerStateClass}`}
-            onClick={() => onPlay?.(answer.id)}
+            className={`answer-card answer-card--play ${answerStateClass} ${selectedAnswers.find((a) => a.id === answer.id) ? ' answer-card--selected' : ''}`}
+            onClick={() => onPlayed?.(answer.id)}
             disabled={revealed}
           >
             {revealed && (
@@ -175,13 +183,13 @@ function PlayAnswerList({ question, revealed = false, onPlay }: PlayProps) {
   );
 }
 
-function ViewAnswerList({ question }: ViewProps) {
+function ViewAnswerList({ question, selectedAnswers = [] }: ViewProps) {
   return (
     <>
       {question.answers.map((answer) => (
         <div
           key={answer.id}
-          className={`answer-card ${answer.isCorrect ? 'answer-card--correct' : 'answer-card--incorrect'}`}
+          className={`answer-card ${answer.isCorrect ? 'answer-card--correct' : 'answer-card--incorrect'} ${selectedAnswers.find((a) => a.id === answer.id) ? ' answer-card--selected' : ''}`}
         >
           <div className="answer-card__icon" aria-hidden="true">
             <i className={`fa-solid ${answer.isCorrect ? 'fa-circle-check' : 'fa-circle-xmark'}`} />

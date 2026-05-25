@@ -67,7 +67,7 @@ describe('AnswerList', () => {
   >;
   let handleSaveAnswer: (answerId: string) => void;
   let onDeleteAnswer: (questionId: string, answerId: string) => void;
-  let onPlay: (answerId?: string) => void;
+  let onPlayed: (answerId?: string) => void;
 
   beforeEach(() => {
     setDraftAnswers = vi.fn((updater) => {
@@ -78,7 +78,7 @@ describe('AnswerList', () => {
 
     handleSaveAnswer = vi.fn();
     onDeleteAnswer = vi.fn();
-    onPlay = vi.fn();
+    onPlayed = vi.fn();
   });
 
   it('renders answers in view mode with correct classes and labels', () => {
@@ -189,7 +189,7 @@ describe('AnswerList', () => {
         mode="play"
         question={choiceQuestion as QuestionWithAnswersDto}
         revealed={false}
-        onPlay={onPlay}
+        onPlayed={onPlayed}
       />
     );
 
@@ -201,7 +201,7 @@ describe('AnswerList', () => {
     await userEvent.click(answer1);
 
     await waitFor(() => {
-      expect(onPlay).toHaveBeenCalled();
+      expect(onPlayed).toHaveBeenCalled();
     });
   });
 
@@ -211,7 +211,7 @@ describe('AnswerList', () => {
         mode="play"
         question={cardQuestion as QuestionWithAnswersDto}
         revealed={false}
-        onPlay={onPlay}
+        onPlayed={onPlayed}
       />
     );
 
@@ -224,7 +224,7 @@ describe('AnswerList', () => {
         mode="play"
         question={cardQuestion as QuestionWithAnswersDto}
         revealed={true}
-        onPlay={onPlay}
+        onPlayed={onPlayed}
       />
     );
 
@@ -237,7 +237,7 @@ describe('AnswerList', () => {
         mode="play"
         question={cardQuestion as QuestionWithAnswersDto}
         revealed={true}
-        onPlay={onPlay}
+        onPlayed={onPlayed}
       />
     );
 
@@ -249,5 +249,29 @@ describe('AnswerList', () => {
 
     expect(screen.getByText('Answer 1')).toBeInTheDocument();
     expect(screen.getByText('Answer 2')).toBeInTheDocument();
+  });
+  it('highlights selected answers in view mode when provided', async () => {
+    render(
+      <AnswerList
+        question={choiceQuestion as QuestionWithAnswersDto}
+        selectedAnswers={[choiceQuestion.answers[0]]}
+      />
+    );
+
+    expect(screen.getByText('Answer 1').closest('.answer-card--selected')).not.toBeNull();
+    expect(screen.getByText('Answer 2').closest('.answer-card--selected')).toBeNull();
+  });
+  it('highlights selected answers in play mode when provided', async () => {
+    render(
+      <AnswerList
+        question={choiceQuestion as QuestionWithAnswersDto}
+        selectedAnswers={[choiceQuestion.answers[0]]}
+        mode="play"
+        onPlayed={() => {}}
+      />
+    );
+
+    expect(screen.getByText('Answer 1').closest('.answer-card--selected')).not.toBeNull();
+    expect(screen.getByText('Answer 2').closest('.answer-card--selected')).toBeNull();
   });
 });
