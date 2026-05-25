@@ -512,4 +512,49 @@ describe('QuestionCard', () => {
     fireEvent.click(button);
     expect(screen.queryByTestId('answer-list')).not.toBeInTheDocument();
   });
+  it('shows a score when a score is provided', async () => {
+    render(<QuestionCard question={oneAnswerQuestionFixture} mode="view" score={2} />);
+
+    expect(screen.getByText('2 Points')).toBeInTheDocument();
+
+    render(<QuestionCard question={oneAnswerQuestionFixture} mode="view" score={1} />);
+    expect(screen.getByText('1 Point')).toBeInTheDocument();
+  });
+  it('shows questions in view mode if revealed is true', async () => {
+    render(
+      <QuestionCard
+        question={oneAnswerQuestionFixture}
+        mode="view"
+        revealed={true}
+        selectedAnswers={[oneAnswerQuestionFixture.answers[0]]}
+      />
+    );
+
+    expect(screen.getByText('Berlin')).toBeInTheDocument();
+  });
+  it('highlights the selected answers when selected answers are provided in view mode', async () => {
+    render(
+      <QuestionCard
+        question={oneAnswerQuestionFixture}
+        mode="view"
+        revealed={true}
+        selectedAnswers={[oneAnswerQuestionFixture.answers[0]]}
+      />
+    );
+
+    expect(screen.getByText('Berlin').closest('.answer-card--selected')).not.toBeNull();
+  });
+  it('highlights the selected answers when selected answers are provided in play mode', async () => {
+    render(
+      <QuestionCard
+        question={oneAnswerQuestionFixture}
+        mode="play"
+        revealed={true}
+        selectedAnswers={[oneAnswerQuestionFixture.answers[0]]}
+        onPlayed={() => {}}
+      />
+    );
+
+    expect(screen.getByText('Berlin').closest('.answer-card--selected')).not.toBeNull();
+  });
 });

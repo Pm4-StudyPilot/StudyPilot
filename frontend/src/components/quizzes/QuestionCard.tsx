@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { QuestionWithAnswersDto } from '../../types/dto';
+import { AnswerDto, QuestionWithAnswersDto } from '../../types/dto';
 import { AnswerFormState, QuestionFormState, questionTypeOptions } from './types';
 import InputField from '../shared/form/InputField';
 import TextareaField from '../shared/form/TextareaField';
@@ -14,6 +14,9 @@ type BaseProps = {
 
 type ViewProps = BaseProps & {
   mode?: 'view';
+  revealed?: boolean;
+  score?: number;
+  selectedAnswers?: AnswerDto[];
 };
 
 type EditProps = BaseProps & {
@@ -33,6 +36,7 @@ type PlayProps = BaseProps & {
   mode: 'play';
   revealed?: boolean;
   onPlayed: (answerId?: string) => void;
+  selectedAnswers?: AnswerDto[];
 };
 
 type QuestionCardProps = ViewProps | EditProps | PlayProps;
@@ -45,7 +49,7 @@ function formatQuestionType(type: QuestionWithAnswersDto['type']) {
     .join(' ');
 }
 
-function ViewQuestionCard({ question }: ViewProps) {
+function ViewQuestionCard({ question, revealed = false, score, selectedAnswers = [] }: ViewProps) {
   const correctAnswers = question.answers.filter((answer) => answer.isCorrect).length;
   const [expanded, setExpanded] = useState(false);
   function handleToggle() {
@@ -73,23 +77,30 @@ function ViewQuestionCard({ question }: ViewProps) {
             <p className="question-card__description">{question.description}</p>
           )}
         </div>
+        {typeof score === 'number' && (
+          <div className="question-card__score">
+            {score} Point{score === 1 ? '' : 's'}{' '}
+          </div>
+        )}
       </header>
 
-      <button
-        className="question-card__toggle btn btn-sm btn-link text-secondary p-0"
-        onClick={handleToggle}
-        aria-label="Toggle answers"
-        aria-expanded={expanded}
-      >
-        View Answers
-        <i
-          className={`question-card__chevron fa-solid fa-chevron-${expanded ? 'down' : 'right'}`}
-        />
-      </button>
+      {!revealed && (
+        <button
+          className="question-card__toggle btn btn-sm btn-link text-secondary p-0"
+          onClick={handleToggle}
+          aria-label="Toggle answers"
+          aria-expanded={expanded}
+        >
+          View Answers
+          <i
+            className={`question-card__chevron fa-solid fa-chevron-${expanded ? 'down' : 'right'}`}
+          />
+        </button>
+      )}
 
-      {expanded && (
+      {(revealed || expanded) && (
         <div className="answer-list" data-testid="answer-list">
-          <AnswerList question={question} mode="view" />
+          <AnswerList question={question} mode="view" selectedAnswers={selectedAnswers} />
         </div>
       )}
     </article>
@@ -315,9 +326,12 @@ function EditQuestionCard({
   );
 }
 
-function PlayQuestionCard({ question, revealed = false, onPlayed }: PlayProps) {
-  const isChoiceQuestion = question.type === 'SINGLE_CHOICE' || question.type === 'MULTIPLE_CHOICE';
-
+function PlayQuestionCard({
+  question,
+  revealed = false,
+  onPlayed,
+  selectedAnswers = [],
+}: PlayProps) {
   return (
     <article className="question-card question-card--play">
       <header className="question-card__header">
@@ -335,10 +349,16 @@ function PlayQuestionCard({ question, revealed = false, onPlayed }: PlayProps) {
       </header>
 
       <div className="answer-list">
-        <AnswerList question={question} mode="play" revealed={revealed} onPlay={onPlayed} />
+        <AnswerList
+          question={question}
+          mode="play"
+          revealed={revealed}
+          onPlay={onPlayed}
+          selectedAnswers={selectedAnswers}
+        />
       </div>
 
-      {!isChoiceQuestion && !revealed && (
+      {question.type !== 'SINGLE_CHOICE' && !revealed && (
         <button type="button" className="btn btn-outline-primary mt-4" onClick={() => onPlayed?.()}>
           Reveal answer
         </button>
