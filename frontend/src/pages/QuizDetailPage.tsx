@@ -198,7 +198,6 @@ export default function QuizDetailPage() {
     }
   ) {
     if (!courseId || !quizId) return;
-    console.log(data);
 
     const updatedAnswer = await api.patch<QuestionWithAnswersDto['answers'][number]>(
       `/courses/${courseId}/quizzes/${quizId}/questions/${questionId}/answers/${answerId}`,

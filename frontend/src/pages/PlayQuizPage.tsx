@@ -189,7 +189,6 @@ export default function PlayQuizPage() {
                     }
                     const correctCount = hist.question.answers.filter((a) => a.isCorrect).length;
                     const incorrectSelectedCount = hist.selectedAnswers.length - hist.correct;
-                    console.log(hist.correct, correctCount);
 
                     return Math.max(0, (hist.correct - incorrectSelectedCount) / correctCount);
                   });

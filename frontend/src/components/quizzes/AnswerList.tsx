@@ -119,7 +119,6 @@ function EditAnswerList({
 }
 
 function PlayAnswerList({ question, revealed = false, onPlayed, selectedAnswers = [] }: PlayProps) {
-  console.log(selectedAnswers);
   const isChoiceQuestion = question.type === 'SINGLE_CHOICE' || question.type === 'MULTIPLE_CHOICE';
 
   if (!isChoiceQuestion) {
