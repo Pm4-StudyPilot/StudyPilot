@@ -34,7 +34,15 @@ const randomMockQuiz = {
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
-
+const cardMockQuiz = {
+  id: 'quiz3',
+  title: 'Sample Quiz',
+  description: 'desc',
+  courseId: 'course3',
+  isOrderRandom: false,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
 const mockQuestions = [
   {
     id: 'q1',
@@ -50,14 +58,26 @@ const mockQuestions = [
     id: 'q2',
     title: 'Question 2',
     description: '',
-    type: 'SINGLE_CHOICE',
+    type: 'MULTIPLE_CHOICE',
     answers: [
       { id: 'a3', content: 'C', isCorrect: true },
       { id: 'a4', content: 'D', isCorrect: false },
+      { id: 'a4', content: 'E', isCorrect: true },
     ],
   },
 ];
-
+const cardMockQuestions = [
+  {
+    id: 'q1',
+    title: 'Question 1',
+    description: '',
+    type: 'CARD',
+    answers: [
+      { id: 'a1', content: 'AnswerButton', isCorrect: true },
+      { id: 'a2', content: 'B', isCorrect: false },
+    ],
+  },
+];
 vi.mock('../services/api', () => ({
   api: {
     get: vi.fn(),
@@ -72,11 +92,17 @@ describe('PlayQuizPage', () => {
       quizId: 'quiz1',
     });
     mockedApi.get.mockImplementation((url: string) => {
+      if (url.includes('/quizzes/quiz3/questions')) {
+        return Promise.resolve(cardMockQuestions);
+      }
       if (url.includes('/quizzes/quiz1/questions') || url.includes('/quizzes/quiz2/questions')) {
         return Promise.resolve(mockQuestions);
       }
       if (url.includes('/quizzes/quiz2')) {
         return Promise.resolve(randomMockQuiz);
+      }
+      if (url.includes('/quizzes/quiz3')) {
+        return Promise.resolve(cardMockQuiz);
       }
 
       return Promise.resolve(mockQuiz);
@@ -155,7 +181,7 @@ describe('PlayQuizPage', () => {
       expect(screen.queryByText('Question 2')).toBeInTheDocument();
     });
   });
-  it('navigates back when quiz is finished', async () => {
+  it('it shows stats after the quiz and finally navigates back to the quiz page', async () => {
     render(
       <MemoryRouter>
         <PlayQuizPage />
@@ -163,20 +189,18 @@ describe('PlayQuizPage', () => {
     );
 
     await screen.findByText('Question 1');
-
-    const answerButton = screen.getByText('AnswerButton');
-    fireEvent.click(answerButton);
-
-    const nextButton = await screen.findByRole('button', {
-      name: /next question/i,
-    });
-
-    fireEvent.click(nextButton);
+    fireEvent.click(screen.getByText('AnswerButton'));
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: /Next question/i,
+      })
+    );
 
     await screen.findByText('Question 2');
-
     fireEvent.click(screen.getByText('C'));
-    fireEvent.click(await screen.findByRole('button', { name: /quiz finished/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /reveal answer/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /view stats/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /finish/i }));
 
     expect(mockNavigate).toHaveBeenCalledWith('/courses/course1/quizzes/quiz1');
   });
@@ -207,5 +231,88 @@ describe('PlayQuizPage', () => {
     );
 
     expect(await screen.findByText('Internal Server Error')).toBeInTheDocument();
+  });
+  it('saves history by highlighting selected answers even after revealing the answers', async () => {
+    render(
+      <MemoryRouter>
+        <PlayQuizPage />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Question 1');
+    fireEvent.click(screen.getByText('AnswerButton'));
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: /Next question/i,
+      })
+    );
+
+    await screen.findByText('Question 2');
+
+    expect(screen.getByText('C').closest('.answer-card--selected')).toBeNull();
+    fireEvent.click(screen.getByText('C'));
+    expect(screen.getByText('C').closest('.answer-card--selected')).not.toBeNull();
+    fireEvent.click(screen.getByText('C'));
+    expect(screen.getByText('C').closest('.answer-card--selected')).toBeNull();
+    fireEvent.click(screen.getByText('C'));
+
+    fireEvent.click(await screen.findByRole('button', { name: /reveal answer/i }));
+    expect(screen.getByText('C').closest('.answer-card--selected')).not.toBeNull();
+  });
+
+  it('lets the user decide that the answer was correct when the question type is card', async () => {
+    mockedUseParams.mockReturnValue({
+      courseId: 'course3',
+      quizId: 'quiz3',
+    });
+    render(
+      <MemoryRouter>
+        <PlayQuizPage />
+      </MemoryRouter>
+    );
+    await screen.findByText('Question 1');
+    fireEvent.click(await screen.findByRole('button', { name: /reveal answer/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /^correct/i }));
+
+    expect(await screen.findByText(/1 \/ 1 Points/)).toBeInTheDocument();
+    expect(screen.queryByText(/0 \/ 1 Points/)).not.toBeInTheDocument();
+  });
+  it('lets the user decide that the answer was incorrect when the question type is card', async () => {
+    mockedUseParams.mockReturnValue({
+      courseId: 'course3',
+      quizId: 'quiz3',
+    });
+    render(
+      <MemoryRouter>
+        <PlayQuizPage />
+      </MemoryRouter>
+    );
+    await screen.findByText('Question 1');
+    fireEvent.click(await screen.findByRole('button', { name: /reveal answer/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /^incorrect/i }));
+
+    expect(await screen.findByText(/0 \/ 1 Points/)).toBeInTheDocument();
+    expect(screen.queryByText(/1 \/ 1 Points/)).not.toBeInTheDocument();
+  });
+  it('calculates partial points when a multiple choice question was partially corect', async () => {
+    render(
+      <MemoryRouter>
+        <PlayQuizPage />
+      </MemoryRouter>
+    );
+    await screen.findByText('Question 1');
+    fireEvent.click(screen.getByText('AnswerButton'));
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: /Next question/i,
+      })
+    );
+
+    await screen.findByText('Question 2');
+    fireEvent.click(screen.getByText('C'));
+    fireEvent.click(await screen.findByRole('button', { name: /reveal answer/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /view stats/i }));
+
+    expect(await screen.findByText(/1.5 \/ 2 Points/)).toBeInTheDocument();
   });
 });

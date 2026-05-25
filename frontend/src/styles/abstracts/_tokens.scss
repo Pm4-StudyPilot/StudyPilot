@@ -36,7 +36,11 @@
 
   --border-warning: 1px solid rgba(255, 165, 0, 0.18);
   --background-warning: rgba(255, 166, 0, 0.08);
-  --background-success: rgba(76, 175, 80, 0.2);
+  --border-success: rgba(76, 175, 80, 0.2);
+  --background-success: rgba(76, 175, 80, 0.08);
+
+  --border-danger: rgba(223, 104, 125, 0.22);
+  --background-danger: rgba(223, 104, 125, 0.06);
 
   /* Shape */
   --radius-card: 1.3rem;
