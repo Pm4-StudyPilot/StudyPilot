@@ -1,36 +1,45 @@
 import { useState } from 'react';
-import { QuestionWithAnswersDto } from '../../types/dto';
-import { questionTypeOptions } from './types';
+import { AnswerDto, QuestionWithAnswersDto } from '../../types/dto';
+import { AnswerFormState, QuestionFormState, questionTypeOptions } from './types';
 import InputField from '../shared/form/InputField';
 import TextareaField from '../shared/form/TextareaField';
 import SelectField from '../shared/form/SelectField';
 import AnswerList from './AnswerList';
 import CheckField from '../shared/form/CheckField';
 
-interface QuestionFormState {
-  title: string;
-  description: string;
-  type: QuestionWithAnswersDto['type'];
-}
-
-interface AnswerFormState {
-  content: string;
-  isCorrect: boolean;
-}
-
-interface QuestionCardProps {
+type BaseProps = {
   question: QuestionWithAnswersDto;
   mode?: 'view' | 'edit' | 'play';
-  onUpdateQuestion?: (questionId: string, data: QuestionFormState) => Promise<void> | void;
-  onDeleteQuestion?: (questionId: string) => Promise<void> | void;
-  onCreateAnswer?: (questionId: string, data: AnswerFormState) => Promise<void> | void;
-  onUpdateAnswer?: (
+};
+
+type ViewProps = BaseProps & {
+  mode?: 'view';
+  revealed?: boolean;
+  score?: number;
+  selectedAnswers?: AnswerDto[];
+};
+
+type EditProps = BaseProps & {
+  mode: 'edit';
+  onUpdateQuestion: (questionId: string, data: QuestionFormState) => Promise<void> | void;
+  onDeleteQuestion: (questionId: string) => Promise<void> | void;
+  onCreateAnswer: (questionId: string, data: AnswerFormState) => Promise<void> | void;
+  onUpdateAnswer: (
     questionId: string,
     answerId: string,
     data: AnswerFormState
   ) => Promise<void> | void;
-  onDeleteAnswer?: (questionId: string, answerId: string) => Promise<void> | void;
-}
+  onDeleteAnswer: (questionId: string, answerId: string) => void;
+};
+
+type PlayProps = BaseProps & {
+  mode: 'play';
+  revealed?: boolean;
+  onPlayed: (answerId?: string) => void;
+  selectedAnswers?: AnswerDto[];
+};
+
+type QuestionCardProps = ViewProps | EditProps | PlayProps;
 
 function formatQuestionType(type: QuestionWithAnswersDto['type']) {
   return type
@@ -40,17 +49,72 @@ function formatQuestionType(type: QuestionWithAnswersDto['type']) {
     .join(' ');
 }
 
-export default function QuestionCard({
+function ViewQuestionCard({ question, revealed = false, score, selectedAnswers = [] }: ViewProps) {
+  const correctAnswers = question.answers.filter((answer) => answer.isCorrect).length;
+  const [expanded, setExpanded] = useState(false);
+  function handleToggle() {
+    setExpanded((prev) => {
+      return !prev;
+    });
+  }
+  return (
+    <article className="question-card">
+      <header className="question-card__header">
+        <div className="question-card__title-group">
+          <div className="question-card__meta">
+            <span className="question-card__type">{formatQuestionType(question.type)}</span>
+            <span>
+              {question.answers.length} answer{question.answers.length !== 1 ? 's' : ''}
+            </span>
+            <span>
+              {correctAnswers} correct answer{correctAnswers !== 1 ? 's' : ''}
+            </span>
+          </div>
+
+          <h3 className="question-card__title">{question.title}</h3>
+
+          {question.description && (
+            <p className="question-card__description">{question.description}</p>
+          )}
+        </div>
+        {typeof score === 'number' && (
+          <div className="question-card__score">
+            {score} Point{score === 1 ? '' : 's'}{' '}
+          </div>
+        )}
+      </header>
+
+      {!revealed && (
+        <button
+          className="question-card__toggle btn btn-sm btn-link text-secondary p-0"
+          onClick={handleToggle}
+          aria-label="Toggle answers"
+          aria-expanded={expanded}
+        >
+          View Answers
+          <i
+            className={`question-card__chevron fa-solid fa-chevron-${expanded ? 'down' : 'right'}`}
+          />
+        </button>
+      )}
+
+      {(revealed || expanded) && (
+        <div className="answer-list" data-testid="answer-list">
+          <AnswerList question={question} mode="view" selectedAnswers={selectedAnswers} />
+        </div>
+      )}
+    </article>
+  );
+}
+
+function EditQuestionCard({
   question,
-  mode = 'view',
   onUpdateQuestion,
   onDeleteQuestion,
   onCreateAnswer,
   onUpdateAnswer,
   onDeleteAnswer,
-  onPlayed,
-}: QuestionCardProps) {
-  const correctAnswers = question.answers.filter((answer) => answer.isCorrect).length;
+}: EditProps) {
   const [draftQuestion, setDraftQuestion] = useState<QuestionFormState>({
     title: question.title,
     description: question.description ?? '',
@@ -74,7 +138,6 @@ export default function QuestionCard({
   const [savingQuestion, setSavingQuestion] = useState(false);
   const [savingAnswerId, setSavingAnswerId] = useState<string | null>(null);
   const [addingAnswer, setAddingAnswer] = useState(false);
-  const [expanded, setExpanded] = useState(false);
   const [questionError, setQuestionError] = useState<string | null>(null);
 
   async function handleSaveQuestion() {
@@ -146,173 +209,135 @@ export default function QuestionCard({
       setAddingAnswer(false);
     }
   }
+  return (
+    <article className="question-card question-card--editable">
+      <header className="question-card__header">
+        <div className="question-card__title-group question-editor">
+          <div className="question-editor__fields">
+            <InputField
+              label="Question title"
+              className="form-control"
+              value={draftQuestion.title}
+              onChange={(event) =>
+                setDraftQuestion((current) => ({
+                  ...current,
+                  title: event.target.value,
+                }))
+              }
+              onBlur={handleSaveQuestion}
+            />
 
-  if (mode === 'edit') {
-    return (
-      <article className="question-card question-card--editable">
-        <header className="question-card__header">
-          <div className="question-card__title-group question-editor">
-            <div className="question-editor__fields">
-              <InputField
-                label="Question title"
-                className="form-control"
-                value={draftQuestion.title}
-                onChange={(event) =>
-                  setDraftQuestion((current) => ({
-                    ...current,
-                    title: event.target.value,
-                  }))
-                }
-                onBlur={handleSaveQuestion}
-              />
+            <TextareaField
+              label="Description"
+              className="form-control"
+              value={draftQuestion.description}
+              onChange={(event) =>
+                setDraftQuestion((current) => ({
+                  ...current,
+                  description: event.target.value,
+                }))
+              }
+              rows={3}
+              onBlur={handleSaveQuestion}
+            />
 
-              <TextareaField
-                label="Description"
-                className="form-control"
-                value={draftQuestion.description}
-                onChange={(event) =>
-                  setDraftQuestion((current) => ({
-                    ...current,
-                    description: event.target.value,
-                  }))
-                }
-                rows={3}
-                onBlur={handleSaveQuestion}
-              />
-
-              <SelectField
-                label="Question type"
-                className="form-select"
-                value={draftQuestion.type}
-                onChange={(event) =>
-                  setDraftQuestion((current) => ({
-                    ...current,
-                    type: event.target.value as QuestionWithAnswersDto['type'],
-                  }))
-                }
-                options={questionTypeOptions}
-                onBlur={handleSaveQuestion}
-              />
-            </div>
-          </div>
-        </header>
-
-        <span className="question-editor__field">Answers</span>
-
-        {!!question.answers.length && (
-          <div className="answer-list answer-list--editable">
-            <AnswerList
-              mode="edit"
-              question={question}
-              draftAnswers={draftAnswers}
-              handleSaveAnswer={handleSaveAnswer}
-              setDraftAnswers={setDraftAnswers}
-              onDeleteAnswer={onDeleteAnswer}
+            <SelectField
+              label="Question type"
+              className="form-select"
+              value={draftQuestion.type}
+              onChange={(event) =>
+                setDraftQuestion((current) => ({
+                  ...current,
+                  type: event.target.value as QuestionWithAnswersDto['type'],
+                }))
+              }
+              options={questionTypeOptions}
+              onBlur={handleSaveQuestion}
             />
           </div>
-        )}
+        </div>
+      </header>
 
-        <div className="answer-editor answer-editor--new">
-          <InputField
-            label="New answer"
-            className="answer-editor__content form-control"
-            value={newAnswer.content}
-            onChange={(event) =>
-              setNewAnswer((current) => ({
-                ...current,
-                content: event.target.value,
-              }))
-            }
-            placeholder="Add another possible answer"
+      <span className="question-editor__field">Answers</span>
+
+      {!!question.answers.length && (
+        <div className="answer-list answer-list--editable">
+          <AnswerList
+            mode="edit"
+            question={question}
+            draftAnswers={draftAnswers}
+            handleSaveAnswer={handleSaveAnswer}
+            setDraftAnswers={setDraftAnswers}
+            onDeleteAnswer={onDeleteAnswer}
           />
-
-          <CheckField
-            label="Correct"
-            type="checkbox"
-            checked={newAnswer.isCorrect}
-            onChange={(event) =>
-              setNewAnswer((current) => ({
-                ...current,
-                isCorrect: event.target.checked,
-              }))
-            }
-            className="answer-editor__check"
-          />
-
-          <button
-            type="button"
-            className="btn btn-primary btn-sm answer-editor__add-button mb-3"
-            disabled={!newAnswer.content.trim() || addingAnswer}
-            onClick={handleCreateAnswer}
-          >
-            <i className="fa-solid fa-plus" />
-            {addingAnswer ? 'Adding...' : 'Add answer'}
-          </button>
         </div>
-        <div className="question-editor__actions">
-          <button
-            type="button"
-            className="btn btn-outline-danger btn-sm"
-            onClick={() => onDeleteQuestion?.(question.id)}
-          >
-            <i className="fa-solid fa-trash me-1" />
-            Delete
-          </button>
-          {(savingAnswerId || savingQuestion) && <>Saving...</>}
-          {questionError && <div className="text-danger">{questionError}</div>}
-        </div>
-      </article>
-    );
-  }
+      )}
 
-  if (mode === 'play') {
-    return (
-      <article className="question-card">
-        <header className="question-card__header">
-          <div className="question-card__title-group">
-            <div className="question-card__meta">
-              <span className="question-card__type">{formatQuestionType(question.type)}</span>
-              <span>
-                {question.answers.length} answer{question.answers.length !== 1 ? 's' : ''}
-              </span>
-              <span>
-                {correctAnswers} correct answer{correctAnswers !== 1 ? 's' : ''}
-              </span>
-            </div>
+      <div className="answer-editor answer-editor--new">
+        <InputField
+          label="New answer"
+          className="answer-editor__content form-control"
+          value={newAnswer.content}
+          onChange={(event) =>
+            setNewAnswer((current) => ({
+              ...current,
+              content: event.target.value,
+            }))
+          }
+          placeholder="Add another possible answer"
+        />
 
-            <h3 className="question-card__title">{question.title}</h3>
+        <CheckField
+          label="Correct"
+          type="checkbox"
+          checked={newAnswer.isCorrect}
+          onChange={(event) =>
+            setNewAnswer((current) => ({
+              ...current,
+              isCorrect: event.target.checked,
+            }))
+          }
+          className="answer-editor__check"
+        />
 
-            {question.description && (
-              <p className="question-card__description">{question.description}</p>
-            )}
-          </div>
-        </header>
+        <button
+          type="button"
+          className="btn btn-primary btn-sm answer-editor__add-button mb-3"
+          disabled={!newAnswer.content.trim() || addingAnswer}
+          onClick={handleCreateAnswer}
+        >
+          <i className="fa-solid fa-plus" />
+          {addingAnswer ? 'Adding...' : 'Add answer'}
+        </button>
+      </div>
+      <div className="question-editor__actions">
+        <button
+          type="button"
+          className="btn btn-outline-danger btn-sm"
+          onClick={() => onDeleteQuestion?.(question.id)}
+        >
+          <i className="fa-solid fa-trash me-1" />
+          Delete
+        </button>
+        {(savingAnswerId || savingQuestion) && <>Saving...</>}
+        {questionError && <div className="text-danger">{questionError}</div>}
+      </div>
+    </article>
+  );
+}
 
-        <div className="answer-list">
-          <AnswerList question={question} mode="play" onPlay={onPlayed} />
-        </div>
-      </article>
-    );
-  }
-
-  function handleToggle() {
-    setExpanded((prev) => {
-      return !prev;
-    });
-  }
-
+function PlayQuestionCard({
+  question,
+  revealed = false,
+  onPlayed,
+  selectedAnswers = [],
+}: PlayProps) {
   return (
-    <article className="question-card">
+    <article className="question-card question-card--play">
       <header className="question-card__header">
         <div className="question-card__title-group">
           <div className="question-card__meta">
             <span className="question-card__type">{formatQuestionType(question.type)}</span>
-            <span>
-              {question.answers.length} answer{question.answers.length !== 1 ? 's' : ''}
-            </span>
-            <span>
-              {correctAnswers} correct answer{correctAnswers !== 1 ? 's' : ''}
-            </span>
           </div>
 
           <h3 className="question-card__title">{question.title}</h3>
@@ -323,23 +348,34 @@ export default function QuestionCard({
         </div>
       </header>
 
-      <button
-        className="question-card__toggle btn btn-sm btn-link text-secondary p-0"
-        onClick={handleToggle}
-        aria-label="Toggle answers"
-        aria-expanded={expanded}
-      >
-        View Answers
-        <i
-          className={`question-card__chevron fa-solid fa-chevron-${expanded ? 'down' : 'right'}`}
+      <div className="answer-list">
+        <AnswerList
+          question={question}
+          mode="play"
+          revealed={revealed}
+          onPlayed={onPlayed}
+          selectedAnswers={selectedAnswers}
         />
-      </button>
+      </div>
 
-      {expanded && (
-        <div className="answer-list">
-          <AnswerList question={question} mode="view" />
-        </div>
+      {question.type !== 'SINGLE_CHOICE' && !revealed && (
+        <button type="button" className="btn btn-outline-primary mt-4" onClick={() => onPlayed?.()}>
+          Reveal answer
+        </button>
       )}
     </article>
   );
+}
+
+export default function QuestionCard(props: QuestionCardProps) {
+  switch (props.mode) {
+    case 'edit':
+      return <EditQuestionCard {...props} />;
+
+    case 'play':
+      return <PlayQuestionCard {...props} />;
+
+    default:
+      return <ViewQuestionCard {...props} />;
+  }
 }
