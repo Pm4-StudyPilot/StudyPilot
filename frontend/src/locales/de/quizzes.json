@@ -71,6 +71,26 @@
       "scorePoints_other": "{{count}} Punkte"
     }
   },
+  "play": {
+    "backToQuiz": "Zurück zum Quiz",
+    "notFound": "Quiz nicht gefunden",
+    "progress": "Frage {{current}} / {{total}}",
+    "selectHint": "Wähle eine Antwort oder zeige die Lösung an.",
+    "correct": "Richtig",
+    "incorrect": "Falsch",
+    "viewStats": "Statistik anzeigen",
+    "nextQuestion": "Nächste Frage",
+    "finish": "Beenden",
+    "resultTitle": "Ergebnis",
+    "resultSummary": "Du hast {{score}} / {{total}} Punkte erreicht. {{feedback}}",
+    "feedback": {
+      "perfect": "Perfekt!",
+      "excellent": "Ausgezeichnet!",
+      "good": "Gut gemacht!",
+      "notBad": "Nicht schlecht!",
+      "keepPracticing": "Übe weiter..."
+    }
+  },
   "answers": {
     "correct": "Richtig",
     "incorrect": "Falsch",
