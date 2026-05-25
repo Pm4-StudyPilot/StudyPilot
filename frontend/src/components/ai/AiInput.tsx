@@ -1,8 +1,10 @@
 import { FormEvent, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { MdSend } from 'react-icons/md';
 import Icon from '../shared/Icon';
 import AiChatPanel from './AiChatPanel';
 import { ChatMessage } from './types';
+import { describeCurrentPage } from './pageContext';
 import { api } from '../../services/api';
 
 export default function AiInput() {
@@ -13,6 +15,7 @@ export default function AiInput() {
   const inputRef = useRef<HTMLInputElement>(null);
   // One thread per chat session — reset on close so a fresh chat starts fresh.
   const threadIdRef = useRef<string | null>(null);
+  const { pathname } = useLocation();
 
   function appendMessage(role: ChatMessage['role'], content: string, tools?: string[]) {
     setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, content, tools }]);
@@ -32,6 +35,7 @@ export default function AiInput() {
     const message = value.trim();
     if (!message || isLoading) return;
 
+    const isFirstMessage = !threadIdRef.current;
     if (!threadIdRef.current) {
       threadIdRef.current = crypto.randomUUID();
     }
@@ -45,6 +49,7 @@ export default function AiInput() {
       const { reply, tools } = await api.post<{ reply: string; tools: string[] }>('/chat', {
         message,
         threadId: threadIdRef.current,
+        ...(isFirstMessage ? { pageContext: describeCurrentPage(pathname) ?? undefined } : {}),
       });
       appendMessage('assistant', reply, tools);
     } catch {

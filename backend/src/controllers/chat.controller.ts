@@ -16,7 +16,11 @@ export class ChatController {
   async send(req: Request, res: Response): Promise<void> {
     try {
       const authUser = req.user as AuthenticatedUser;
-      const { message, threadId } = req.body as { message?: string; threadId?: string };
+      const { message, threadId, pageContext } = req.body as {
+        message?: string;
+        threadId?: string;
+        pageContext?: string;
+      };
 
       if (!message?.trim()) {
         res.status(400).json({ message: 'Message is required' });
@@ -26,7 +30,8 @@ export class ChatController {
       const result = await this.chatService.send(
         message.trim(),
         authUser.id,
-        threadId?.trim() || randomUUID()
+        threadId?.trim() || randomUUID(),
+        pageContext?.trim() || undefined
       );
 
       res.json(result);

@@ -29,6 +29,9 @@ const chatController = new ChatController();
  *               threadId:
  *                 type: string
  *                 description: Conversation thread id; reuse it to keep multi-turn memory.
+ *               pageContext:
+ *                 type: string
+ *                 description: Description of the page the user is on; only honoured on the first message of a thread.
  *     responses:
  *       200:
  *         description: The agent's reply.

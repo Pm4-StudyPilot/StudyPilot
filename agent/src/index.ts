@@ -40,10 +40,16 @@ export function messageText(content: MessageContent | undefined): string {
  * agent; `threadId` scopes conversation memory and `userId` is injected into
  * every tool call.
  */
-export async function runAgent({ message, userId, threadId }: AgentInput): Promise<AgentReply> {
+export async function runAgent({
+  message,
+  userId,
+  threadId,
+  pageContext,
+}: AgentInput): Promise<AgentReply> {
   const agent = await getAgent();
+  const userMessage = pageContext ? `[Page context: ${pageContext}]\n\n${message}` : message;
   const result = await agent.invoke(
-    { messages: [new HumanMessage(message)] },
+    { messages: [new HumanMessage(userMessage)] },
     { configurable: { thread_id: threadId, userId }, recursionLimit: 25 }
   );
 
