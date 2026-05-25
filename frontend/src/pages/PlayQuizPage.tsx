@@ -1,5 +1,7 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import DashboardLayout from '../components/shared/layout/DashboardLayout';
 import QuestionCard from '../components/quizzes/QuestionCard';
 import { api } from '../services/api';
@@ -11,12 +13,12 @@ type History = {
   correct: number;
 };
 
-function getScoreText(scoreFraction: number) {
-  if (scoreFraction === 0.9) return 'Perfect!';
-  if (scoreFraction >= 0.9) return 'Excellent!';
-  if (scoreFraction >= 0.7) return 'Good job!';
-  if (scoreFraction >= 0.5) return 'Not bad!';
-  return 'Keep practicing...';
+function getScoreFeedback(scoreFraction: number, t: TFunction) {
+  if (scoreFraction === 1) return t('quizzes.play.feedback.perfect');
+  if (scoreFraction >= 0.9) return t('quizzes.play.feedback.excellent');
+  if (scoreFraction >= 0.7) return t('quizzes.play.feedback.good');
+  if (scoreFraction >= 0.5) return t('quizzes.play.feedback.notBad');
+  return t('quizzes.play.feedback.keepPracticing');
 }
 
 export default function PlayQuizPage() {
@@ -24,6 +26,7 @@ export default function PlayQuizPage() {
     courseId: string;
     quizId: string;
   }>();
+  const { t } = useTranslation();
 
   const [quiz, setQuiz] = useState<QuizDto | null>(null);
   const [questions, setQuestions] = useState<QuestionWithAnswersDto[]>([]);
@@ -62,12 +65,12 @@ export default function PlayQuizPage() {
         );
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Failed to load quiz');
+        setError(err instanceof Error ? err.message : t('quizzes.detail.loadFailed'));
       })
       .finally(() => {
         setLoading(false);
       });
-  }, [courseId, quizId]);
+  }, [courseId, quizId, t]);
 
   const currentQuestion = questions[currentQuestionIndex];
   const currentHistory = history[currentQuestionIndex];
@@ -157,7 +160,7 @@ export default function PlayQuizPage() {
           className="course-detail__back-link text-secondary text-decoration-none d-inline-flex align-items-center gap-2"
         >
           <i className="fa-solid fa-chevron-left" />
-          Back to quiz
+          {t('quizzes.play.backToQuiz')}
         </Link>
         {(() => {
           if (loading)
@@ -171,7 +174,7 @@ export default function PlayQuizPage() {
           if (error || !quiz || !currentQuestion)
             return (
               <div className="dashboard-state panel dashboard-state--error">
-                {error || 'Quiz not found'}
+                {error || t('quizzes.play.notFound')}
               </div>
             );
           if (showStats) {
@@ -179,7 +182,7 @@ export default function PlayQuizPage() {
               <div className="panel play-quiz">
                 <div className="play-quiz__header">
                   <div>
-                    <h1 className="play-quiz__title">Result</h1>
+                    <h1 className="play-quiz__title">{t('quizzes.play.resultTitle')}</h1>
                   </div>
                 </div>
                 {(() => {
@@ -199,7 +202,11 @@ export default function PlayQuizPage() {
                   return (
                     <div className="play-quiz__history">
                       <h4>
-                        You got {scoreSum} / {history.length} Points. {getScoreText(fraction)}
+                        {t('quizzes.play.resultSummary', {
+                          score: scoreSum,
+                          total: history.length,
+                          feedback: getScoreFeedback(fraction, t),
+                        })}
                       </h4>
                       {history.map((history, index) => (
                         <QuestionCard
@@ -221,7 +228,7 @@ export default function PlayQuizPage() {
                     onClick={() => navigate(`/courses/${courseId}/quizzes/${quizId}`)}
                   >
                     <i className="fa-solid fa-arrow-right" />
-                    Finish
+                    {t('quizzes.play.finish')}
                   </button>
                 </div>
               </div>
@@ -232,7 +239,10 @@ export default function PlayQuizPage() {
               <div className="play-quiz__header">
                 <div>
                   <span className="play-quiz__progress">
-                    Question {currentQuestionIndex + 1} / {questions.length}
+                    {t('quizzes.play.progress', {
+                      current: currentQuestionIndex + 1,
+                      total: questions.length,
+                    })}
                   </span>
 
                   <h1 className="play-quiz__title">{quiz.title}</h1>
@@ -249,7 +259,7 @@ export default function PlayQuizPage() {
 
               <div className="play-quiz__footer">
                 {!revealed ? (
-                  <p className="text-secondary mb-0">Select an answer or reveal the solution.</p>
+                  <p className="text-secondary mb-0">{t('quizzes.play.selectHint')}</p>
                 ) : (
                   <>
                     {(() => {
@@ -261,14 +271,14 @@ export default function PlayQuizPage() {
                               className="btn btn-primary play-quiz__next-button me-3"
                               onClick={() => handleCardPlay(true)}
                             >
-                              Correct
+                              {t('quizzes.play.correct')}
                             </button>
                             <button
                               type="button"
                               className="btn btn-primary play-quiz__next-button"
                               onClick={() => handleCardPlay(false)}
                             >
-                              Incorrect
+                              {t('quizzes.play.incorrect')}
                             </button>
                           </>
                         );
@@ -281,7 +291,7 @@ export default function PlayQuizPage() {
                             onClick={() => setShowStats(true)}
                           >
                             <i className="fa-solid fa-arrow-right" />
-                            View Stats
+                            {t('quizzes.play.viewStats')}
                           </button>
                         );
                       }
@@ -292,7 +302,7 @@ export default function PlayQuizPage() {
                           onClick={handleNextQuestion}
                         >
                           <i className="fa-solid fa-arrow-right" />
-                          Next question
+                          {t('quizzes.play.nextQuestion')}
                         </button>
                       );
                     })()}

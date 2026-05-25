@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import CourseList from '../components/courses/CourseList';
 import DashboardLayout from '../components/shared/layout/DashboardLayout';
 
@@ -9,11 +10,8 @@ import DashboardLayout from '../components/shared/layout/DashboardLayout';
  * for filtering courses by name.
  */
 export default function CoursesPage() {
-  /**
-   * Updates automatically when the user types
-   * into the dashboard search input.
-   */
   const [searchTerm, setSearchTerm] = useState('');
+  const { t } = useTranslation();
 
   return (
     <DashboardLayout
@@ -21,16 +19,14 @@ export default function CoursesPage() {
       showSearch
       searchValue={searchTerm}
       onSearchChange={setSearchTerm}
-      searchPlaceholder="Search courses..."
+      searchPlaceholder={t('common.search.courses')}
     >
       <section className="dashboard-page-stack">
         <header className="dashboard-page-header">
           <div>
-            <p className="dashboard-page-header__eyebrow">Course library</p>
-            <h1>Courses</h1>
-            <p className="dashboard-page-header__subline">
-              Browse all available courses and open one to view its detailed page.
-            </p>
+            <p className="dashboard-page-header__eyebrow">{t('courses.library.eyebrow')}</p>
+            <h1>{t('courses.library.title')}</h1>
+            <p className="dashboard-page-header__subline">{t('courses.library.subline')}</p>
           </div>
         </header>
 

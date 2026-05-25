@@ -1,10 +1,8 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TaskDto } from '../../types/dto';
-import {
-  TASK_PRIORITY_BADGE_CLASS,
-  TASK_STATUS_BADGE_CLASS,
-  TASK_STATUS_LABEL,
-} from './taskDisplay';
+import { TASK_PRIORITY_BADGE_CLASS, TASK_STATUS_BADGE_CLASS } from './taskDisplay';
+import { formatDate } from '../../utils/formatDate';
 
 interface TaskCardProps {
   task: TaskDto;
@@ -34,14 +32,9 @@ export default function TaskCard({
   isDragging,
 }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const { t } = useTranslation();
 
-  const formattedDueDate = task.dueDate
-    ? new Date(task.dueDate).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      })
-    : null;
+  const formattedDueDate = task.dueDate ? formatDate(task.dueDate) : null;
 
   return (
     <div className={`task-card rounded p-3 mb-2${isDragging ? ' opacity-50' : ''}`}>
@@ -50,7 +43,7 @@ export default function TaskCard({
           <span
             {...dragHandleProps}
             className="task-card__drag-handle text-secondary"
-            aria-label="drag handle"
+            aria-label={t('tasks.card.dragHandleAria')}
           >
             <i className="fa-solid fa-grip-vertical" />
           </span>
@@ -75,22 +68,22 @@ export default function TaskCard({
             </span>
           )}
           <span className={`task-card__priority badge ${TASK_PRIORITY_BADGE_CLASS[task.priority]}`}>
-            {task.priority}
+            {t(`tasks.priority.${task.priority}`)}
           </span>
           <span className={`task-card__status badge ${TASK_STATUS_BADGE_CLASS[task.status]}`}>
-            {TASK_STATUS_LABEL[task.status]}
+            {t(`tasks.status.${task.status}`)}
           </span>
           <button
             className="btn btn-link p-0 text-secondary"
             onClick={() => onEdit(task)}
-            aria-label="edit task"
+            aria-label={t('tasks.card.editAria')}
           >
             <i className="fa-solid fa-pen-to-square" />
           </button>
           <button
             className="btn btn-link p-0 text-secondary"
             onClick={() => onDelete(task)}
-            aria-label="delete task"
+            aria-label={t('tasks.card.deleteAria')}
           >
             <i className="fa-solid fa-trash" />
           </button>
@@ -99,7 +92,7 @@ export default function TaskCard({
 
       {expanded && (
         <div className="task-card__description mt-2 pt-2 text-secondary">
-          {task.description ?? <em>No description.</em>}
+          {task.description ?? <em>{t('tasks.card.noDescription')}</em>}
         </div>
       )}
     </div>

@@ -142,7 +142,7 @@ describe('CourseDocumentsList', () => {
 
     expect(screen.getByText('5.31 MB')).toBeInTheDocument();
     expect(screen.getByText('2.37 MB')).toBeInTheDocument();
-    expect(screen.getAllByText(/Updated Apr 20, 2026/i)).toHaveLength(2);
+    expect(screen.getAllByText(/Updated 20\.04\.2026/i)).toHaveLength(2);
 
     expect(document.querySelectorAll('.fa-file-pdf')).toHaveLength(2);
   });
@@ -319,7 +319,7 @@ describe('CourseDocumentsList', () => {
     });
 
     expect(screen.getByText('0.5 KB')).toBeInTheDocument();
-    expect(screen.getByText(/Updated Apr 20, 2026/i)).toBeInTheDocument();
+    expect(screen.getByText(/Updated 20\.04\.2026/i)).toBeInTheDocument();
 
     expect(document.querySelector('.fa-file.text-secondary')).toBeInTheDocument();
   });

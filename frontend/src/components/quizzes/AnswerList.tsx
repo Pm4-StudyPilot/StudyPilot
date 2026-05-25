@@ -1,6 +1,7 @@
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { AnswerDto, QuestionWithAnswersDto } from '../../types/dto';
 import CheckField from '../shared/form/CheckField';
-import React from 'react';
 
 type BaseProps = {
   question: QuestionWithAnswersDto;
@@ -54,6 +55,7 @@ function EditAnswerList({
   handleSaveAnswer,
   onDeleteAnswer,
 }: EditProps) {
+  const { t } = useTranslation();
   return (
     <>
       {question.answers.map((answer) => {
@@ -83,7 +85,7 @@ function EditAnswerList({
 
             <CheckField
               className="inline-form-check"
-              label="Correct"
+              label={t('quizzes.answers.correctCheckbox')}
               type="checkbox"
               checked={draft.isCorrect ?? false}
               onChange={(event) => {
@@ -108,7 +110,7 @@ function EditAnswerList({
                 onClick={() => onDeleteAnswer(question.id, answer.id)}
               >
                 <i className="fa-solid fa-trash  me-1" />
-                Delete
+                {t('quizzes.answers.deleteButton')}
               </button>
             </div>
           </div>
@@ -120,6 +122,7 @@ function EditAnswerList({
 
 function PlayAnswerList({ question, revealed = false, onPlayed, selectedAnswers = [] }: PlayProps) {
   const isChoiceQuestion = question.type === 'SINGLE_CHOICE' || question.type === 'MULTIPLE_CHOICE';
+  const { t } = useTranslation();
 
   if (!isChoiceQuestion) {
     return (
@@ -171,7 +174,7 @@ function PlayAnswerList({ question, revealed = false, onPlayed, selectedAnswers 
 
             {revealed && (
               <span className="answer-card__badge">
-                {answer.isCorrect ? 'Correct' : 'Incorrect'}
+                {answer.isCorrect ? t('quizzes.answers.correct') : t('quizzes.answers.incorrect')}
               </span>
             )}
           </button>
@@ -182,6 +185,7 @@ function PlayAnswerList({ question, revealed = false, onPlayed, selectedAnswers 
 }
 
 function ViewAnswerList({ question, selectedAnswers = [] }: ViewProps) {
+  const { t } = useTranslation();
   return (
     <>
       {question.answers.map((answer) => (
@@ -195,7 +199,9 @@ function ViewAnswerList({ question, selectedAnswers = [] }: ViewProps) {
 
           <p className="answer-card__content">{answer.content}</p>
 
-          <span className="answer-card__badge">{answer.isCorrect ? 'Correct' : 'Incorrect'}</span>
+          <span className="answer-card__badge">
+            {answer.isCorrect ? t('quizzes.answers.correct') : t('quizzes.answers.incorrect')}
+          </span>
         </div>
       ))}
     </>

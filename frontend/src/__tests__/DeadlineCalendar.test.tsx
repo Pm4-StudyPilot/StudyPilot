@@ -121,7 +121,7 @@ describe('DeadlineCalendar', () => {
     expect(await screen.findByText('Upcoming Deadlines')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /all courses/i })).toBeInTheDocument();
     expect(
-      await screen.findByRole('button', { name: /may 10, 2026, today, 1 deadline/i })
+      await screen.findByRole('button', { name: /10\.05\.2026, today, 1 deadline/i })
     ).toBeInTheDocument();
     expect(screen.getAllByText('Quiz prep').length).toBeGreaterThan(0);
     expect(screen.getByText('Read chapter 5')).toBeInTheDocument();
@@ -172,8 +172,8 @@ describe('DeadlineCalendar', () => {
     );
 
     await screen.findByText('Upcoming Deadlines');
-    fireEvent.click(screen.getByRole('button', { name: /may 3, 2026, 1 deadline/i }));
-    expect(screen.getByRole('heading', { name: 'May 3, 2026' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /03\.05\.2026, 1 deadline/i }));
+    expect(screen.getByRole('heading', { name: '03.05.2026' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /go to next month/i }));
     expect(screen.getByText('June 2026')).toBeInTheDocument();
@@ -350,11 +350,11 @@ describe('DeadlineCalendar', () => {
     expect(await screen.findByText('Portfolio review')).toBeInTheDocument();
     expect(screen.queryByText('Completed project')).not.toBeInTheDocument();
     expect(screen.queryByText('No due date task')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /may 21, 2026, 1 deadline/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: /21\.05\.2026, 1 deadline/i })).toHaveClass(
       'deadline-calendar__day--default'
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /may 11, 2026, 1 deadline/i }));
+    fireEvent.click(screen.getByRole('button', { name: /11\.05\.2026, 1 deadline/i }));
 
     expect(screen.getByText('Completed project')).toBeInTheDocument();
     expect(screen.getByText('Already submitted.')).toBeInTheDocument();
@@ -368,9 +368,9 @@ describe('DeadlineCalendar', () => {
     );
 
     expect(await screen.findByText('Upcoming Deadlines')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /may 3, 2026, 1 deadline/i }));
+    fireEvent.click(screen.getByRole('button', { name: /03\.05\.2026, 1 deadline/i }));
 
-    expect(screen.getByRole('heading', { name: 'May 3, 2026' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '03.05.2026' })).toBeInTheDocument();
     expect(screen.queryByText('Upcoming Deadlines')).not.toBeInTheDocument();
     expect(screen.getByText('Lab recap')).toBeInTheDocument();
     expect(screen.getByText("Summarize last week's experiment notes.")).toBeInTheDocument();
@@ -394,9 +394,9 @@ describe('DeadlineCalendar', () => {
     fireEvent.click(screen.getByRole('button', { name: /all courses/i }));
     fireEvent.change(screen.getByLabelText(/search courses/i), { target: { value: 'bio' } });
     fireEvent.click(screen.getByRole('option', { name: /biology/i }));
-    fireEvent.click(screen.getByRole('button', { name: /may 3, 2026/i }));
+    fireEvent.click(screen.getByRole('button', { name: /03\.05\.2026/i }));
 
-    expect(screen.getByRole('heading', { name: 'May 3, 2026' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '03.05.2026' })).toBeInTheDocument();
     expect(screen.getByText('No task deadlines fall on this date.')).toBeInTheDocument();
     expect(screen.queryByText('Lab recap')).not.toBeInTheDocument();
   });

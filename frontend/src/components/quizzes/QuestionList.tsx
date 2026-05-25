@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { QuestionWithAnswersDto } from '../../types/dto';
 import QuestionCard from './QuestionCard.tsx';
 import InputField from '../shared/form/InputField';
 import TextAreaField from '../shared/form/TextareaField';
 import SelectField from '../shared/form/SelectField';
-import { questionTypeOptions } from './types';
+import { questionTypes, type QuestionTypeValue } from './types';
 
 interface NewQuestionFormState {
   title: string;
@@ -30,16 +31,6 @@ interface QuestionListProps {
   onDeleteAnswer?: (questionId: string, answerId: string) => Promise<void> | void;
 }
 
-/**
- * QuestionList
- *
- * Displays all questions for a quiz.
- *
- * Responsibilities:
- * - Render questions using QuestionCard
- * - Display an empty state when no questions exist
- * - Render an add-question area when edit mode is enabled
- */
 export default function QuestionList({
   questions,
   editable = false,
@@ -50,6 +41,7 @@ export default function QuestionList({
   onUpdateAnswer,
   onDeleteAnswer,
 }: QuestionListProps) {
+  const { t } = useTranslation();
   const [newQuestion, setNewQuestion] = useState<NewQuestionFormState>({
     title: '',
     description: '',
@@ -58,10 +50,19 @@ export default function QuestionList({
   const [saving, setSaving] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
+  const questionTypeOptions = useMemo(
+    () =>
+      questionTypes.map((value: QuestionTypeValue) => ({
+        value,
+        label: t(`quizzes.questions.typeOptions.${value}`),
+      })),
+    [t]
+  );
+
   async function handleCreateQuestion() {
     setCreateError(null);
     if (!newQuestion.title.trim()) {
-      setCreateError('Question title is required');
+      setCreateError(t('validation.questionTitleRequired'));
       return;
     }
 
@@ -80,7 +81,7 @@ export default function QuestionList({
         type: 'SINGLE_CHOICE',
       });
     } catch {
-      setCreateError('Failed to create question');
+      setCreateError(t('validation.failedToCreateQuestion'));
     } finally {
       setSaving(false);
     }
@@ -93,15 +94,15 @@ export default function QuestionList({
           <div className="question-list__empty-icon">
             <i className="fa-regular fa-circle-question" />
           </div>
-          <h3>No questions yet</h3>
-          <p className="mb-0">Once questions are added, they will appear here.</p>
+          <h3>{t('quizzes.questions.noneViewTitle')}</h3>
+          <p className="mb-0">{t('quizzes.questions.noneViewHint')}</p>
         </div>
       )}
 
       {questions.length === 0 && editable && (
         <div className="question-list__empty question-list__empty--editable">
-          <h3>No questions yet</h3>
-          <p className="mb-0">Create the first question below.</p>
+          <h3>{t('quizzes.questions.noneEditTitle')}</h3>
+          <p className="mb-0">{t('quizzes.questions.noneEditHint')}</p>
         </div>
       )}
 
@@ -126,12 +127,12 @@ export default function QuestionList({
       {editable && (
         <section className="question-list__new-question">
           <div className="question-list__new-question-header">
-            <h3>Add a new question</h3>
+            <h3>{t('quizzes.questions.addHeading')}</h3>
           </div>
 
           <div className="question-editor__fields">
             <InputField
-              label="Question title"
+              label={t('quizzes.questions.titleLabel')}
               name="title"
               value={newQuestion.title}
               onChange={(event) =>
@@ -140,12 +141,12 @@ export default function QuestionList({
                   title: event.target.value,
                 }))
               }
-              placeholder="e.g. What is the capital of France?"
+              placeholder={t('quizzes.questions.titlePlaceholder')}
             />
 
             <TextAreaField
               className="form-control"
-              label="Description"
+              label={t('quizzes.questions.descriptionLabel')}
               value={newQuestion.description}
               onChange={(event) =>
                 setNewQuestion((current) => ({
@@ -153,12 +154,12 @@ export default function QuestionList({
                   description: event.target.value,
                 }))
               }
-              placeholder="Additional explanation or hint"
+              placeholder={t('quizzes.questions.descriptionPlaceholder')}
               rows={3}
             />
 
             <SelectField
-              label="Question type"
+              label={t('quizzes.questions.typeLabel')}
               className="form-select"
               value={newQuestion.type}
               onChange={(event) =>
@@ -178,7 +179,7 @@ export default function QuestionList({
             onClick={handleCreateQuestion}
           >
             <i className="fa-solid fa-plus" />
-            {saving ? 'Adding...' : 'Add question'}
+            {saving ? t('quizzes.questions.adding') : t('quizzes.questions.addButton')}
           </button>
           {createError && <div className="text-danger">{createError}</div>}
         </section>

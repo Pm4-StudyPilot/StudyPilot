@@ -1,7 +1,9 @@
 import { useRef, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../context/useAuth';
 import { useNavigate, Link } from 'react-router-dom';
 import Logo from '../Logo';
+import LanguageSwitcher from './LanguageSwitcher';
 
 function Avatar({ username, size }: { username: string; size: number }) {
   return (
@@ -17,6 +19,7 @@ function Avatar({ username, size }: { username: string; size: number }) {
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -32,7 +35,7 @@ export default function Navbar() {
 
   function handleLogout() {
     setOpen(false);
-    sessionStorage.setItem('logoutMessage', 'Successfully logged out');
+    sessionStorage.setItem('logoutMessage', t('common.logoutSuccess'));
     logout();
     navigate('/login');
   }
@@ -45,64 +48,67 @@ export default function Navbar() {
         </a>
 
         {user && (
-          <div className="dropdown" ref={dropdownRef}>
-            {/* Trigger */}
-            <button
-              className="navbar__trigger btn btn-dark d-flex align-items-center gap-2 px-2 py-1"
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-            >
-              <Avatar username={user.username} size={32} />
-              <span className="navbar__username text-white">{user.username}</span>
-              <i
-                className={`navbar__chevron fa-solid fa-chevron-${open ? 'up' : 'down'} text-secondary`}
-              />
-            </button>
+          <div className="d-flex align-items-center gap-2">
+            <LanguageSwitcher />
+            <div className="dropdown" ref={dropdownRef}>
+              {/* Trigger */}
+              <button
+                className="navbar__trigger btn btn-dark d-flex align-items-center gap-2 px-2 py-1"
+                onClick={() => setOpen((v) => !v)}
+                aria-expanded={open}
+              >
+                <Avatar username={user.username} size={32} />
+                <span className="navbar__username text-white">{user.username}</span>
+                <i
+                  className={`navbar__chevron fa-solid fa-chevron-${open ? 'up' : 'down'} text-secondary`}
+                />
+              </button>
 
-            {/* Menu */}
-            <ul
-              className={`navbar__menu dropdown-menu dropdown-menu-end shadow-sm mt-1${open ? ' show' : ''}`}
-            >
-              {/* Header */}
-              <li className="px-3 pt-3 pb-2 d-flex align-items-center gap-3">
-                <Avatar username={user.username} size={40} />
-                <div className="navbar__meta">
-                  <div className="navbar__meta-name fw-semibold text-dark text-truncate">
-                    {user.username}
+              {/* Menu */}
+              <ul
+                className={`navbar__menu dropdown-menu dropdown-menu-end shadow-sm mt-1${open ? ' show' : ''}`}
+              >
+                {/* Header */}
+                <li className="px-3 pt-3 pb-2 d-flex align-items-center gap-3">
+                  <Avatar username={user.username} size={40} />
+                  <div className="navbar__meta">
+                    <div className="navbar__meta-name fw-semibold text-dark text-truncate">
+                      {user.username}
+                    </div>
+                    <div className="navbar__meta-email text-muted text-truncate">{user.email}</div>
                   </div>
-                  <div className="navbar__meta-email text-muted text-truncate">{user.email}</div>
-                </div>
-              </li>
+                </li>
 
-              <li>
-                <hr className="dropdown-divider my-1" />
-              </li>
+                <li>
+                  <hr className="dropdown-divider my-1" />
+                </li>
 
-              <li>
-                <Link
-                  to="/settings"
-                  className="dropdown-item d-flex align-items-center gap-2 py-2"
-                  onClick={() => setOpen(false)}
-                >
-                  <i className="navbar__item-icon fa-solid fa-key fa-fw text-muted" />
-                  <span className="navbar__item-label">Account Settings</span>
-                </Link>
-              </li>
+                <li>
+                  <Link
+                    to="/settings"
+                    className="dropdown-item d-flex align-items-center gap-2 py-2"
+                    onClick={() => setOpen(false)}
+                  >
+                    <i className="navbar__item-icon fa-solid fa-key fa-fw text-muted" />
+                    <span className="navbar__item-label">{t('common.nav.accountSettings')}</span>
+                  </Link>
+                </li>
 
-              <li>
-                <hr className="dropdown-divider my-1" />
-              </li>
+                <li>
+                  <hr className="dropdown-divider my-1" />
+                </li>
 
-              <li>
-                <button
-                  className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger"
-                  onClick={handleLogout}
-                >
-                  <i className="navbar__item-icon fa-solid fa-right-from-bracket fa-fw" />
-                  <span className="navbar__item-label">Logout</span>
-                </button>
-              </li>
-            </ul>
+                <li>
+                  <button
+                    className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger"
+                    onClick={handleLogout}
+                  >
+                    <i className="navbar__item-icon fa-solid fa-right-from-bracket fa-fw" />
+                    <span className="navbar__item-label">{t('common.nav.logout')}</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
         )}
       </div>

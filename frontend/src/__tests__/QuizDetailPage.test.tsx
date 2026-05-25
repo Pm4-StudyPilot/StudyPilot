@@ -235,7 +235,7 @@ describe('QuizDetailPage', () => {
     });
 
     expect(screen.getByRole('link', { name: /play/i })).toBeInTheDocument();
-    expect(screen.getByText(/Updated May 2, 2026/i)).toBeInTheDocument();
+    expect(screen.getByText(/Updated 02\.05\.2026/i)).toBeInTheDocument();
   });
 
   it('renders calculated quiz stats', async () => {
@@ -472,7 +472,7 @@ describe('QuizDetailPage', () => {
       fireEvent.click(editBtn);
 
       const titleInput = await screen.findByLabelText('Quiz title');
-      const descriptionInput = screen.getByLabelText('Quiz description');
+      const descriptionInput = screen.getByLabelText('Description');
       const randomCheckbox = screen.getByLabelText(/randomize question order/i);
 
       expect(titleInput).toHaveValue(quizFixture.title);
@@ -544,7 +544,7 @@ describe('QuizDetailPage', () => {
       const editBtn = await screen.findByRole('button', { name: /edit/i });
       fireEvent.click(editBtn);
 
-      const descriptionInput = await screen.findByLabelText('Quiz description');
+      const descriptionInput = await screen.findByLabelText('Description');
       fireEvent.change(descriptionInput, { target: { value: 'A new description.' } });
       fireEvent.blur(descriptionInput);
 
