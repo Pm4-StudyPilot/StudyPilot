@@ -111,13 +111,13 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
                 />
                 <Link
                   to={`/courses/${course.id}`}
-                  className="course-card__name fw-semibold text-white text-decoration-none"
+                  className="course-card__name fw-semibold text-decoration-none"
                 >
                   {course.name}
                 </Link>
               </div>
-              <div className="course-card__date text-secondary">Added {formattedDate}</div>
-              <div className="course-card__progress-text text-secondary">
+              <div className="course-card__date">Added {formattedDate}</div>
+              <div className="course-card__progress-text">
                 {progress.openTasks} open · {progress.inProgressTasks} in progress ·{' '}
                 {progress.completedTasks} completed
               </div>
@@ -170,7 +170,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
             )}
 
             {!tasksLoading && tasks !== null && tasks.length === 0 && (
-              <p className="course-card__empty text-secondary mb-0">No tasks yet.</p>
+              <p className="course-card__empty mb-0">No tasks yet.</p>
             )}
 
             {!tasksLoading && tasks !== null && tasks.length > 0 && (
@@ -181,10 +181,10 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
                       key={task.id}
                       className="course-card__task d-flex align-items-center justify-content-between py-1"
                     >
-                      <span className="course-card__task-title text-white">{task.title}</span>
+                      <span className="course-card__task-title">{task.title}</span>
                       <div className="d-flex align-items-center gap-2">
                         {task.dueDate && (
-                          <span className="course-card__task-date text-secondary">
+                          <span className="course-card__task-date">
                             {new Date(task.dueDate).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
@@ -202,7 +202,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
                 </ul>
                 <Link
                   to={`/courses/${course.id}`}
-                  className="course-card__tasks-link text-secondary text-decoration-none"
+                  className="course-card__tasks-link text-decoration-none"
                 >
                   View all tasks →
                 </Link>

@@ -32,10 +32,16 @@
   &__progress-text {
     font-size: 0.76rem;
     line-height: 1.2;
+    color: var(--color-text-secondary);
   }
 
   &__name {
     font-size: 0.95rem;
+    color: var(--color-text-primary);
+
+    &:hover {
+      color: var(--color-text-primary);
+    }
   }
 
   &__color-dot {
@@ -49,6 +55,7 @@
 
   &__date {
     font-size: 0.78rem;
+    color: var(--color-text-secondary);
   }
 
   &__chevron {
@@ -57,6 +64,7 @@
 
   &__empty {
     font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
   }
 
   &__task {
@@ -65,10 +73,12 @@
 
   &__task-title {
     font-size: 0.9rem;
+    color: var(--color-text-primary);
   }
 
   &__task-date {
     font-size: 0.78rem;
+    color: var(--color-text-secondary);
   }
 
   &__task-status {
@@ -77,6 +87,11 @@
 
   &__tasks-link {
     font-size: 0.82rem;
+    color: var(--color-text-secondary);
+
+    &:hover {
+      color: var(--color-text-primary);
+    }
   }
 }
 

@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import Logo from '../Logo';
 import { useAuth } from '../../../context/useAuth';
+import { useTheme } from '../../../context/useTheme';
 
 /**
  * DashboardLayout
@@ -50,9 +51,11 @@ export default function DashboardLayout({
   searchPlaceholder = 'Search for courses, notes, or deadlines...',
 }: DashboardLayoutProps) {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const username = user?.username ?? 'A';
+  const nextThemeLabel = theme === 'dark' ? 'light' : 'dark';
 
   /**
    * Logs out the current user and redirects to the login page.
@@ -139,6 +142,16 @@ export default function DashboardLayout({
           <div className="dashboard-search dashboard-search--placeholder" aria-hidden="true" />
 
           <div className="dashboard-topbar__actions">
+            <button
+              type="button"
+              className="dashboard-topbar__icon dashboard-topbar__theme-toggle"
+              aria-label={`Switch to ${nextThemeLabel} mode`}
+              aria-pressed={theme === 'light'}
+              title={`Switch to ${nextThemeLabel} mode`}
+              onClick={toggleTheme}
+            >
+              <i className={`fa-solid ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`} />
+            </button>
             <button
               type="button"
               className="dashboard-topbar__icon dashboard-topbar__settings"
