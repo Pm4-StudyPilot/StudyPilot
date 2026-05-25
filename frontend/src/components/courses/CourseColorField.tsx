@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { useTranslation } from 'react-i18next';
 import { COURSE_COLOR_PALETTE, normalizeCourseColor, withOpacity } from '../../utils/courseColors';
 
 interface CourseColorFieldProps {
@@ -10,14 +11,19 @@ interface CourseColorFieldProps {
 export default function CourseColorField({ value, error, onChange }: CourseColorFieldProps) {
   const inputId = useId();
   const normalizedValue = normalizeCourseColor(value);
+  const { t } = useTranslation();
 
   return (
     <div className="course-color-field mb-3">
       <label className="form-label" htmlFor={inputId}>
-        Course Color
+        {t('courses.colorField.label')}
       </label>
 
-      <div className="course-color-field__swatches" role="radiogroup" aria-label="Preset palette">
+      <div
+        className="course-color-field__swatches"
+        role="radiogroup"
+        aria-label={t('courses.colorField.paletteAria')}
+      >
         {COURSE_COLOR_PALETTE.map((color) => {
           const isSelected = color === normalizedValue;
 
@@ -28,7 +34,7 @@ export default function CourseColorField({ value, error, onChange }: CourseColor
               className={`course-color-field__swatch${
                 isSelected ? ' course-color-field__swatch--selected' : ''
               }`}
-              aria-label={`Select ${color}`}
+              aria-label={t('courses.colorField.selectAria', { color })}
               aria-pressed={isSelected}
               onClick={() => onChange(color)}
               style={{
@@ -51,9 +57,7 @@ export default function CourseColorField({ value, error, onChange }: CourseColor
         <span className="course-color-field__value">{normalizedValue}</span>
       </div>
 
-      <div className="course-color-field__hint form-text">
-        Used in the course list and deadline calendar.
-      </div>
+      <div className="course-color-field__hint form-text">{t('courses.colorField.hint')}</div>
 
       {error && <div className="invalid-feedback d-block">{error}</div>}
     </div>

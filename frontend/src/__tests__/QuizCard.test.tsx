@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import QuizCard from '../components/quizzes/QuizCard';
 import { QuizDto } from '../types/dto';
+import { formatDate } from '../utils/formatDate';
 
 describe('QuizCard', () => {
   const quiz: QuizDto = {
@@ -15,12 +16,7 @@ describe('QuizCard', () => {
     updatedAt: '2026-05-01T12:00:00.000Z',
   };
 
-  const getExpectedDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+  const getExpectedDate = (dateStr: string) => formatDate(dateStr);
 
   it('renders quiz title and description', () => {
     render(
@@ -71,5 +67,6 @@ describe('QuizCard', () => {
     const expectedDate = getExpectedDate(quiz.createdAt);
 
     expect(screen.getByText(new RegExp(`Added ${expectedDate}`, 'i'))).toBeInTheDocument();
+    expect(expectedDate).toMatch(/^\d{2}\.\d{2}\.\d{4}$/);
   });
 });

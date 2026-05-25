@@ -1,0 +1,104 @@
+{
+  "card": {
+    "added": "Hinzugefügt am {{date}}",
+    "noDescription": "Keine Beschreibung vorhanden."
+  },
+  "create": {
+    "title": "Neues Quiz",
+    "titleLabel": "Titel",
+    "descriptionLabel": "Beschreibung",
+    "randomOrderLabel": "Zufällige Fragenreihenfolge",
+    "submit": "Quiz erstellen"
+  },
+  "detail": {
+    "backToCourse": "Zurück zum Kurs",
+    "loadFailed": "Quiz konnte nicht geladen werden",
+    "saveFailed": "Quiz konnte nicht gespeichert werden",
+    "fallbackTitle": "Quiz-Detail",
+    "fallbackDescription": "Sieh dir die Fragen und Antworten an, bevor du dieses Quiz startest.",
+    "fixedOrder": "Feste Fragenreihenfolge",
+    "randomOrder": "Zufällige Fragenreihenfolge",
+    "loadingQuiz": "Quiz wird geladen...",
+    "titleField": "Quiz-Titel",
+    "descriptionField": "Beschreibung",
+    "randomizeField": "Fragenreihenfolge zufällig festlegen",
+    "savingStatus": "Wird gespeichert...",
+    "overviewHeading": "Übersicht",
+    "question": "Frage",
+    "question_other": "Fragen",
+    "answer": "Antwort",
+    "answer_other": "Antworten",
+    "correct": "Richtig",
+    "play": "Starten",
+    "updated": "Aktualisiert am {{date}}",
+    "updatedRecently": "Kürzlich aktualisiert",
+    "questionsAndAnswers": "Fragen und Antworten",
+    "itemsCount": "{{count}} Element",
+    "itemsCount_other": "{{count}} Elemente",
+    "preview": "Vorschau",
+    "edit": "Bearbeiten",
+    "summaryAria": "Quiz-Zusammenfassung"
+  },
+  "questions": {
+    "noneViewTitle": "Noch keine Fragen",
+    "noneViewHint": "Sobald Fragen hinzugefügt werden, erscheinen sie hier.",
+    "noneEditTitle": "Noch keine Fragen",
+    "noneEditHint": "Erstelle unten die erste Frage.",
+    "addHeading": "Neue Frage hinzufügen",
+    "titleLabel": "Fragetitel",
+    "titlePlaceholder": "z.B. Was ist die Hauptstadt von Frankreich?",
+    "descriptionLabel": "Beschreibung",
+    "descriptionPlaceholder": "Zusätzliche Erklärung oder Hinweis",
+    "typeLabel": "Fragetyp",
+    "adding": "Wird hinzugefügt...",
+    "addButton": "Frage hinzufügen",
+    "typeOptions": {
+      "SINGLE_CHOICE": "Einzelauswahl",
+      "MULTIPLE_CHOICE": "Mehrfachauswahl",
+      "CARD": "Karte"
+    },
+    "card": {
+      "toggleAria": "Antworten umschalten",
+      "viewAnswers": "Antworten ansehen",
+      "answersCount": "{{count}} Antwort",
+      "answersCount_other": "{{count}} Antworten",
+      "correctCount": "{{count}} richtige Antwort",
+      "correctCount_other": "{{count}} richtige Antworten",
+      "answersHeading": "Antworten",
+      "delete": "Löschen",
+      "revealAnswer": "Antwort anzeigen",
+      "scorePoints": "{{count}} Punkt",
+      "scorePoints_other": "{{count}} Punkte"
+    }
+  },
+  "play": {
+    "backToQuiz": "Zurück zum Quiz",
+    "notFound": "Quiz nicht gefunden",
+    "progress": "Frage {{current}} / {{total}}",
+    "selectHint": "Wähle eine Antwort oder zeige die Lösung an.",
+    "correct": "Richtig",
+    "incorrect": "Falsch",
+    "viewStats": "Statistik anzeigen",
+    "nextQuestion": "Nächste Frage",
+    "finish": "Beenden",
+    "resultTitle": "Ergebnis",
+    "resultSummary": "Du hast {{score}} / {{total}} Punkte erreicht. {{feedback}}",
+    "feedback": {
+      "perfect": "Perfekt!",
+      "excellent": "Ausgezeichnet!",
+      "good": "Gut gemacht!",
+      "notBad": "Nicht schlecht!",
+      "keepPracticing": "Übe weiter..."
+    }
+  },
+  "answers": {
+    "correct": "Richtig",
+    "incorrect": "Falsch",
+    "newLabel": "Neue Antwort",
+    "newPlaceholder": "Weitere mögliche Antwort hinzufügen",
+    "correctCheckbox": "Richtig",
+    "addButton": "Antwort hinzufügen",
+    "addingButton": "Wird hinzugefügt...",
+    "deleteButton": "Löschen"
+  }
+}

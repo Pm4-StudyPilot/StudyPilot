@@ -1,0 +1,123 @@
+{
+  "library": {
+    "eyebrow": "Kursbibliothek",
+    "title": "Kurse",
+    "subline": "Durchsuche alle verfügbaren Kurse und öffne einen, um die Detailseite zu sehen."
+  },
+  "list": {
+    "heading": "Meine Kurse",
+    "addAria": "Kurs hinzufügen",
+    "coursesShown": "{{shown}} von {{total}} Kursen angezeigt",
+    "courseShown": "{{shown}} von {{total}} Kurs angezeigt",
+    "errorLoad": "Kurse konnten nicht geladen werden",
+    "empty": "Noch keine Kurse.",
+    "emptySearch": "Keine Kurse entsprechen deiner Suche."
+  },
+  "card": {
+    "addedDate": "Hinzugefügt am {{date}}",
+    "openAria": "Kurs öffnen",
+    "editAria": "Kurs bearbeiten",
+    "deleteAria": "Kurs löschen",
+    "toggleAria": "Kurs umschalten",
+    "openLabel": "Öffnen",
+    "loadingTasks": "Aufgaben werden geladen...",
+    "noTasks": "Noch keine Aufgaben.",
+    "viewAllTasks": "Alle Aufgaben anzeigen →",
+    "progressText": "{{open}} offen · {{inProgress}} in Bearbeitung · {{completed}} erledigt",
+    "progressLabel": "{{open}} offen, {{inProgress}} in Bearbeitung, {{completed}} erledigt",
+    "status": {
+      "OPEN": "Offen",
+      "IN_PROGRESS": "In Bearbeitung",
+      "DONE": "Erledigt"
+    }
+  },
+  "create": {
+    "title": "Neuer Kurs",
+    "nameLabel": "Kursname",
+    "submit": "Kurs erstellen"
+  },
+  "edit": {
+    "title": "Kurs bearbeiten",
+    "submit": "Änderungen speichern"
+  },
+  "delete": {
+    "title": "Kurs löschen",
+    "confirm": "Bist du sicher, dass du <strong>{{name}}</strong> löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden."
+  },
+  "colorField": {
+    "label": "Kursfarbe",
+    "paletteAria": "Voreingestellte Palette",
+    "selectAria": "{{color}} auswählen",
+    "hint": "Wird in der Kursliste und im Fristenkalender verwendet."
+  },
+  "detail": {
+    "backToCourses": "Zurück zu den Kursen",
+    "loadFailed": "Kurs konnte nicht geladen werden",
+    "courseNotFound": "Kurs nicht gefunden",
+    "courseNotFoundHint": "Das Backend hat für diese Route keinen Kurs zurückgegeben.",
+    "workspacePill": "Kurs-Arbeitsbereich",
+    "metaTasks": "{{count}} Aufgabe",
+    "metaTasks_other": "{{count}} Aufgaben",
+    "metaCompleted": "{{count}} erledigt",
+    "metaCreated": "Erstellt am {{date}}",
+    "progressHeading": "Kursfortschritt",
+    "progressSummary": "{{completed}} erledigt, {{inProgress}} in Bearbeitung, {{open}} offen",
+    "percentComplete": "{{percent}}% erledigt",
+    "percentLabel": "erledigt",
+    "tasksHeading": "Aufgaben",
+    "addTaskAria": "Aufgabe hinzufügen",
+    "loadingTasks": "Aufgaben werden geladen...",
+    "loadTasksFailed": "Aufgaben konnten nicht geladen werden",
+    "materialsHeading": "Kursmaterialien",
+    "addQuizAria": "Quiz hinzufügen",
+    "loadingMaterials": "Kursmaterialien werden geladen...",
+    "loadMaterialsFailed": "Kursfeed konnte nicht geladen werden",
+    "documentsHeading": "Kursdokumente",
+    "uploadHeading": "Dokument hochladen",
+    "uploadSubtitle": "Füge Dateien zu diesem Kurs-Arbeitsbereich hinzu. Die Dokumentenliste oben wird nach erfolgreichem Upload aktualisiert.",
+    "searchPlaceholder": "In diesem Kurs suchen..."
+  },
+  "feed": {
+    "empty": "Noch keine Kursmaterialien. Füge Quizze oder andere Inhalte hinzu, um zu beginnen.",
+    "sortBy": "Sortieren nach: {{label}}",
+    "sortLabels": {
+      "title": "Titel",
+      "dateAdded": "Hinzugefügt am"
+    }
+  },
+  "documents": {
+    "heading": "Hochgeladene Dokumente",
+    "loading": "Dokumente werden geladen...",
+    "loadFailed": "Dokumente konnten nicht geladen werden.",
+    "shown": "{{shown}} von {{total}} Dateien angezeigt",
+    "shownOne": "{{shown}} von {{total}} Datei angezeigt",
+    "sortBy": "Sortieren nach:",
+    "sortNewest": "Neueste",
+    "sortName": "Name",
+    "sortType": "Typ",
+    "sortSize": "Größe",
+    "empty": "Noch keine Dokumente hochgeladen.",
+    "emptySearch": "Keine Dokumente entsprechen deiner Suche.",
+    "updated": "Aktualisiert am {{date}}",
+    "unknownSize": "Unbekannte Größe",
+    "openAria": "{{filename}} öffnen",
+    "downloadAria": "{{filename}} herunterladen",
+    "deleteAria": "{{filename}} löschen",
+    "openFailed": "Dokument konnte nicht geöffnet werden.",
+    "downloadFailed": "Dokument konnte nicht heruntergeladen werden.",
+    "delete": {
+      "title": "Dokument löschen",
+      "confirm": "Bist du sicher, dass du <strong>{{filename}}</strong> löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden."
+    }
+  },
+  "upload": {
+    "title": "Dokument hochladen",
+    "hint": "Datei hierher ziehen oder zum Auswählen klicken.",
+    "maxSize": "Maximale Dateigröße: 50 MB.",
+    "selectedFile": "Ausgewählte Datei: {{name}}",
+    "uploading": "Wird hochgeladen...",
+    "notAuthenticated": "Du bist nicht authentifiziert.",
+    "failed": "Upload fehlgeschlagen.",
+    "success": "Upload erfolgreich: {{filename}}"
+  }
+}

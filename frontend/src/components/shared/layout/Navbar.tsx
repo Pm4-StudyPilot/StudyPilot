@@ -1,8 +1,10 @@
 import { useRef, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../context/useAuth';
 import { useTheme } from '../../../context/useTheme';
 import { useNavigate, Link } from 'react-router-dom';
 import Logo from '../Logo';
+import LanguageSwitcher from './LanguageSwitcher';
 
 function Avatar({ username, size }: { username: string; size: number }) {
   return (
@@ -19,6 +21,7 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const nextThemeLabel = theme === 'dark' ? 'light' : 'dark';
@@ -35,7 +38,7 @@ export default function Navbar() {
 
   function handleLogout() {
     setOpen(false);
-    sessionStorage.setItem('logoutMessage', 'Successfully logged out');
+    sessionStorage.setItem('logoutMessage', t('common.logoutSuccess'));
     logout();
     navigate('/login');
   }
@@ -48,6 +51,7 @@ export default function Navbar() {
         </a>
 
         <div className="d-flex align-items-center gap-2">
+          <LanguageSwitcher />
           <button
             type="button"
             className="navbar__theme-toggle btn d-flex align-items-center justify-content-center"
@@ -98,7 +102,7 @@ export default function Navbar() {
                     onClick={() => setOpen(false)}
                   >
                     <i className="navbar__item-icon fa-solid fa-key fa-fw text-muted" />
-                    <span className="navbar__item-label">Account Settings</span>
+                    <span className="navbar__item-label">{t('common.nav.accountSettings')}</span>
                   </Link>
                 </li>
 
@@ -112,7 +116,7 @@ export default function Navbar() {
                     onClick={handleLogout}
                   >
                     <i className="navbar__item-icon fa-solid fa-right-from-bracket fa-fw" />
-                    <span className="navbar__item-label">Logout</span>
+                    <span className="navbar__item-label">{t('common.nav.logout')}</span>
                   </button>
                 </li>
               </ul>

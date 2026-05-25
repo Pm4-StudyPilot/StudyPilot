@@ -1,0 +1,22 @@
+{
+  "identifierRequired": "Email or username is required",
+  "passwordRequired": "Password is required",
+  "currentPasswordRequired": "Current password is required",
+  "emailInvalid": "Invalid email address",
+  "usernameMin": "Username must be at least 3 characters",
+  "passwordMin": "Password must be at least 12 characters",
+  "passwordUppercase": "Password must contain at least one uppercase letter",
+  "passwordLowercase": "Password must contain at least one lowercase letter",
+  "passwordNumber": "Password must contain at least one number",
+  "passwordSpecial": "Password must contain at least one special character",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "courseNameRequired": "Course name is required",
+  "courseColorRequired": "Course color is required",
+  "taskTitleRequired": "Task title is required",
+  "quizTitleRequired": "Quiz title is required",
+  "questionTitleRequired": "Question title is required",
+  "answerContentRequired": "Answer content is required",
+  "failedToCreateQuestion": "Failed to create question",
+  "failedToSaveQuestion": "Failed to save question",
+  "failedToSaveAnswer": "Failed to save answer"
+}

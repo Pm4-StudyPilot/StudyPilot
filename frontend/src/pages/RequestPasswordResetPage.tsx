@@ -1,19 +1,22 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import Button from '../components/shared/Button';
 import Form from '../components/shared/form/Form';
 import InputField from '../components/shared/form/InputField';
 import Logo from '../components/shared/Logo';
 import { useForm } from '../hooks/useForm';
-import { requestPasswordResetSchema } from '../validation/schemas';
+import { createRequestPasswordResetSchema } from '../validation/schemas';
 
 export default function RequestPasswordResetPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
-  const { values, errors, handleChange, validate } = useForm(requestPasswordResetSchema, {
+  const schema = useMemo(() => createRequestPasswordResetSchema(t), [t]);
+  const { values, errors, handleChange, validate } = useForm(schema, {
     email: '',
   });
 
@@ -30,7 +33,7 @@ export default function RequestPasswordResetPage() {
       });
       setSuccess(data.message);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof Error ? err.message : t('common.somethingWentWrong'));
     } finally {
       setLoading(false);
     }
@@ -45,11 +48,9 @@ export default function RequestPasswordResetPage() {
               <Logo className="auth-card__brand" />
             </h2>
           </div>
-          <p className="auth-card__eyebrow">Recovery</p>
-          <h5 className="auth-card__title text-center mb-1">Forgot Password</h5>
-          <p className="auth-card__lead text-center mb-4">
-            Enter your email and we'll send you a reset link.
-          </p>
+          <p className="auth-card__eyebrow">{t('auth.forgotPassword.eyebrow')}</p>
+          <h5 className="auth-card__title text-center mb-1">{t('auth.forgotPassword.title')}</h5>
+          <p className="auth-card__lead text-center mb-4">{t('auth.forgotPassword.lead')}</p>
 
           {success ? (
             <>
@@ -58,7 +59,7 @@ export default function RequestPasswordResetPage() {
               </div>
               <div className="text-center mt-3">
                 <Link to="/login" className="auth-card__muted-link">
-                  Back to Login
+                  {t('auth.forgotPassword.backToLogin')}
                 </Link>
               </div>
             </>
@@ -66,7 +67,7 @@ export default function RequestPasswordResetPage() {
             <>
               <Form onSubmit={handleSubmit} error={error}>
                 <InputField
-                  label="Email Address"
+                  label={t('auth.forgotPassword.email')}
                   type="email"
                   value={values.email}
                   onChange={(e) => handleChange('email', e.target.value)}
@@ -74,12 +75,12 @@ export default function RequestPasswordResetPage() {
                   autoComplete="email"
                 />
                 <Button type="submit" className="w-100" loading={loading}>
-                  Send Reset Link
+                  {t('auth.forgotPassword.submit')}
                 </Button>
               </Form>
               <div className="text-center mt-3">
                 <Link to="/login" className="auth-card__muted-link">
-                  Back to Login
+                  {t('auth.forgotPassword.backToLogin')}
                 </Link>
               </div>
             </>

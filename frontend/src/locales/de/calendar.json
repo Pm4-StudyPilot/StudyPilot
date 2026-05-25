@@ -1,0 +1,28 @@
+{
+  "allCourses": "Alle Kurse",
+  "loadingDeadlines": "Fristen werden geladen...",
+  "loadFailed": "Fristen konnten nicht geladen werden",
+  "searchCourses": "Kurse durchsuchen",
+  "searchCoursesAria": "Kurse durchsuchen",
+  "noCoursesFound": "Keine Kurse gefunden.",
+  "navAria": "Kalendernavigation",
+  "prevMonth": "Zum vorherigen Monat",
+  "nextMonth": "Zum nächsten Monat",
+  "upcomingTitle": "Anstehende Fristen",
+  "showUpcoming": "Anstehende Fristen anzeigen",
+  "emptyDate": "An diesem Datum sind keine Fristen.",
+  "emptyUpcoming": "Noch keine anstehenden Fristen. Füge Aufgaben mit Fälligkeitsdaten hinzu oder aktualisiere sie, um diese Liste zu füllen.",
+  "showLess": "Weniger Fristen anzeigen",
+  "showMoreOne": "{{count}} weitere Frist anzeigen",
+  "showMore": "{{count}} weitere Fristen anzeigen",
+  "deadlineCount": "{{count}} Frist",
+  "deadlineCount_other": "{{count}} Fristen",
+  "today": "heute",
+  "flag": {
+    "completed": "Erledigt",
+    "overdue": "Überfällig",
+    "dueToday": "Heute fällig",
+    "dueSoon": "Bald fällig",
+    "scheduled": "Geplant"
+  }
+}

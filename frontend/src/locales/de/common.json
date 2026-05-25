@@ -1,0 +1,37 @@
+{
+  "appName": "StudyPilot",
+  "loading": "Wird geladen...",
+  "saving": "Wird gespeichert...",
+  "somethingWentWrong": "Etwas ist schiefgelaufen",
+  "logoutSuccess": "Erfolgreich abgemeldet",
+  "buttons": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "back": "Zurück",
+    "close": "Schließen"
+  },
+  "language": {
+    "label": "Sprache",
+    "english": "English",
+    "german": "Deutsch",
+    "switcherLabel": "Sprache ändern"
+  },
+  "nav": {
+    "dashboard": "Übersicht",
+    "courses": "Kurse",
+    "settings": "Einstellungen",
+    "logout": "Abmelden",
+    "accountSettings": "Kontoeinstellungen",
+    "profileAriaLabel": "Profil",
+    "settingsAriaLabel": "Einstellungen"
+  },
+  "search": {
+    "default": "Nach Kursen, Notizen oder Fristen suchen...",
+    "dashboard": "Übersicht durchsuchen...",
+    "courses": "Kurse durchsuchen...",
+    "inCourse": "In diesem Kurs suchen..."
+  }
+}

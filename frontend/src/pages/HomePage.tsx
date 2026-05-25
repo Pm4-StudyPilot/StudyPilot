@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import DeadlineCalendar from '../components/calendar/DeadlineCalendar';
 import ProgressRing from '../components/shared/ProgressRing';
 import DashboardLayout from '../components/shared/layout/DashboardLayout';
 import { api } from '../services/api';
 import { CourseDto, TaskDto } from '../types/dto';
+import { formatDate } from '../utils/formatDate';
 
 type RingVariant = 'primary' | 'secondary' | 'tertiary' | 'quaternary';
 
@@ -52,44 +55,36 @@ type DashboardCourseData = {
 
 const COURSE_VARIANTS: RingVariant[] = ['primary', 'secondary', 'tertiary', 'quaternary'];
 
-/**
- * Returns a visual progress variant based on the course index.
- */
 function getVariant(index: number): RingVariant {
   return COURSE_VARIANTS[index % COURSE_VARIANTS.length];
 }
 
-/**
- * Formats a task due date as a short month/day label.
- */
-function formatShortDate(value: string | null) {
-  if (!value) return 'No due date';
-
-  return new Date(value).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  });
+function formatTaskStatus(status: TaskDto['status'], t: TFunction): string {
+  return t(`tasks.status.${status}`);
 }
 
-/**
- * Creates the small metadata line shown below a dashboard assignment.
- */
-function createTaskMeta(task: TaskDto) {
+function formatTaskPriority(priority: TaskDto['priority'], t: TFunction): string {
+  return t(`tasks.priority.${priority}`);
+}
+
+function createTaskMeta(task: TaskDto, t: TFunction): string {
+  const priority = formatTaskPriority(task.priority, t).toLowerCase();
+
   if (task.status === 'DONE') {
-    return `Completed - ${task.priority.toLowerCase()} priority`;
+    return t('home.completedPriority', { priority });
   }
 
   if (task.dueDate) {
-    return `Due ${formatShortDate(task.dueDate)} - ${task.priority.toLowerCase()} priority`;
+    return t('home.duePriority', { date: formatDate(task.dueDate), priority });
   }
 
-  return `${task.status.replace('_', ' ').toLowerCase()} - ${task.priority.toLowerCase()} priority`;
+  return t('home.statusPriority', {
+    status: formatTaskStatus(task.status, t).toLowerCase(),
+    priority,
+  });
 }
 
-/**
- * Selects the most relevant assignments for the featured course card.
- */
-function buildFeaturedAssignments(tasks: TaskDto[]): DashboardAssignment[] {
+function buildFeaturedAssignments(tasks: TaskDto[], t: TFunction): DashboardAssignment[] {
   return [...tasks]
     .sort((a, b) => {
       if (a.status === 'DONE' && b.status !== 'DONE') return 1;
@@ -108,15 +103,12 @@ function buildFeaturedAssignments(tasks: TaskDto[]): DashboardAssignment[] {
     .map((task) => ({
       id: task.id,
       title: task.title,
-      meta: createTaskMeta(task),
+      meta: createTaskMeta(task, t),
       status: task.status === 'DONE' ? 'done' : 'urgent',
     }));
 }
 
-/**
- * Builds the support text shown on compact course cards.
- */
-function buildCourseSupportMeta(data: DashboardCourseData) {
+function buildCourseSupportMeta(data: DashboardCourseData, t: TFunction): string {
   const nextTask = [...data.tasks]
     .filter((task) => task.status !== 'DONE')
     .sort((a, b) => {
@@ -131,34 +123,28 @@ function buildCourseSupportMeta(data: DashboardCourseData) {
     })[0];
 
   if (nextTask) {
-    return `Next task: ${nextTask.title}`;
+    return t('home.nextTask', { title: nextTask.title });
   }
 
   if (data.quizzes.length > 0) {
-    return `Quiz available: ${data.quizzes[0].title}`;
+    return t('home.quizAvailable', { title: data.quizzes[0].title });
   }
 
   if (data.documents.length > 0) {
-    return `Document uploaded: ${data.documents[0].filename}`;
+    return t('home.documentUploaded', { filename: data.documents[0].filename });
   }
 
   if (data.taskError || data.quizError || data.documentError) {
-    return 'Supporting dashboard data could not be fully loaded';
+    return t('home.supportLoadFail');
   }
 
-  return 'No tasks, quizzes, or documents available';
+  return t('home.noSupportContent');
 }
 
-/**
- * Builds visible search result items for the featured dashboard card.
- *
- * The dashboard search can match tasks, documents, and quizzes.
- * These matches are shown instead of the normal assignment preview
- * while a search term is active.
- */
 function getDashboardMatches(
   data: DashboardCourseData,
-  searchTerm: string
+  searchTerm: string,
+  t: TFunction
 ): DashboardSearchMatch[] {
   const normalized = searchTerm.trim().toLowerCase();
   if (!normalized) return [];
@@ -168,7 +154,7 @@ function getDashboardMatches(
     .map((task) => ({
       id: task.id,
       title: task.title,
-      meta: 'Task',
+      meta: t('home.matchType.task'),
       type: 'task' as const,
     }));
 
@@ -181,7 +167,7 @@ function getDashboardMatches(
     .map((document) => ({
       id: document.id,
       title: document.filename,
-      meta: 'Document',
+      meta: t('home.matchType.document'),
       type: 'document' as const,
     }));
 
@@ -190,47 +176,38 @@ function getDashboardMatches(
     .map((quiz) => ({
       id: quiz.id,
       title: quiz.title,
-      meta: 'Quiz',
+      meta: t('home.matchType.quiz'),
       type: 'quiz' as const,
     }));
 
   return [...taskMatches, ...documentMatches, ...quizMatches].slice(0, 2);
 }
 
-/**
- * Collects warning messages when supporting dashboard data could not be loaded.
- */
-function collectDashboardWarnings(data: DashboardCourseData[]) {
+function collectDashboardWarnings(data: DashboardCourseData[], t: TFunction): string[] {
   const warnings = new Set<string>();
 
   if (data.some((entry) => entry.taskError)) {
-    warnings.add('Some task data could not be loaded.');
+    warnings.add(t('home.tasksWarning'));
   }
 
   if (data.some((entry) => entry.quizError)) {
-    warnings.add('Some quiz data could not be loaded.');
+    warnings.add(t('home.quizzesWarning'));
   }
 
   if (data.some((entry) => entry.documentError)) {
-    warnings.add('Some document data could not be loaded.');
+    warnings.add(t('home.documentsWarning'));
   }
 
   return [...warnings];
 }
 
-/**
- * Extracts an error message from a rejected settled result, or undefined when it fulfilled.
- */
 function getSettledErrorMessage(result: PromiseSettledResult<unknown>, fallback: string) {
   if (result.status !== 'rejected') return undefined;
 
   return result.reason instanceof Error ? result.reason.message : fallback;
 }
 
-/**
- * Loads tasks, documents, and quizzes for every course displayed on the dashboard.
- */
-async function loadDashboardCourseData(courses: CourseDto[]) {
+async function loadDashboardCourseData(courses: CourseDto[], t: TFunction) {
   const results = await Promise.all(
     courses.map(async (course) => {
       const [tasksResult, documentsResult, quizzesResult] = await Promise.allSettled([
@@ -244,9 +221,9 @@ async function loadDashboardCourseData(courses: CourseDto[]) {
         tasks: tasksResult.status === 'fulfilled' ? tasksResult.value : [],
         documents: documentsResult.status === 'fulfilled' ? documentsResult.value : [],
         quizzes: quizzesResult.status === 'fulfilled' ? quizzesResult.value : [],
-        taskError: getSettledErrorMessage(tasksResult, 'Failed to load tasks'),
-        documentError: getSettledErrorMessage(documentsResult, 'Failed to load documents'),
-        quizError: getSettledErrorMessage(quizzesResult, 'Failed to load quizzes'),
+        taskError: getSettledErrorMessage(tasksResult, t('home.errors.loadTasks')),
+        documentError: getSettledErrorMessage(documentsResult, t('home.errors.loadDocuments')),
+        quizError: getSettledErrorMessage(quizzesResult, t('home.errors.loadQuizzes')),
       } satisfies DashboardCourseData;
     })
   );
@@ -254,9 +231,6 @@ async function loadDashboardCourseData(courses: CourseDto[]) {
   return results;
 }
 
-/**
- * Renders the large highlighted course card on the dashboard.
- */
 function FeaturedCourseCard({
   data,
   searchTerm = '',
@@ -264,6 +238,7 @@ function FeaturedCourseCard({
   data: DashboardCourseData;
   searchTerm?: string;
 }) {
+  const { t } = useTranslation();
   const progress = data.course.taskProgress ?? {
     totalTasks: 0,
     completedTasks: 0,
@@ -272,23 +247,25 @@ function FeaturedCourseCard({
     completionPercentage: 0,
   };
 
-  const searchMatches = getDashboardMatches(data, searchTerm);
+  const searchMatches = getDashboardMatches(data, searchTerm, t);
   const assignments =
-    searchMatches.length > 0 ? searchMatches : buildFeaturedAssignments(data.tasks);
+    searchMatches.length > 0 ? searchMatches : buildFeaturedAssignments(data.tasks, t);
 
   const quizSummary =
     data.quizzes.length > 0
-      ? `${data.quizzes.length} quiz${data.quizzes.length !== 1 ? 'zes' : ''} available`
-      : 'No quizzes available';
+      ? t(data.quizzes.length === 1 ? 'home.quizCount' : 'home.quizCount_other', {
+          count: data.quizzes.length,
+        })
+      : t('home.quizCountZero');
 
-  const sectionLabel = searchTerm.trim() ? 'Search Results' : 'Recent Assignments';
+  const sectionLabel = searchTerm.trim() ? t('home.searchResults') : t('home.recentAssignments');
 
   return (
     <div className="dashboard-featured-card card">
       <div className="dashboard-featured-card__content">
         <div className="dashboard-featured-card__eyebrow">
           <span className="dashboard-pill">
-            {progress.openTasks > 0 ? 'Action Needed' : 'On Track'}
+            {progress.openTasks > 0 ? t('home.actionNeeded') : t('home.onTrack')}
           </span>
           <span>{quizSummary}</span>
         </div>
@@ -316,8 +293,8 @@ function FeaturedCourseCard({
         ) : (
           <div className="dashboard-section-message">
             {data.taskError
-              ? `Tasks unavailable: ${data.taskError}`
-              : 'No task data is available for this course yet.'}
+              ? t('home.tasksUnavailable', { error: data.taskError })
+              : t('home.noTaskData')}
           </div>
         )}
       </div>
@@ -333,29 +310,30 @@ function FeaturedCourseCard({
             inProgressTasks={progress.inProgressTasks}
             completedTasks={progress.completedTasks}
             totalTasks={progress.totalTasks}
-            label={`${progress.completionPercentage}% complete`}
+            label={t('home.percentComplete', { percent: progress.completionPercentage })}
             variant="primary"
             size={152}
             className="dashboard-featured-card__ring"
           />
           <div className="dashboard-featured-card__ring-center">
             <strong>{progress.completionPercentage}%</strong>
-            <span>overall</span>
+            <span>{t('home.percentOverall')}</span>
           </div>
         </div>
 
         <p className="dashboard-featured-card__summary">
-          {progress.completedTasks} / {progress.totalTasks || 0} tasks completed
+          {t('home.tasksCompleted', {
+            completed: progress.completedTasks,
+            total: progress.totalTasks || 0,
+          })}
         </p>
       </div>
     </div>
   );
 }
 
-/**
- * Renders a compact course card for the dashboard course grid.
- */
 function CompactCourseCard({ data, index }: { data: DashboardCourseData; index: number }) {
+  const { t } = useTranslation();
   const progress = data.course.taskProgress ?? {
     totalTasks: 0,
     completedTasks: 0,
@@ -367,8 +345,10 @@ function CompactCourseCard({ data, index }: { data: DashboardCourseData; index: 
   const variant = getVariant(index);
   const quizLabel =
     data.quizzes.length > 0
-      ? `${data.quizzes.length} quiz${data.quizzes.length !== 1 ? 'zes' : ''}`
-      : 'No quizzes';
+      ? t(data.quizzes.length === 1 ? 'home.quizCountShort' : 'home.quizCountShort_other', {
+          count: data.quizzes.length,
+        })
+      : t('home.noQuizzesShort');
 
   return (
     <div className="dashboard-course-card card light">
@@ -378,7 +358,7 @@ function CompactCourseCard({ data, index }: { data: DashboardCourseData; index: 
           inProgressTasks={progress.inProgressTasks}
           completedTasks={progress.completedTasks}
           totalTasks={progress.totalTasks}
-          label={`${progress.completionPercentage}% complete`}
+          label={t('home.percentComplete', { percent: progress.completionPercentage })}
           variant={variant}
           size={96}
         />
@@ -392,15 +372,12 @@ function CompactCourseCard({ data, index }: { data: DashboardCourseData; index: 
             {data.course.name}
           </Link>
         </h3>
-        <div className="dashboard-course-card__meta">{buildCourseSupportMeta(data)}</div>
+        <div className="dashboard-course-card__meta">{buildCourseSupportMeta(data, t)}</div>
       </div>
     </div>
   );
 }
 
-/**
- * Renders the right dashboard rail with calendar, deadlines, and stats.
- */
 function DashboardRail({
   courses,
   coursesLoading,
@@ -416,6 +393,7 @@ function DashboardRail({
   dueThisWeek: number;
   averageProgress: number;
 }) {
+  const { t } = useTranslation();
   return (
     <aside className="dashboard-rail">
       <section className="dashboard-rail__panel card dark">
@@ -430,31 +408,23 @@ function DashboardRail({
       <div className="dashboard-stats">
         <div className="dashboard-stat-card card light">
           <strong>{dueThisWeek}</strong>
-          <span>Due this week</span>
+          <span>{t('home.dueThisWeek')}</span>
         </div>
         <div className="dashboard-stat-card card light dashboard-stat-card--highlight">
           <strong>{averageProgress}%</strong>
-          <span>Avg progress</span>
+          <span>{t('home.avgProgress')}</span>
         </div>
       </div>
     </aside>
   );
 }
 
-/**
- * HomePage
- *
- * Displays the dashboard overview with course cards, upcoming deadlines,
- * progress statistics, and a local dashboard search.
- */
 export default function HomePage() {
+  const { t } = useTranslation();
   const [dashboardCourses, setDashboardCourses] = useState<DashboardCourseData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  /**
-   * Current dashboard search input value.
-   */
   const [dashboardSearchTerm, setDashboardSearchTerm] = useState('');
 
   useEffect(() => {
@@ -463,14 +433,14 @@ export default function HomePage() {
     async function loadDashboard() {
       try {
         const courses = await api.get<CourseDto[]>('/courses');
-        const data = await loadDashboardCourseData(courses);
+        const data = await loadDashboardCourseData(courses, t);
 
         if (cancelled) return;
         setDashboardCourses(data);
         setError('');
       } catch (err: unknown) {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+        setError(err instanceof Error ? err.message : t('home.loadingFailed'));
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -483,22 +453,12 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
-  /**
-   * Current date used for calendar and deadline calculations.
-   */
   const currentDate = useMemo(() => new Date(), []);
 
-  /**
-   * Normalized dashboard search term used for case-insensitive filtering.
-   */
   const normalizedDashboardSearch = dashboardSearchTerm.trim().toLowerCase();
 
-  /**
-   * Filters dashboard courses by course name, task title,
-   * quiz title, document filename, or document file type.
-   */
   const filteredDashboardCourses = normalizedDashboardSearch
     ? dashboardCourses.filter((entry) => {
         const courseMatches = entry.course.name.toLowerCase().includes(normalizedDashboardSearch);
@@ -521,19 +481,10 @@ export default function HomePage() {
       })
     : dashboardCourses;
 
-  /**
-   * First matching course shown as featured course.
-   */
   const featuredCourse = filteredDashboardCourses[0] ?? null;
 
-  /**
-   * Additional matching courses shown in the compact course grid.
-   */
   const compactCourses = filteredDashboardCourses.slice(1, 4);
 
-  /**
-   * Average progress based on all dashboard courses.
-   */
   const averageProgress =
     dashboardCourses.length > 0
       ? Math.round(
@@ -570,30 +521,34 @@ export default function HomePage() {
       }).length;
   }, [dashboardCourses, currentDate]);
 
-  const warnings = useMemo(() => collectDashboardWarnings(dashboardCourses), [dashboardCourses]);
+  const warnings = useMemo(
+    () => collectDashboardWarnings(dashboardCourses, t),
+    [dashboardCourses, t]
+  );
 
-  /**
-   * Renders the dashboard page.
-   */
+  const totalCourses = dashboardCourses.length;
+  const shownCourses = filteredDashboardCourses.length;
+  const coursesShown =
+    totalCourses === 1
+      ? t('home.courseShown', { shown: shownCourses, total: totalCourses })
+      : t('home.coursesShown', { shown: shownCourses, total: totalCourses });
+
   return (
     <DashboardLayout
       activeNav="dashboard"
       showSearch
       searchValue={dashboardSearchTerm}
       onSearchChange={setDashboardSearchTerm}
-      searchPlaceholder="Search dashboard..."
+      searchPlaceholder={t('common.search.dashboard')}
     >
       <div className="dashboard-grid">
         <section className="dashboard-content">
           <header className="dashboard-page-header">
             <div>
-              <p className="dashboard-page-header__eyebrow">Academic overview</p>
-              <h1>My Courses</h1>
+              <p className="dashboard-page-header__eyebrow">{t('home.eyebrow')}</p>
+              <h1>{t('home.title')}</h1>
               {!loading && !error && dashboardCourses.length > 0 && (
-                <p className="dashboard-page-header__eyebrow">
-                  {filteredDashboardCourses.length} of {dashboardCourses.length} course
-                  {dashboardCourses.length !== 1 ? 's' : ''} shown
-                </p>
+                <p className="dashboard-page-header__eyebrow">{coursesShown}</p>
               )}
             </div>
           </header>
@@ -609,7 +564,7 @@ export default function HomePage() {
           {loading && (
             <div className="dashboard-state panel dashboard-state--loading">
               <div className="spinner-border" role="status">
-                <span className="visually-hidden">Loading dashboard...</span>
+                <span className="visually-hidden">{t('home.loading')}</span>
               </div>
             </div>
           )}
@@ -635,18 +590,15 @@ export default function HomePage() {
             dashboardCourses.length > 0 &&
             filteredDashboardCourses.length === 0 && (
               <div className="dashboard-state">
-                <h2>No dashboard results</h2>
-                <p>No courses, tasks, quizzes, or documents match your search.</p>
+                <h2>{t('home.noResults')}</h2>
+                <p>{t('home.noResultsHint')}</p>
               </div>
             )}
 
           {!loading && !error && dashboardCourses.length === 0 && (
             <div className="dashboard-state panel">
-              <h2>No courses yet</h2>
-              <p>
-                The backend returned no courses for this user, so the dashboard has nothing to
-                display yet.
-              </p>
+              <h2>{t('home.noCoursesYet')}</h2>
+              <p>{t('home.noCoursesHint')}</p>
             </div>
           )}
         </section>

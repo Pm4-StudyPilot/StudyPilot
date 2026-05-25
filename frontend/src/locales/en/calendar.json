@@ -1,0 +1,28 @@
+{
+  "allCourses": "All courses",
+  "loadingDeadlines": "Loading deadlines...",
+  "loadFailed": "Failed to load deadlines",
+  "searchCourses": "Search courses",
+  "searchCoursesAria": "Search courses",
+  "noCoursesFound": "No courses found.",
+  "navAria": "Calendar navigation",
+  "prevMonth": "Go to previous month",
+  "nextMonth": "Go to next month",
+  "upcomingTitle": "Upcoming Deadlines",
+  "showUpcoming": "Show upcoming deadlines",
+  "emptyDate": "No task deadlines fall on this date.",
+  "emptyUpcoming": "No upcoming deadlines yet. Add or update task due dates to populate this list.",
+  "showLess": "Show fewer deadlines",
+  "showMoreOne": "Show {{count}} more deadline",
+  "showMore": "Show {{count}} more deadlines",
+  "deadlineCount": "{{count}} deadline",
+  "deadlineCount_other": "{{count}} deadlines",
+  "today": "today",
+  "flag": {
+    "completed": "Completed",
+    "overdue": "Overdue",
+    "dueToday": "Due today",
+    "dueSoon": "Due soon",
+    "scheduled": "Scheduled"
+  }
+}
