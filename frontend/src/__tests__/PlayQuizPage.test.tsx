@@ -134,6 +134,14 @@ describe('PlayQuizPage', () => {
         logout: vi.fn(),
       }),
     }));
+
+    vi.mock('../context/useTheme', () => ({
+      useTheme: () => ({
+        theme: 'dark',
+        toggleTheme: vi.fn(),
+        setTheme: vi.fn(),
+      }),
+    }));
   });
   it('renders quiz title', async () => {
     render(

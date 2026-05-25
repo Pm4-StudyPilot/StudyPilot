@@ -104,7 +104,7 @@ describe('Navbar', () => {
     expect(menu).not.toBeNull();
     expect(menu).not.toHaveClass('show');
 
-    fireEvent.click(screen.getByRole('button', { expanded: false }));
+    fireEvent.click(screen.getByRole('button', { name: /jdoe/i }));
 
     expect(document.querySelector('.navbar__menu')).toHaveClass('show');
   });
@@ -112,7 +112,7 @@ describe('Navbar', () => {
   it('closes the user menu when clicking outside', () => {
     renderNavbar();
 
-    fireEvent.click(screen.getByRole('button', { expanded: false }));
+    fireEvent.click(screen.getByRole('button', { name: /jdoe/i }));
     expect(document.querySelector('.navbar__menu')).toHaveClass('show');
 
     fireEvent.mouseDown(document.body);
@@ -122,7 +122,7 @@ describe('Navbar', () => {
   it('renders a settings link in the dropdown', () => {
     renderNavbar();
 
-    fireEvent.click(screen.getByRole('button', { expanded: false }));
+    fireEvent.click(screen.getByRole('button', { name: /jdoe/i }));
 
     expect(screen.getByRole('link', { name: /account settings/i })).toHaveAttribute(
       'href',
@@ -133,7 +133,7 @@ describe('Navbar', () => {
   it('logs out, records the logout message, and navigates to /login', () => {
     renderNavbar();
 
-    fireEvent.click(screen.getByRole('button', { expanded: false }));
+    fireEvent.click(screen.getByRole('button', { name: /jdoe/i }));
     fireEvent.click(screen.getByRole('button', { name: /logout/i }));
 
     expect(sessionStorage.getItem('logoutMessage')).toBe('Successfully logged out');
