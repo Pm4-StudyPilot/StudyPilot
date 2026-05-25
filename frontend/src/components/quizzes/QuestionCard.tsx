@@ -353,7 +353,7 @@ function PlayQuestionCard({
           question={question}
           mode="play"
           revealed={revealed}
-          onPlay={onPlayed}
+          onPlayed={onPlayed}
           selectedAnswers={selectedAnswers}
         />
       </div>
