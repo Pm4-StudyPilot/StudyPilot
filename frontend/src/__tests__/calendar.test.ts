@@ -20,9 +20,10 @@ describe('calendar utilities', () => {
     const date = new Date(2026, 4, 10);
 
     expect(formatLocalDateKey(date)).toBe('2026-05-10');
-    expect(formatMonthLabel(date)).toBe('May 2026');
-    expect(formatLongDate('2026-05-10')).toBe('May 10, 2026');
-    expect(formatShortDate('2026-05-10')).toBe('May 10');
+    expect(formatMonthLabel(date, 'en')).toBe('May 2026');
+    expect(formatMonthLabel(date, 'de')).toBe('Mai 2026');
+    expect(formatLongDate('2026-05-10')).toBe('10.05.2026');
+    expect(formatShortDate('2026-05-10')).toBe('10.05.2026');
   });
 
   it('reads the local date key for today', () => {
@@ -55,7 +56,7 @@ describe('calendar utilities', () => {
   });
 
   it('shifts months and calculates day differences', () => {
-    expect(formatMonthLabel(shiftMonth(new Date(2026, 4, 10), 1))).toBe('June 2026');
+    expect(formatMonthLabel(shiftMonth(new Date(2026, 4, 10), 1), 'en')).toBe('June 2026');
     expect(getDayDifference('2026-05-12', '2026-05-10')).toBe(2);
     expect(getDayDifference('2026-05-03', '2026-05-10')).toBe(-7);
   });

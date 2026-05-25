@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import Modal from '../shared/layout/Modal';
 import Button from '../shared/Button';
 import { api } from '../../services/api';
@@ -14,23 +15,6 @@ interface DeleteDocumentModalProps {
   onDeleted: (id: string) => void;
 }
 
-/**
- * DeleteDocumentModal
- *
- * Asks the user to confirm before permanently deleting a document.
- *
- * Responsibilities:
- * - Display the document filename so the user knows what will be deleted
- * - Send a DELETE request to the backend API on confirmation
- * - Notify the parent with the deleted document id via onDeleted
- * - Display loading state and error messages
- *
- * Workflow:
- * 1. The modal opens with the filename displayed
- * 2. The user clicks "Delete" to confirm or "Cancel" to abort
- * 3. DELETE /documents/:id is called on confirmation
- * 4. The parent is notified with the document id and the modal closes
- */
 export default function DeleteDocumentModal({
   document,
   onClose,
@@ -38,6 +22,7 @@ export default function DeleteDocumentModal({
 }: DeleteDocumentModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useTranslation();
 
   async function handleDelete() {
     setError('');
@@ -47,18 +32,20 @@ export default function DeleteDocumentModal({
       await api.delete(`/documents/${document.id}`);
       onDeleted(document.id);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof Error ? err.message : t('common.somethingWentWrong'));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <Modal title="Delete Document" onClose={onClose}>
+    <Modal title={t('courses.documents.delete.title')} onClose={onClose}>
       <p className="text-center mb-4">
-        Are you sure you want to delete{' '}
-        <span className="fw-semibold text-white">{document.filename}</span>? This action cannot be
-        undone.
+        <Trans
+          i18nKey="courses.documents.delete.confirm"
+          values={{ filename: document.filename }}
+          components={{ strong: <span className="fw-semibold text-white" /> }}
+        />
       </p>
 
       {error && <div className="alert alert-danger py-2 mb-3">{error}</div>}
@@ -71,10 +58,10 @@ export default function DeleteDocumentModal({
           loading={loading}
           onClick={handleDelete}
         >
-          Delete
+          {t('common.buttons.delete')}
         </Button>
         <Button type="button" variant="secondary" className="w-100" onClick={onClose}>
-          Cancel
+          {t('common.buttons.cancel')}
         </Button>
       </div>
     </Modal>

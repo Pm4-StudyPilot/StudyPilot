@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../services/api.ts';
 import { QuestionWithAnswersDto, QuizDto } from '../types/dto.ts';
 import QuestionList from '../components/quizzes/QuestionList.tsx';
@@ -7,11 +8,8 @@ import DashboardLayout from '../components/shared/layout/DashboardLayout.tsx';
 import InputField from '../components/shared/form/InputField.tsx';
 import TextareaField from '../components/shared/form/TextareaField.tsx';
 import CheckField from '../components/shared/form/CheckField.tsx';
+import { formatDate } from '../utils/formatDate.ts';
 
-/**
- * Editable subset of the quiz used by the inline editor.
- * Booleans/strings only — no nullables — so the form fields stay simple.
- */
 interface QuizDraftState {
   title: string;
   description: string;
@@ -20,6 +18,7 @@ interface QuizDraftState {
 
 export default function QuizDetailPage() {
   const { courseId, quizId } = useParams<{ courseId: string; quizId: string }>();
+  const { t } = useTranslation();
   const [quiz, setQuiz] = useState<QuizDto | null>(null);
   const [questions, setQuestions] = useState<QuestionWithAnswersDto[]>([]);
   const [questionsError, setQuestionsError] = useState('');
@@ -44,7 +43,6 @@ export default function QuizDetailPage() {
       .then(([quizResponse, questionResponse]) => {
         setQuiz(quizResponse);
         setQuestions(questionResponse);
-        // Seed the draft from the loaded quiz so the editor fields are pre-filled.
         setQuizDraft({
           title: quizResponse.title,
           description: quizResponse.description ?? '',
@@ -52,21 +50,11 @@ export default function QuizDetailPage() {
         });
       })
       .catch((err) => {
-        setQuestionsError(err instanceof Error ? err.message : 'Failed to load quiz');
+        setQuestionsError(err instanceof Error ? err.message : t('quizzes.detail.loadFailed'));
       })
       .finally(() => setQuestionsLoading(false));
-  }, [courseId, quizId]);
+  }, [courseId, quizId, t]);
 
-  /**
-   * Persists a partial update to the quiz.
-   *
-   * Called from auto-save handlers (blur on inputs, change on checkbox).
-   * Only sends fields that actually changed so the backend's partial-update
-   * semantics stay honest and we don't overwrite untouched fields.
-   *
-   * On failure: surfaces an error message but does not revert local state —
-   * the user can fix the value and the next blur retries the save.
-   */
   async function handleUpdateQuiz(patch: Partial<QuizDraftState>) {
     if (!courseId || !quizId || !quiz) return;
 
@@ -77,31 +65,22 @@ export default function QuizDetailPage() {
       const updated = await api.patch<QuizDto>(`/courses/${courseId}/quizzes/${quizId}`, patch);
       setQuiz(updated);
     } catch (err) {
-      setQuizError(err instanceof Error ? err.message : 'Failed to save quiz');
+      setQuizError(err instanceof Error ? err.message : t('quizzes.detail.saveFailed'));
     } finally {
       setSavingQuiz(false);
     }
   }
 
-  /**
-   * Saves the title on blur if it changed and is not empty.
-   * Empty titles are rejected client-side because the backend would
-   * either reject them or silently keep the old value — both bad UX.
-   */
   function handleSaveTitle() {
     const trimmed = quizDraft.title.trim();
     if (!trimmed) {
-      setQuizError('Quiz title is required');
+      setQuizError(t('validation.quizTitleRequired'));
       return;
     }
     if (quiz && trimmed === quiz.title) return;
     handleUpdateQuiz({ title: trimmed });
   }
 
-  /**
-   * Saves the description on blur if it changed. Empty descriptions are
-   * allowed — the backend stores them as null.
-   */
   function handleSaveDescription() {
     const trimmed = quizDraft.description.trim();
     if (quiz && trimmed === (quiz.description ?? '')) return;
@@ -198,7 +177,6 @@ export default function QuizDetailPage() {
     }
   ) {
     if (!courseId || !quizId) return;
-    console.log(data);
 
     const updatedAnswer = await api.patch<QuestionWithAnswersDto['answers'][number]>(
       `/courses/${courseId}/quizzes/${quizId}/questions/${questionId}/answers/${answerId}`,
@@ -252,13 +230,7 @@ export default function QuizDetailPage() {
     };
   }, [questions]);
 
-  const formattedUpdatedDate = quiz
-    ? new Date(quiz.updatedAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      })
-    : '';
+  const formattedUpdatedDate = quiz ? formatDate(quiz.updatedAt) : '';
 
   return (
     <DashboardLayout activeNav="courses" showSearch={false}>
@@ -268,13 +240,13 @@ export default function QuizDetailPage() {
           className="course-detail__back-link text-secondary text-decoration-none d-inline-flex align-items-center gap-2 mb-4"
         >
           <i className="fa-solid fa-chevron-left" />
-          Back to course
+          {t('quizzes.detail.backToCourse')}
         </Link>
 
         {questionsLoading && (
           <div className="dashboard-state panel dashboard-state--loading course-detail__section-card p-4">
             <div className="spinner-border text-secondary" role="status">
-              <span className="visually-hidden">Loading quiz...</span>
+              <span className="visually-hidden">{t('quizzes.detail.loadingQuiz')}</span>
             </div>
           </div>
         )}
@@ -295,14 +267,16 @@ export default function QuizDetailPage() {
                     Quiz
                   </span>
                   <span className="quiz-detail__meta-line">
-                    {quiz?.isOrderRandom ? 'Randomized question order' : 'Fixed question order'}
+                    {quiz?.isOrderRandom
+                      ? t('quizzes.detail.randomOrder')
+                      : t('quizzes.detail.fixedOrder')}
                   </span>
                 </div>
 
                 {editMode ? (
                   <div className="quiz-detail__editor question-editor__fields">
                     <InputField
-                      label="Quiz title"
+                      label={t('quizzes.detail.titleField')}
                       value={quizDraft.title}
                       onChange={(event) =>
                         setQuizDraft((current) => ({
@@ -311,11 +285,11 @@ export default function QuizDetailPage() {
                         }))
                       }
                       onBlur={handleSaveTitle}
-                      aria-label="Quiz title"
+                      aria-label={t('quizzes.detail.titleField')}
                     />
 
                     <TextareaField
-                      label="Description"
+                      label={t('quizzes.detail.descriptionField')}
                       value={quizDraft.description}
                       onChange={(event) =>
                         setQuizDraft((current) => ({
@@ -325,24 +299,24 @@ export default function QuizDetailPage() {
                       }
                       onBlur={handleSaveDescription}
                       rows={3}
-                      aria-label="Quiz description"
+                      aria-label={t('quizzes.detail.descriptionField')}
                     />
 
                     <CheckField
-                      label="Randomize question order"
+                      label={t('quizzes.detail.randomizeField')}
                       type="checkbox"
                       checked={quizDraft.isOrderRandom}
                       onChange={(event) => {
                         const next = event.target.checked;
                         setQuizDraft((current) => ({ ...current, isOrderRandom: next }));
-                        // Checkboxes don't blur the way text inputs do — persist
-                        // the change immediately so the user sees the result.
                         handleUpdateQuiz({ isOrderRandom: next });
                       }}
                     />
 
                     {savingQuiz && (
-                      <span className="quiz-detail__editor-status text-secondary">Saving...</span>
+                      <span className="quiz-detail__editor-status text-secondary">
+                        {t('quizzes.detail.savingStatus')}
+                      </span>
                     )}
                     {quizError && (
                       <div className="quiz-detail__editor-error text-danger" role="alert">
@@ -352,33 +326,51 @@ export default function QuizDetailPage() {
                   </div>
                 ) : (
                   <>
-                    <h1 className="quiz-detail__title">{quiz?.title ?? 'Quiz Detail'}</h1>
+                    <h1 className="quiz-detail__title">
+                      {quiz?.title ?? t('quizzes.detail.fallbackTitle')}
+                    </h1>
 
                     <p className="quiz-detail__description">
-                      {quiz?.description?.trim() ||
-                        'Review the questions and answers before starting this quiz.'}
+                      {quiz?.description?.trim() || t('quizzes.detail.fallbackDescription')}
                     </p>
                   </>
                 )}
 
                 <div className="quiz-detail__actions">
-                  <button
-                    type="button"
-                    className="btn btn-primary quiz-detail__play-button"
-                    disabled={editMode}
-                  >
-                    <i className="fa-solid fa-play" />
-                    Play
-                  </button>
+                  {editMode ? (
+                    <button
+                      type="button"
+                      className="btn btn-primary quiz-detail__play-button"
+                      disabled
+                    >
+                      <i className="fa-solid fa-play" />
+                      {t('quizzes.detail.play')}
+                    </button>
+                  ) : (
+                    <Link
+                      to={`/courses/${courseId}/quizzes/${quizId}/play`}
+                      className="btn btn-primary quiz-detail__play-button"
+                    >
+                      <i className="fa-solid fa-play" />
+                      {t('quizzes.detail.play')}
+                    </Link>
+                  )}
                   <span className="quiz-detail__updated">
                     <i className="fa-regular fa-clock" />
-                    Updated {formattedUpdatedDate || 'recently'}
+                    {formattedUpdatedDate
+                      ? t('quizzes.detail.updated', { date: formattedUpdatedDate })
+                      : t('quizzes.detail.updatedRecently')}
                   </span>
                 </div>
               </div>
 
-              <aside className="quiz-detail__summary-card panel" aria-label="Quiz summary">
-                <h1 className="quiz-detail__summary-title">Overview</h1>
+              <aside
+                className="quiz-detail__summary-card panel"
+                aria-label={t('quizzes.detail.summaryAria')}
+              >
+                <h1 className="quiz-detail__summary-title">
+                  {t('quizzes.detail.overviewHeading')}
+                </h1>
 
                 <div className="quiz-detail__summary-grid">
                   <div className="quiz-detail__stat">
@@ -388,7 +380,11 @@ export default function QuizDetailPage() {
                     <span className="quiz-detail__stat-copy">
                       <span className="quiz-detail__stat-value">{quizStats.questionCount}</span>
                       <span className="quiz-detail__stat-label">
-                        Question{quizStats.questionCount === 1 ? '' : 's'}
+                        {t(
+                          quizStats.questionCount === 1
+                            ? 'quizzes.detail.question'
+                            : 'quizzes.detail.question_other'
+                        )}
                       </span>
                     </span>
                   </div>
@@ -400,7 +396,11 @@ export default function QuizDetailPage() {
                     <span className="quiz-detail__stat-copy">
                       <span className="quiz-detail__stat-value">{quizStats.answerCount}</span>
                       <span className="quiz-detail__stat-label">
-                        Answer{quizStats.answerCount === 1 ? '' : 's'}
+                        {t(
+                          quizStats.answerCount === 1
+                            ? 'quizzes.detail.answer'
+                            : 'quizzes.detail.answer_other'
+                        )}
                       </span>
                     </span>
                   </div>
@@ -413,7 +413,7 @@ export default function QuizDetailPage() {
                       <span className="quiz-detail__stat-value">
                         {quizStats.correctAnswerCount}
                       </span>
-                      <span className="quiz-detail__stat-label">Correct</span>
+                      <span className="quiz-detail__stat-label">{t('quizzes.detail.correct')}</span>
                     </span>
                   </div>
                 </div>
@@ -422,11 +422,18 @@ export default function QuizDetailPage() {
 
             <section className="quiz-detail__questions-panel panel">
               <div className="quiz-detail__section-header">
-                <h2 className="quiz-detail__section-title">Questions and answers</h2>
+                <h2 className="quiz-detail__section-title">
+                  {t('quizzes.detail.questionsAndAnswers')}
+                </h2>
 
                 <div className="quiz-detail__section-actions">
                   <span className="quiz-detail__question-count">
-                    {quizStats.questionCount} item{quizStats.questionCount !== 1 ? 's' : ''}
+                    {t(
+                      quizStats.questionCount === 1
+                        ? 'quizzes.detail.itemsCount'
+                        : 'quizzes.detail.itemsCount_other',
+                      { count: quizStats.questionCount }
+                    )}
                   </span>
 
                   <button
@@ -435,7 +442,7 @@ export default function QuizDetailPage() {
                     onClick={() => setEditMode((current) => !current)}
                   >
                     <i className={`fa-solid ${editMode ? 'fa-eye' : 'fa-pen'}`} />
-                    {editMode ? 'Preview' : 'Edit'}
+                    {editMode ? t('quizzes.detail.preview') : t('quizzes.detail.edit')}
                   </button>
                 </div>
               </div>

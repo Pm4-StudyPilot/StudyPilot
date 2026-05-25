@@ -1,5 +1,6 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/useAuth';
 import { api } from '../services/api';
 import { AuthResponse } from '../types/dto';
@@ -9,7 +10,7 @@ import Form from '../components/shared/form/Form';
 import InputField from '../components/shared/form/InputField';
 import PasswordField from '../components/shared/form/PasswordField';
 import { useForm } from '../hooks/useForm';
-import { loginSchema } from '../validation/schemas';
+import { createLoginSchema } from '../validation/schemas';
 
 /**
  * LoginPage
@@ -37,6 +38,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [logoutMessage, setLogoutMessage] = useState('');
 
@@ -49,6 +51,7 @@ export default function LoginPage() {
   }, []);
 
   // Initialize form with validation schema
+  const loginSchema = useMemo(() => createLoginSchema(t), [t]);
   const { values, errors, handleChange, validate } = useForm(loginSchema, {
     identifier: '',
     password: '',
@@ -80,7 +83,7 @@ export default function LoginPage() {
       // Redirect to home/dashboard
       navigate('/');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof Error ? err.message : t('common.somethingWentWrong'));
     } finally {
       setLoading(false);
     }
@@ -94,9 +97,9 @@ export default function LoginPage() {
             <Logo />
           </div>
 
-          <p className="auth-card__eyebrow">Welcome back</p>
-          <h1 className="auth-card__title text-center mb-2">Sign In</h1>
-          <p className="auth-card__lead text-center mb-4">Log in to continue to StudyPilot.</p>
+          <p className="auth-card__eyebrow">{t('auth.login.eyebrow')}</p>
+          <h1 className="auth-card__title text-center mb-2">{t('auth.login.title')}</h1>
+          <p className="auth-card__lead text-center mb-4">{t('auth.login.lead')}</p>
 
           {logoutMessage && (
             <div className="alert alert-success" role="alert">
@@ -106,7 +109,7 @@ export default function LoginPage() {
 
           <Form onSubmit={handleSubmit} error={error}>
             <InputField
-              label="Email or Username"
+              label={t('auth.login.identifier')}
               type="text"
               value={values.identifier}
               onChange={(e) => handleChange('identifier', e.target.value)}
@@ -115,7 +118,7 @@ export default function LoginPage() {
             />
 
             <PasswordField
-              label="Password"
+              label={t('auth.login.password')}
               showToggle={true}
               value={values.password}
               onChange={(e) => handleChange('password', e.target.value)}
@@ -124,19 +127,19 @@ export default function LoginPage() {
             />
 
             <Button type="submit" className="w-100" loading={loading}>
-              Login
+              {t('auth.login.submit')}
             </Button>
           </Form>
 
           <div className="text-center mt-3">
             <Link to="/register" className="auth-card__muted-link">
-              Need an account? Register
+              {t('auth.login.needAccount')}
             </Link>
           </div>
 
           <div className="text-center mt-2">
             <Link to="/forgot-password" className="auth-card__muted-link">
-              Forgot your password?
+              {t('auth.login.forgotPassword')}
             </Link>
           </div>
         </div>

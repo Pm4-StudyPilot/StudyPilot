@@ -4,6 +4,8 @@ import '@testing-library/jest-dom/vitest';
 import QuestionList from '../components/quizzes/QuestionList';
 import { QuestionWithAnswersDto } from '../types/dto';
 import { Option } from '../components/shared/form/types';
+import { AnswerFormState, QuestionFormState } from '../components/quizzes/types.ts';
+import { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 
 vi.mock('../components/quizzes/QuestionCard.tsx', () => ({
   default: ({
@@ -67,15 +69,13 @@ vi.mock('../components/shared/form/SelectField', () => ({
     <select data-testid="select-type" value={value} onChange={onChange}>
       <option value="SINGLE_CHOICE">SINGLE_CHOICE</option>
       <option value="MULTIPLE_CHOICE">MULTIPLE_CHOICE</option>
+      <option value="CARD">CARD</option>
     </select>
   ),
 }));
 
 vi.mock('../components/quizzes/types', () => ({
-  questionTypeOptions: [
-    { value: 'SINGLE_CHOICE', label: 'Single' },
-    { value: 'MULTIPLE_CHOICE', label: 'Multiple' },
-  ],
+  questionTypes: ['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'CARD'],
 }));
 
 const questionFixtures: QuestionWithAnswersDto[] = [
@@ -151,8 +151,17 @@ describe('QuestionList', () => {
     expect(screen.getByText('Create the first question below.')).toBeInTheDocument();
   });
 
-  it('renders questions using QuestionCard', () => {
+  it('renders questions using QuestionCard in view mode', () => {
     renderComponent({ questions: questionFixtures });
+
+    const cards = screen.getAllByTestId('question-card');
+    expect(cards).toHaveLength(2);
+    expect(screen.getByText('question-1')).toBeInTheDocument();
+    expect(screen.getByText('question-2')).toBeInTheDocument();
+  });
+
+  it('renders questions using QuestionCard in edit mode', () => {
+    renderComponent({ questions: questionFixtures, editable: true });
 
     const cards = screen.getAllByTestId('question-card');
     expect(cards).toHaveLength(2);
@@ -272,10 +281,12 @@ describe('QuestionList', () => {
 
     const titleInput = screen.getByTestId('input-title');
     const descriptionInput = screen.getByTestId('textarea-description');
+    const typeSelect = screen.getByTestId('select-type');
     const button = screen.getByRole('button', { name: /add question/i });
 
     fireEvent.change(titleInput, { target: { value: '   My Question   ' } });
     fireEvent.change(descriptionInput, { target: { value: '   Some description   ' } });
+    fireEvent.change(typeSelect, { target: { value: 'CARD' } });
 
     fireEvent.click(button);
 
@@ -283,7 +294,7 @@ describe('QuestionList', () => {
       expect(onCreateQuestion).toHaveBeenCalledWith({
         title: 'My Question',
         description: 'Some description',
-        type: 'SINGLE_CHOICE',
+        type: 'CARD',
       });
     });
 

@@ -4,7 +4,7 @@ import '@testing-library/jest-dom/vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import QuizDetailPage from '../pages/QuizDetailPage';
 import { api } from '../services/api';
-import { QuestionWithAnswersDto } from '../types/dto';
+import { AnswerDto, QuestionWithAnswersDto } from '../types/dto';
 
 /**
  * Mock API service
@@ -49,8 +49,19 @@ vi.mock('../components/quizzes/QuestionList.tsx', () => ({
   }: {
     questions: QuestionWithAnswersDto[];
     editable?: boolean;
-    onCreateQuestion?: (data: NewQuestionFormState) => Promise<void> | void;
-    onUpdateQuestion?: (questionId: string, data: NewQuestionFormState) => Promise<void> | void;
+    onCreateQuestion?: (data: {
+      title: string;
+      description: string;
+      type: QuestionWithAnswersDto['type'];
+    }) => Promise<void> | void;
+    onUpdateQuestion?: (
+      questionId: string,
+      data: {
+        title: string;
+        description: string;
+        type: QuestionWithAnswersDto['type'];
+      }
+    ) => Promise<void> | void;
     onDeleteQuestion?: (questionId: string) => Promise<void> | void;
     onCreateAnswer?: (
       questionId: string,
@@ -110,7 +121,7 @@ vi.mock('../components/quizzes/QuestionList.tsx', () => ({
                   Add Answer
                 </button>
 
-                {q.answers?.map((a: QuestionWithAnswersDto) => (
+                {q.answers?.map((a: AnswerDto) => (
                   <div key={a.id}>
                     {a.content}
 
@@ -223,8 +234,8 @@ describe('QuizDetailPage', () => {
       expect(screen.getByText('Randomized question order')).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: /play/i })).toBeInTheDocument();
-    expect(screen.getByText(/Updated May 2, 2026/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /play/i })).toBeInTheDocument();
+    expect(screen.getByText(/Updated 02\.05\.2026/i)).toBeInTheDocument();
   });
 
   it('renders calculated quiz stats', async () => {
@@ -233,9 +244,17 @@ describe('QuizDetailPage', () => {
 
     const summary = await screen.findByLabelText('Quiz summary');
 
-    const questionStat = within(summary).getByText('Questions').closest('.quiz-detail__stat');
-    const answerStat = within(summary).getByText('Answers').closest('.quiz-detail__stat');
-    const correctStat = within(summary).getByText('Correct').closest('.quiz-detail__stat');
+    const questionStat = within(summary)
+      .getByText('Questions')
+      .closest('.quiz-detail__stat') as HTMLElement;
+
+    const answerStat = within(summary)
+      .getByText('Answers')
+      .closest('.quiz-detail__stat') as HTMLElement;
+
+    const correctStat = within(summary)
+      .getByText('Correct')
+      .closest('.quiz-detail__stat') as HTMLElement;
 
     expect(within(questionStat!).getByText('2')).toBeInTheDocument();
     expect(within(answerStat!).getByText('3')).toBeInTheDocument();
@@ -453,7 +472,7 @@ describe('QuizDetailPage', () => {
       fireEvent.click(editBtn);
 
       const titleInput = await screen.findByLabelText('Quiz title');
-      const descriptionInput = screen.getByLabelText('Quiz description');
+      const descriptionInput = screen.getByLabelText('Description');
       const randomCheckbox = screen.getByLabelText(/randomize question order/i);
 
       expect(titleInput).toHaveValue(quizFixture.title);
@@ -525,7 +544,7 @@ describe('QuizDetailPage', () => {
       const editBtn = await screen.findByRole('button', { name: /edit/i });
       fireEvent.click(editBtn);
 
-      const descriptionInput = await screen.findByLabelText('Quiz description');
+      const descriptionInput = await screen.findByLabelText('Description');
       fireEvent.change(descriptionInput, { target: { value: 'A new description.' } });
       fireEvent.blur(descriptionInput);
 
@@ -582,10 +601,9 @@ describe('QuizDetailPage', () => {
       mockQuizDetailApi();
       renderWithRoute();
 
-      const playBeforeEdit = await screen.findByRole('button', { name: /play/i });
-      expect(playBeforeEdit).not.toBeDisabled();
+      const editBtn = await screen.findByRole('button', { name: /edit/i });
 
-      const editBtn = screen.getByRole('button', { name: /edit/i });
+      expect(screen.getByRole('link', { name: /play/i })).toBeInTheDocument();
       fireEvent.click(editBtn);
 
       expect(screen.getByRole('button', { name: /play/i })).toBeDisabled();

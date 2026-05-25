@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/shared/layout/DashboardLayout';
 import DocumentUploadForm from '../components/courses/DocumentUploadForm';
 import CourseDocumentsList from '../components/courses/CourseDocumentsList';
@@ -11,18 +12,11 @@ import ProgressRing from '../components/shared/ProgressRing';
 import { api } from '../services/api';
 import { CourseDto, QuizDto, TaskDto } from '../types/dto';
 import { withOpacity } from '../utils/courseColors';
+import { formatDate } from '../utils/formatDate';
 
-/**
- * CourseDetailPage
- *
- * Displays the workspace for a selected course.
- *
- * Includes course details, task progress, tasks, course materials,
- * documents, document upload, and a course-specific search in the
- * dashboard topbar.
- */
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation();
 
   const [course, setCourse] = useState<CourseDto | null>(null);
   const [tasks, setTasks] = useState<TaskDto[]>([]);
@@ -45,7 +39,7 @@ export default function CourseDetailPage() {
       .get<CourseDto>(`/courses/${id}`)
       .then(setCourse)
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Failed to load course');
+        setError(err instanceof Error ? err.message : t('courses.detail.loadFailed'));
       })
       .finally(() => setLoading(false));
 
@@ -53,7 +47,7 @@ export default function CourseDetailPage() {
       .get<TaskDto[]>(`/courses/${id}/tasks`)
       .then(setTasks)
       .catch((err: unknown) => {
-        setTasksError(err instanceof Error ? err.message : 'Failed to load tasks');
+        setTasksError(err instanceof Error ? err.message : t('courses.detail.loadTasksFailed'));
       })
       .finally(() => setTasksLoading(false));
 
@@ -61,94 +55,53 @@ export default function CourseDetailPage() {
       .get<QuizDto[]>(`/courses/${id}/quizzes`)
       .then((quizzes) => setCourseFeedItems(quizzes.map((quiz) => ({ type: 'quiz', data: quiz }))))
       .catch((err) => {
-        setCourseFeedError(err instanceof Error ? err.message : 'Failed to load course feed');
+        setCourseFeedError(
+          err instanceof Error ? err.message : t('courses.detail.loadMaterialsFailed')
+        );
       })
       .finally(() => setCourseFeedLoading(false));
-  }, [id]);
+  }, [id, t]);
 
-  /**
-   * Triggers a document list refresh after a successful upload.
-   */
   function handleUploadSuccess() {
     setDocumentsRefreshKey((prev) => prev + 1);
   }
 
-  /**
-   * Adds a newly created task to the local task list.
-   */
   function handleTaskCreated(task: TaskDto) {
     setTasks((prev) => [...prev, task]);
     setCreateTaskModalOpen(false);
   }
 
-  /**
-   * Replaces an updated task in the local task list.
-   */
   function handleTaskUpdated(task: TaskDto) {
     setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
   }
 
-  /**
-   * Removes a deleted task from the local task list.
-   */
   function handleTaskDeleted(taskId: string) {
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
   }
 
-  /**
-   * Updates local task order after drag-and-drop reordering.
-   */
   function handleTasksReordered(reordered: TaskDto[]) {
     setTasks(reordered);
   }
 
-  /**
-   * Adds a newly created quiz to the local feed list.
-   */
   function handleQuizCreated(quiz: QuizDto) {
     setCourseFeedItems((prev) => [...prev, { type: 'quiz', data: quiz }]);
     setCreateQuizModalOpen(false);
   }
 
-  /**
-   * Normalized search term used for case-insensitive filtering
-   * inside the selected course.
-   */
   const normalizedCourseSearch = courseSearchTerm.trim().toLowerCase();
 
-  /**
-   * Filters tasks by title using the course search term.
-   */
   const filteredTasks = normalizedCourseSearch
     ? tasks.filter((task) => task.title.toLowerCase().includes(normalizedCourseSearch))
     : tasks;
 
-  /**
-   * Filters course feed items, such as quizzes, by title.
-   */
   const filteredCourseFeedItems = normalizedCourseSearch
     ? courseFeedItems.filter((item) =>
         item.data.title.toLowerCase().includes(normalizedCourseSearch)
       )
     : courseFeedItems;
 
-  /**
-   * Human-readable course creation date.
-   */
-  const formattedDate = course
-    ? new Date(course.createdAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
-    : '';
+  const formattedDate = course ? formatDate(course.createdAt) : '';
 
-  /**
-   * Task progress statistics for the current course.
-   *
-   * Falls back to empty default values
-   * while the course data is still loading.
-   */
   const progress = course?.taskProgress ?? {
     totalTasks: 0,
     completedTasks: 0,
@@ -157,21 +110,20 @@ export default function CourseDetailPage() {
     completionPercentage: 0,
   };
 
-  /**
-   * Metadata entries displayed inside the course overview section.
-   *
-   * Memoized to avoid unnecessary recalculations
-   * during component re-renders.
-   */
   const courseMeta = useMemo(() => {
     if (!course) return [];
 
+    const tasksLabel = t(
+      progress.totalTasks === 1 ? 'courses.detail.metaTasks' : 'courses.detail.metaTasks_other',
+      { count: progress.totalTasks }
+    );
+
     return [
-      `${progress.totalTasks} task${progress.totalTasks !== 1 ? 's' : ''}`,
-      `${progress.completedTasks} completed`,
-      `Created ${formattedDate}`,
+      tasksLabel,
+      t('courses.detail.metaCompleted', { count: progress.completedTasks }),
+      t('courses.detail.metaCreated', { date: formattedDate }),
     ];
-  }, [course, progress.totalTasks, progress.completedTasks, formattedDate]);
+  }, [course, progress.totalTasks, progress.completedTasks, formattedDate, t]);
 
   return (
     <DashboardLayout
@@ -179,7 +131,7 @@ export default function CourseDetailPage() {
       showSearch
       searchValue={courseSearchTerm}
       onSearchChange={setCourseSearchTerm}
-      searchPlaceholder="Search in this course..."
+      searchPlaceholder={t('courses.detail.searchPlaceholder')}
     >
       <section className="dashboard-page-stack">
         <Link
@@ -187,13 +139,13 @@ export default function CourseDetailPage() {
           className="course-detail__back-link text-secondary text-decoration-none d-inline-flex align-items-center gap-2"
         >
           <i className="fa-solid fa-chevron-left" />
-          Back to Courses
+          {t('courses.detail.backToCourses')}
         </Link>
 
         {loading && (
           <div className="dashboard-state panel dashboard-state--loading">
             <div className="spinner-border text-secondary" role="status">
-              <span className="visually-hidden">Loading...</span>
+              <span className="visually-hidden">{t('common.loading')}</span>
             </div>
           </div>
         )}
@@ -202,8 +154,8 @@ export default function CourseDetailPage() {
 
         {!loading && !error && !course && (
           <div className="dashboard-state panel">
-            <h2>Course not found</h2>
-            <p>The backend did not return a course for this route.</p>
+            <h2>{t('courses.detail.courseNotFound')}</h2>
+            <p>{t('courses.detail.courseNotFoundHint')}</p>
           </div>
         )}
 
@@ -212,7 +164,7 @@ export default function CourseDetailPage() {
             <div className="course-detail__hero">
               <div className="course-detail__hero-copy">
                 <div className="course-detail__eyebrow">
-                  <span className="course-detail__pill">Course workspace</span>
+                  <span className="course-detail__pill">{t('courses.detail.workspacePill')}</span>
                   <span className="course-detail__meta-line">{courseMeta.join(' - ')}</span>
                 </div>
 
@@ -239,20 +191,25 @@ export default function CourseDetailPage() {
                     inProgressTasks={progress.inProgressTasks}
                     completedTasks={progress.completedTasks}
                     totalTasks={progress.totalTasks}
-                    label={`${progress.completionPercentage}% complete`}
+                    label={t('courses.detail.percentComplete', {
+                      percent: progress.completionPercentage,
+                    })}
                     variant="primary"
                     size={148}
                   />
                   <div className="course-detail__progress-center">
                     <strong>{progress.completionPercentage}%</strong>
-                    <span>complete</span>
+                    <span>{t('courses.detail.percentLabel')}</span>
                   </div>
                 </div>
                 <div className="course-detail__progress-summary">
-                  <h2>Course Progress</h2>
+                  <h2>{t('courses.detail.progressHeading')}</h2>
                   <p>
-                    {progress.completedTasks} completed, {progress.inProgressTasks} in progress,{' '}
-                    {progress.openTasks} open
+                    {t('courses.detail.progressSummary', {
+                      completed: progress.completedTasks,
+                      inProgress: progress.inProgressTasks,
+                      open: progress.openTasks,
+                    })}
                   </p>
                 </div>
               </aside>
@@ -264,12 +221,12 @@ export default function CourseDetailPage() {
                   <div className="course-detail__section-header">
                     <div className="course-detail__section-title">
                       <span className="course-detail__section-accent course-detail__section-accent--primary" />
-                      <h2>Tasks</h2>
+                      <h2>{t('courses.detail.tasksHeading')}</h2>
                     </div>
                     <button
                       className="course-detail__add-button btn btn-primary bold"
                       onClick={() => setCreateTaskModalOpen(true)}
-                      aria-label="Add task"
+                      aria-label={t('courses.detail.addTaskAria')}
                     >
                       <i className="fa-solid fa-plus" />
                     </button>
@@ -278,7 +235,7 @@ export default function CourseDetailPage() {
                   {tasksLoading && (
                     <div className="dashboard-state panel dashboard-state--loading course-detail__section-card p-4">
                       <div className="spinner-border text-secondary" role="status">
-                        <span className="visually-hidden">Loading tasks...</span>
+                        <span className="visually-hidden">{t('courses.detail.loadingTasks')}</span>
                       </div>
                     </div>
                   )}
@@ -305,7 +262,7 @@ export default function CourseDetailPage() {
                 {courseFeedLoading && (
                   <div className="dashboard-state panel dashboard-state--loading course-detail__section-card p-4">
                     <div className="spinner-border text-secondary" role="status">
-                      <span className="visually-hidden">Loading course materials...</span>
+                      <span className="visually-hidden">{t('courses.detail.loadingMaterials')}</span>
                     </div>
                   </div>
                 )}
@@ -321,12 +278,12 @@ export default function CourseDetailPage() {
                     <div className="course-detail__section-header">
                       <div className="course-detail__section-title">
                         <span className="course-detail__section-accent course-detail__section-accent--primary" />
-                        <h2>Course Materials</h2>
+                        <h2>{t('courses.detail.materialsHeading')}</h2>
                       </div>
                       <button
                         className="course-detail__add-button btn btn-primary bold"
                         onClick={() => setCreateQuizModalOpen(true)}
-                        aria-label="Add quiz"
+                        aria-label={t('courses.detail.addQuizAria')}
                       >
                         <i className="fa-solid fa-plus" />
                       </button>
@@ -339,7 +296,7 @@ export default function CourseDetailPage() {
               <aside className="course-detail__documents-column">
                 <div className="course-detail__section-title">
                   <span className="course-detail__section-accent course-detail__section-accent--secondary" />
-                  <h2>Course Documents</h2>
+                  <h2>{t('courses.detail.documentsHeading')}</h2>
                 </div>
 
                 <CourseDocumentsList
@@ -350,10 +307,11 @@ export default function CourseDetailPage() {
 
                 <div className="panel course-detail__upload-form p-4">
                   <div className="course-detail__upload-header">
-                    <h3 className="course-detail__upload-title">Upload Document</h3>
+                    <h3 className="course-detail__upload-title">
+                      {t('courses.detail.uploadHeading')}
+                    </h3>
                     <p className="course-detail__upload-subtitle mb-0">
-                      Add files to this course workspace. The document list above refreshes after a
-                      successful upload.
+                      {t('courses.detail.uploadSubtitle')}
                     </p>
                   </div>
                   <DocumentUploadForm courseId={course.id} onUploadSuccess={handleUploadSuccess} />

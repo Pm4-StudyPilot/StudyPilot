@@ -244,7 +244,7 @@ describe('CourseDetailPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Machine Learning Fundamentals')).toBeInTheDocument();
-      expect(screen.getByText(/Created March 26, 2026/i)).toBeInTheDocument();
+      expect(screen.getByText(/Created 26\.03\.2026/i)).toBeInTheDocument();
     });
   });
 

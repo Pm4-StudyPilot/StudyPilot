@@ -1,6 +1,7 @@
 import { FormEvent, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MdSend } from 'react-icons/md';
+import { useTranslation } from 'react-i18next';
 import Icon from '../shared/Icon';
 import AiChatPanel from './AiChatPanel';
 import { ChatMessage } from './types';
@@ -13,9 +14,9 @@ export default function AiInput() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  // One thread per chat session — reset on close so a fresh chat starts fresh.
   const threadIdRef = useRef<string | null>(null);
   const { pathname } = useLocation();
+  const { t } = useTranslation();
 
   function appendMessage(role: ChatMessage['role'], content: string, tools?: string[]) {
     setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, content, tools }]);
@@ -53,7 +54,7 @@ export default function AiInput() {
       });
       appendMessage('assistant', reply, tools);
     } catch {
-      appendMessage('assistant', 'Sorry, something went wrong reaching TARS. Please try again.');
+      appendMessage('assistant', t('ai.errorReply'));
     } finally {
       setIsLoading(false);
     }
@@ -67,18 +68,18 @@ export default function AiInput() {
           ref={inputRef}
           type="text"
           className="ai-input__field"
-          placeholder="How can TARS help you?"
+          placeholder={t('ai.placeholder')}
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          aria-label="Ask TARS"
+          aria-label={t('ai.ariaLabel')}
         />
         <button
           type="submit"
           className="ai-input__send"
           disabled={!value.trim() || isLoading}
-          aria-label="Send"
+          aria-label={t('ai.sendAria')}
         >
-          <Icon icon={MdSend} size={18} aria-label="Send" />
+          <Icon icon={MdSend} size={18} aria-label={t('ai.sendAria')} />
         </button>
       </form>
     </div>

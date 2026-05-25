@@ -1,5 +1,6 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/shared/layout/DashboardLayout';
 import Form from '../components/shared/form/Form';
 import InputField from '../components/shared/form/InputField';
@@ -8,23 +9,22 @@ import { api } from '../services/api';
 import { useAuth } from '../context/useAuth';
 import { useForm } from '../hooks/useForm';
 import { UpdateProfileDto, UserDto } from '../types/dto';
-import { updateProfileSchema } from '../validation/schemas';
+import { createUpdateProfileSchema } from '../validation/schemas';
 
 export default function SettingsPage() {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { values, errors, handleChange, validate } = useForm<UpdateProfileDto>(
-    updateProfileSchema,
-    {
-      username: user?.username ?? '',
-      email: user?.email ?? '',
-    }
-  );
+  const schema = useMemo(() => createUpdateProfileSchema(t), [t]);
+  const { values, errors, handleChange, validate } = useForm<UpdateProfileDto>(schema, {
+    username: user?.username ?? '',
+    email: user?.email ?? '',
+  });
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -47,9 +47,9 @@ export default function SettingsPage() {
         email: updatedUser.email,
       });
 
-      setSuccess('Profile updated successfully');
+      setSuccess(t('settings.profile.successUpdated'));
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof Error ? err.message : t('common.somethingWentWrong'));
     } finally {
       setLoading(false);
     }
@@ -60,13 +60,11 @@ export default function SettingsPage() {
       <section className="dashboard-page-stack">
         <header className="dashboard-page-header">
           <div>
-            <p className="dashboard-page-header__eyebrow">Account workspace</p>
+            <p className="dashboard-page-header__eyebrow">{t('settings.eyebrow')}</p>
 
-            <h1>Account Settings</h1>
+            <h1>{t('settings.title')}</h1>
 
-            <p className="dashboard-page-header__subline">
-              Manage your profile and security settings.
-            </p>
+            <p className="dashboard-page-header__subline">{t('settings.subline')}</p>
           </div>
         </header>
 
@@ -74,9 +72,9 @@ export default function SettingsPage() {
           <section className="settings-card">
             <div className="settings-card__content">
               <div className="settings-card__header">
-                <h2 className="settings-card__title">Profile Information</h2>
+                <h2 className="settings-card__title">{t('settings.profile.title')}</h2>
 
-                <p className="settings-card__subtitle">Update your visible account information.</p>
+                <p className="settings-card__subtitle">{t('settings.profile.subtitle')}</p>
               </div>
 
               {success && (
@@ -87,7 +85,7 @@ export default function SettingsPage() {
 
               <Form onSubmit={handleSubmit} error={error}>
                 <InputField
-                  label="Username"
+                  label={t('settings.profile.usernameLabel')}
                   value={values.username}
                   onChange={(e) => handleChange('username', e.target.value)}
                   error={errors.username}
@@ -95,7 +93,7 @@ export default function SettingsPage() {
                 />
 
                 <InputField
-                  label="Email"
+                  label={t('settings.profile.emailLabel')}
                   type="email"
                   value={values.email}
                   onChange={(e) => handleChange('email', e.target.value)}
@@ -109,7 +107,7 @@ export default function SettingsPage() {
                     loading={loading}
                     className="btn btn-primary bold settings-page__button"
                   >
-                    Save Profile
+                    {t('settings.profile.save')}
                   </Button>
                 </div>
               </Form>
@@ -119,18 +117,16 @@ export default function SettingsPage() {
           <section className="settings-card">
             <div className="settings-card__content">
               <div className="settings-card__header">
-                <h2 className="settings-card__title">Security</h2>
+                <h2 className="settings-card__title">{t('settings.security.title')}</h2>
 
-                <p className="settings-card__subtitle">
-                  Update your password to keep your account secure.
-                </p>
+                <p className="settings-card__subtitle">{t('settings.security.subtitle')}</p>
               </div>
 
               <Button
                 onClick={() => navigate('/settings/password')}
                 className="btn btn-primary bold settings-page__button"
               >
-                Change Password
+                {t('settings.security.change')}
               </Button>
             </div>
           </section>
