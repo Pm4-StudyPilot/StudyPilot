@@ -10,6 +10,7 @@ import RequestPasswordResetPage from './pages/RequestPasswordResetPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import CourseDetailPage from './pages/CourseDetailPage';
 import QuizDetailPage from './pages/QuizDetailPage';
+import PlayQuizPage from './pages/PlayQuizPage';
 import AiInput from './components/ai/AiInput';
 import AiInputGuard from './components/shared/AiInputGuard';
 
@@ -71,6 +72,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <CourseDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/courses/:courseId/quizzes/:quizId/play"
+          element={
+            <ProtectedRoute>
+              <PlayQuizPage />
             </ProtectedRoute>
           }
         />

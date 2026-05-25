@@ -198,7 +198,6 @@ export default function QuizDetailPage() {
     }
   ) {
     if (!courseId || !quizId) return;
-    console.log(data);
 
     const updatedAnswer = await api.patch<QuestionWithAnswersDto['answers'][number]>(
       `/courses/${courseId}/quizzes/${quizId}/questions/${questionId}/answers/${answerId}`,
@@ -362,14 +361,25 @@ export default function QuizDetailPage() {
                 )}
 
                 <div className="quiz-detail__actions">
-                  <button
-                    type="button"
-                    className="btn btn-primary quiz-detail__play-button"
-                    disabled={editMode}
-                  >
-                    <i className="fa-solid fa-play" />
-                    Play
-                  </button>
+                  {editMode && (
+                    <button
+                      type="button"
+                      className="btn btn-primary quiz-detail__play-button"
+                      disabled={true}
+                    >
+                      <i className="fa-solid fa-play" />
+                      Play
+                    </button>
+                  )}
+                  {!editMode && (
+                    <Link
+                      to={`/courses/${courseId}/quizzes/${quizId}/play`}
+                      className="btn btn-primary quiz-detail__play-button"
+                    >
+                      <i className="fa-solid fa-play" />
+                      Play
+                    </Link>
+                  )}
                   <span className="quiz-detail__updated">
                     <i className="fa-regular fa-clock" />
                     Updated {formattedUpdatedDate || 'recently'}

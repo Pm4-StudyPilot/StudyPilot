@@ -1,16 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AnswerList from '../components/quizzes/AnswerList';
 import { AnswerDto, QuestionWithAnswersDto } from '../types/dto';
+import React, { InputHTMLAttributes } from 'react';
+import userEvent from '@testing-library/user-event';
 
 vi.mock('../components/shared/form/CheckField', () => ({
   default: ({
     label,
     checked,
     onChange,
-  }: {
+  }: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & {
     label: string;
     type: 'checkbox' | 'radio';
+    labelPosition?: 'left' | 'right';
     error?: string;
     className?: string;
   }) => (
@@ -22,8 +25,23 @@ vi.mock('../components/shared/form/CheckField', () => ({
 }));
 
 describe('AnswerList', () => {
-  const question = {
+  const cardQuestion = {
     id: 'q1',
+    type: 'CARD',
+    answers: [
+      {
+        id: 'a1',
+        content: 'Answer 1',
+        isCorrect: true,
+        questionId: 'q1',
+        createdAt: '',
+        updatedAt: '',
+      },
+    ] as AnswerDto[],
+  };
+  const choiceQuestion = {
+    id: 'q1',
+    type: 'MULTIPLE_CHOICE',
     answers: [
       {
         id: 'a1',
@@ -44,12 +62,12 @@ describe('AnswerList', () => {
     ] as AnswerDto[],
   };
 
-  let setDraftAnswers: (
-    draftAnswers: Record<string, { content: string; isCorrect: boolean }>
-  ) => void;
+  let setDraftAnswers: React.Dispatch<
+    React.SetStateAction<Record<string, { content: string; isCorrect: boolean }>>
+  >;
   let handleSaveAnswer: (answerId: string) => void;
   let onDeleteAnswer: (questionId: string, answerId: string) => void;
-  let onPlay: (questionId: string) => void;
+  let onPlayed: (answerId?: string) => void;
 
   beforeEach(() => {
     setDraftAnswers = vi.fn((updater) => {
@@ -60,14 +78,11 @@ describe('AnswerList', () => {
 
     handleSaveAnswer = vi.fn();
     onDeleteAnswer = vi.fn();
-    onPlay = vi.fn();
+    onPlayed = vi.fn();
   });
 
-  // -------------------------
-  // VIEW MODE
-  // -------------------------
   it('renders answers in view mode with correct classes and labels', () => {
-    render(<AnswerList mode="view" question={question as QuestionWithAnswersDto} />);
+    render(<AnswerList mode="view" question={choiceQuestion as QuestionWithAnswersDto} />);
 
     expect(screen.getByText('Answer 1')).toBeInTheDocument();
     expect(screen.getByText('Answer 2')).toBeInTheDocument();
@@ -80,14 +95,11 @@ describe('AnswerList', () => {
     expect(document.querySelector('.fa-circle-xmark')).toBeInTheDocument();
   });
 
-  // -------------------------
-  // EDIT MODE
-  // -------------------------
   it('renders edit mode with inputs and uses draft fallback', () => {
     render(
       <AnswerList
         mode="edit"
-        question={question as QuestionWithAnswersDto}
+        question={choiceQuestion as QuestionWithAnswersDto}
         draftAnswers={{}}
         setDraftAnswers={setDraftAnswers}
         handleSaveAnswer={handleSaveAnswer}
@@ -98,12 +110,11 @@ describe('AnswerList', () => {
     const inputs = screen.getAllByDisplayValue(/Answer/);
     expect(inputs).toHaveLength(2);
   });
-
   it('updates draftAnswers on input change', () => {
     render(
       <AnswerList
         mode="edit"
-        question={question as QuestionWithAnswersDto}
+        question={choiceQuestion as QuestionWithAnswersDto}
         draftAnswers={{}}
         setDraftAnswers={setDraftAnswers}
         handleSaveAnswer={handleSaveAnswer}
@@ -121,7 +132,7 @@ describe('AnswerList', () => {
     render(
       <AnswerList
         mode="edit"
-        question={question as QuestionWithAnswersDto}
+        question={choiceQuestion as QuestionWithAnswersDto}
         draftAnswers={{}}
         setDraftAnswers={setDraftAnswers}
         handleSaveAnswer={handleSaveAnswer}
@@ -139,7 +150,7 @@ describe('AnswerList', () => {
     render(
       <AnswerList
         mode="edit"
-        question={question as QuestionWithAnswersDto}
+        question={choiceQuestion as QuestionWithAnswersDto}
         draftAnswers={{}}
         setDraftAnswers={setDraftAnswers}
         handleSaveAnswer={handleSaveAnswer}
@@ -158,7 +169,7 @@ describe('AnswerList', () => {
     render(
       <AnswerList
         mode="edit"
-        question={question as QuestionWithAnswersDto}
+        question={choiceQuestion as QuestionWithAnswersDto}
         draftAnswers={{}}
         setDraftAnswers={setDraftAnswers}
         handleSaveAnswer={handleSaveAnswer}
@@ -172,19 +183,95 @@ describe('AnswerList', () => {
     expect(onDeleteAnswer).toHaveBeenCalledWith('q1', 'a1');
   });
 
-  it('renders play mode with clickable answers', () => {
+  it('renders play mode with clickable answers', async () => {
     render(
-      <AnswerList mode="play" question={question as QuestionWithAnswersDto} onPlay={onPlay} />
+      <AnswerList
+        mode="play"
+        question={choiceQuestion as QuestionWithAnswersDto}
+        revealed={false}
+        onPlayed={onPlayed}
+      />
     );
 
     expect(screen.getByText('Answer 1')).toBeInTheDocument();
     expect(screen.getByText('Answer 2')).toBeInTheDocument();
+
+    const answer1 = screen.getByText('Answer 1');
+
+    await userEvent.click(answer1);
+
+    await waitFor(() => {
+      expect(onPlayed).toHaveBeenCalled();
+    });
+  });
+
+  it('renders nothing in play when the question type is card and the question is not revealed yet', async () => {
+    render(
+      <AnswerList
+        mode="play"
+        question={cardQuestion as QuestionWithAnswersDto}
+        revealed={false}
+        onPlayed={onPlayed}
+      />
+    );
+
+    expect(screen.queryByText('Answer 1')).not.toBeInTheDocument();
+  });
+
+  it('renders play when the question type is card and the question was not revealed', async () => {
+    render(
+      <AnswerList
+        mode="play"
+        question={cardQuestion as QuestionWithAnswersDto}
+        revealed={true}
+        onPlayed={onPlayed}
+      />
+    );
+
+    expect(screen.getByText('Answer 1')).toBeInTheDocument();
+  });
+
+  it('renders play when the question type is card and the question was revealed', async () => {
+    render(
+      <AnswerList
+        mode="play"
+        question={cardQuestion as QuestionWithAnswersDto}
+        revealed={true}
+        onPlayed={onPlayed}
+      />
+    );
+
+    expect(screen.queryByText('Answer 1')).toBeInTheDocument();
   });
 
   it('defaults to view mode when mode is not provided', () => {
-    render(<AnswerList question={question as QuestionWithAnswersDto} />);
+    render(<AnswerList question={choiceQuestion as QuestionWithAnswersDto} />);
 
     expect(screen.getByText('Answer 1')).toBeInTheDocument();
     expect(screen.getByText('Answer 2')).toBeInTheDocument();
+  });
+  it('highlights selected answers in view mode when provided', async () => {
+    render(
+      <AnswerList
+        question={choiceQuestion as QuestionWithAnswersDto}
+        selectedAnswers={[choiceQuestion.answers[0]]}
+      />
+    );
+
+    expect(screen.getByText('Answer 1').closest('.answer-card--selected')).not.toBeNull();
+    expect(screen.getByText('Answer 2').closest('.answer-card--selected')).toBeNull();
+  });
+  it('highlights selected answers in play mode when provided', async () => {
+    render(
+      <AnswerList
+        question={choiceQuestion as QuestionWithAnswersDto}
+        selectedAnswers={[choiceQuestion.answers[0]]}
+        mode="play"
+        onPlayed={() => {}}
+      />
+    );
+
+    expect(screen.getByText('Answer 1').closest('.answer-card--selected')).not.toBeNull();
+    expect(screen.getByText('Answer 2').closest('.answer-card--selected')).toBeNull();
   });
 });

@@ -36,7 +36,7 @@ describe('QuizCard', () => {
   it('falls back to default description when none is provided', () => {
     const quizWithoutDescription: QuizDto = {
       ...quiz,
-      description: null as string,
+      description: null as unknown as string,
     };
 
     render(
