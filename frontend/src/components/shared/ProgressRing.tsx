@@ -4,7 +4,7 @@ type ProgressRingProps = {
   completedTasks: number;
   totalTasks: number;
   label: string;
-  variant?: 'primary' | 'secondary' | 'tertiary' | 'quaternary';
+  accentColor?: string;
   size?: number;
   className?: string;
 };
@@ -32,7 +32,7 @@ export default function ProgressRing({
   completedTasks,
   totalTasks,
   label,
-  variant = 'primary',
+  accentColor,
   size = 40,
   className,
 }: ProgressRingProps) {
@@ -42,9 +42,7 @@ export default function ProgressRing({
     completedTasks,
     totalTasks
   );
-  const classes = ['progress-ring', `progress-ring--${variant}`, className]
-    .filter(Boolean)
-    .join(' ');
+  const classes = ['progress-ring', className].filter(Boolean).join(' ');
 
   // Build conic-gradient: OPEN (grey) -> IN_PROGRESS (blue) -> DONE (green) -> unfilled (dark)
   const openEnd = segments.open;
@@ -61,7 +59,14 @@ export default function ProgressRing({
   return (
     <div
       className={classes}
-      style={{ width: size, height: size, backgroundImage: gradient }}
+      style={
+        {
+          width: size,
+          height: size,
+          backgroundImage: gradient,
+          '--progress-accent': accentColor,
+        } as React.CSSProperties
+      }
       title={label}
       aria-label={label}
       role="img"
