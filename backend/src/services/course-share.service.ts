@@ -2,6 +2,18 @@ import { prisma } from '../config/database';
 import { logger } from '../lib/logger';
 import type { PrismaClient } from '../generated/prisma/client';
 
+export class ShareError extends Error {
+  public type: 'CourseNotFound' | 'UserNotFound' | 'SelfShare' | 'AlreadyShared';
+
+  constructor(
+    type: 'CourseNotFound' | 'UserNotFound' | 'SelfShare' | 'AlreadyShared',
+    message: string
+  ) {
+    super(message);
+    this.type = type;
+  }
+}
+
 export interface CourseShareDto {
   id: string;
   courseId: string;
@@ -21,12 +33,12 @@ export class CourseShareService {
     courseId: string,
     sharedByUserId: string,
     sharedWithUsername: string
-  ): Promise<CourseShareDto | null> {
+  ): Promise<CourseShareDto> {
     // Verify the user is the course owner
     const course = await this.db.course.findFirst({
       where: { id: courseId, ownerId: sharedByUserId },
     });
-    if (!course) return null;
+    if (!course) throw new ShareError('CourseNotFound', 'Course not found');
 
     // Find the user to share with by username or email
     const userToShareWith = await this.db.user.findFirst({
@@ -34,12 +46,22 @@ export class CourseShareService {
         OR: [{ username: sharedWithUsername }, { email: sharedWithUsername }],
       },
     });
-    if (!userToShareWith) return null;
+    if (!userToShareWith) throw new ShareError('UserNotFound', 'User not found');
 
     // Prevent self-sharing
-    if (userToShareWith.id === sharedByUserId) return null;
+    if (userToShareWith.id === sharedByUserId)
+      throw new ShareError('SelfShare', 'Cannot share course with yourself');
 
-    // Check if already shared (will fail with unique constraint if exists)
+    // Check if already shared
+    const existingShare = await this.db.courseShare.findFirst({
+      where: {
+        courseId,
+        sharedWithUserId: userToShareWith.id,
+      },
+    });
+    if (existingShare)
+      throw new ShareError('AlreadyShared', 'Course already shared with this user');
+
     try {
       return await this.db.courseShare.create({
         data: {
@@ -49,14 +71,6 @@ export class CourseShareService {
         },
       });
     } catch (error: unknown) {
-      // Unique constraint violation - already shared
-      if (error instanceof Error && error.message.includes('Unique constraint failed')) {
-        logger.warn(
-          { courseId, sharedWithUserId: userToShareWith.id },
-          '[CourseShareService] Course already shared with user'
-        );
-        return null;
-      }
       logger.error({ error }, '[CourseShareService] Failed to share course');
       throw error;
     }

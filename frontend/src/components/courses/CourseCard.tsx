@@ -5,9 +5,11 @@ import { CourseDto, TaskDto } from '../../types/dto';
 import { api } from '../../services/api';
 import EditCourseModal from './EditCourseModal';
 import DeleteCourseModal from './DeleteCourseModal';
+import ShareCourseModal from './ShareCourseModal';
 import ProgressRing from '../shared/ProgressRing';
 import { withOpacity } from '../../utils/courseColors';
 import { formatDate } from '../../utils/formatDate';
+import { useAuth } from '../../context/AuthContext';
 
 type CourseCardProps = {
   course: CourseDto;
@@ -25,6 +27,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
   const [expanded, setExpanded] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [tasks, setTasks] = useState<TaskDto[] | null>(null);
   const [tasksLoading, setTasksLoading] = useState(false);
   const { t } = useTranslation();
@@ -56,6 +59,9 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
     onUpdated(updated);
     setEditOpen(false);
   }
+
+  const { user } = useAuth();
+  const isOwner = user?.id === course.ownerId;
 
   const courseAccentStyle = {
     borderColor: withOpacity(course.color, 0.2),
@@ -129,6 +135,15 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
             >
               <i className="fa-solid fa-trash" />
             </button>
+            {isOwner && (
+              <button
+                className="btn btn-sm btn-link text-secondary p-0"
+                onClick={() => setShareOpen(true)}
+                aria-label={t('courses.card.shareAria')}
+              >
+                <i className="fa-solid fa-share-alt" />
+              </button>
+            )}
             <button
               className="btn btn-sm btn-link text-secondary p-0"
               onClick={handleToggle}
@@ -205,6 +220,8 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
           onDeleted={onDeleted}
         />
       )}
+
+      {shareOpen && <ShareCourseModal course={course} onClose={() => setShareOpen(false)} />}
     </>
   );
 }

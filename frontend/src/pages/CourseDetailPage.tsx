@@ -7,12 +7,14 @@ import CourseDocumentsList from '../components/courses/CourseDocumentsList';
 import CourseFeed, { CourseFeedItem } from '../components/courses/CourseFeed';
 import CreateTaskModal from '../components/tasks/CreateTaskModal';
 import CreateQuizModal from '../components/quizzes/CreateQuizModal';
+import ShareCourseModal from '../components/courses/ShareCourseModal';
 import TaskList from '../components/tasks/TaskList';
 import ProgressRing from '../components/shared/ProgressRing';
 import { api } from '../services/api';
 import { CourseDto, QuizDto, TaskDto } from '../types/dto';
 import { withOpacity } from '../utils/courseColors';
 import { formatDate } from '../utils/formatDate';
+import { useAuth } from '../context/AuthContext';
 
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +33,10 @@ export default function CourseDetailPage() {
   const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0);
   const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
   const [createQuizModalOpen, setCreateQuizModalOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+
+  const { user } = useAuth();
+  const isOwner = user?.id === course?.ownerId;
 
   useEffect(() => {
     if (!id) return;
@@ -176,6 +182,12 @@ export default function CourseDetailPage() {
                   />
                   <h1 className="course-detail__title">{course.name}</h1>
                 </div>
+                {isOwner && (
+                  <button className="btn btn-primary" onClick={() => setShareModalOpen(true)}>
+                    <i className="fa-solid fa-share-alt me-2" />
+                    {t('courses.detail.share')}
+                  </button>
+                )}
               </div>
 
               <aside
@@ -336,6 +348,9 @@ export default function CourseDetailPage() {
             onClose={() => setCreateQuizModalOpen(false)}
             onCreated={handleQuizCreated}
           />
+        )}
+        {shareModalOpen && course && (
+          <ShareCourseModal course={course} onClose={() => setShareModalOpen(false)} />
         )}
       </section>
     </DashboardLayout>
