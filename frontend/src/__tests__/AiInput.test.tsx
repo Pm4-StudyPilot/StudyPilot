@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import AiInput from '../components/ai/AiInput';
 import { api } from '../services/api';
 
@@ -9,6 +10,14 @@ vi.mock('../services/api', () => ({
 }));
 
 const mockedPost = vi.mocked(api.post);
+
+function renderAt(path = '/') {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <AiInput />
+    </MemoryRouter>
+  );
+}
 
 describe('AiInput', () => {
   beforeEach(() => {
@@ -25,14 +34,14 @@ describe('AiInput', () => {
   }
 
   it('renders the input with the TARS placeholder and a hidden chat panel', () => {
-    render(<AiInput />);
+    renderAt();
 
     expect(getInput()).toHaveAttribute('placeholder', 'How can TARS help you?');
     expect(screen.queryByRole('log')).not.toBeInTheDocument();
   });
 
   it('disables the send button until text is entered', async () => {
-    render(<AiInput />);
+    renderAt();
 
     expect(getSendButton()).toBeDisabled();
 
@@ -41,7 +50,7 @@ describe('AiInput', () => {
   });
 
   it('opens the chat, posts to /chat, renders the reply, and clears the input', async () => {
-    render(<AiInput />);
+    renderAt();
 
     await userEvent.type(getInput(), 'What courses do I have?');
     await userEvent.click(getSendButton());
@@ -51,6 +60,7 @@ describe('AiInput', () => {
     expect(mockedPost).toHaveBeenCalledWith('/chat', {
       message: 'What courses do I have?',
       threadId: expect.any(String),
+      pageContext: 'The user is on the StudyPilot home page.',
     });
     expect(await screen.findByText('Hello from TARS')).toBeInTheDocument();
     expect(getInput()).toHaveValue('');
@@ -58,7 +68,7 @@ describe('AiInput', () => {
 
   it('renders the used-tools disclosure from the response', async () => {
     mockedPost.mockResolvedValueOnce({ reply: 'You have 2 courses.', tools: ['list_courses'] });
-    render(<AiInput />);
+    renderAt();
 
     await userEvent.type(getInput(), 'My courses?{Enter}');
 
@@ -68,7 +78,7 @@ describe('AiInput', () => {
   });
 
   it('submits when pressing Enter in the input', async () => {
-    render(<AiInput />);
+    renderAt();
 
     await userEvent.type(getInput(), 'Quick question{Enter}');
 
@@ -77,7 +87,7 @@ describe('AiInput', () => {
   });
 
   it('ignores whitespace-only submissions', async () => {
-    render(<AiInput />);
+    renderAt();
 
     await userEvent.type(getInput(), '   {Enter}');
 
@@ -87,7 +97,7 @@ describe('AiInput', () => {
 
   it('shows an error message when the request fails', async () => {
     mockedPost.mockRejectedValueOnce(new Error('network down'));
-    render(<AiInput />);
+    renderAt();
 
     await userEvent.type(getInput(), 'Hi{Enter}');
 
@@ -95,20 +105,32 @@ describe('AiInput', () => {
   });
 
   it('reuses the same thread id across turns within a session', async () => {
-    render(<AiInput />);
+    renderAt();
 
     await userEvent.type(getInput(), 'First{Enter}');
     await screen.findByText('Hello from TARS');
     await userEvent.type(getInput(), 'Second{Enter}');
     await waitFor(() => expect(mockedPost).toHaveBeenCalledTimes(2));
 
-    const firstThread = mockedPost.mock.calls[0][1] as { threadId: string };
-    const secondThread = mockedPost.mock.calls[1][1] as { threadId: string };
-    expect(secondThread.threadId).toBe(firstThread.threadId);
+    const firstBody = mockedPost.mock.calls[0][1] as { threadId: string; pageContext?: string };
+    const secondBody = mockedPost.mock.calls[1][1] as { threadId: string; pageContext?: string };
+    expect(secondBody.threadId).toBe(firstBody.threadId);
+    expect(firstBody.pageContext).toBeDefined();
+    expect(secondBody.pageContext).toBeUndefined();
+  });
+
+  it('sends the course id in pageContext on a course detail route', async () => {
+    renderAt('/courses/abc-123');
+
+    await userEvent.type(getInput(), 'Hello{Enter}');
+    await waitFor(() => expect(mockedPost).toHaveBeenCalledTimes(1));
+
+    const body = mockedPost.mock.calls[0][1] as { pageContext?: string };
+    expect(body.pageContext).toBe('The user is on the course detail page for course id abc-123.');
   });
 
   it('clears the chat and starts a fresh thread when closed', async () => {
-    render(<AiInput />);
+    renderAt();
 
     await userEvent.type(getInput(), 'First message{Enter}');
     await screen.findByText('Hello from TARS');
