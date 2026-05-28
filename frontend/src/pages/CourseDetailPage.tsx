@@ -262,7 +262,9 @@ export default function CourseDetailPage() {
                 {courseFeedLoading && (
                   <div className="dashboard-state panel dashboard-state--loading course-detail__section-card p-4">
                     <div className="spinner-border text-secondary" role="status">
-                      <span className="visually-hidden">{t('courses.detail.loadingMaterials')}</span>
+                      <span className="visually-hidden">
+                        {t('courses.detail.loadingMaterials')}
+                      </span>
                     </div>
                   </div>
                 )}

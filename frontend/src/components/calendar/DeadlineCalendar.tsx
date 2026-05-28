@@ -329,7 +329,9 @@ export default function DeadlineCalendar({
     ? 0
     : Math.max(upcomingTasks.length - UPCOMING_LIMIT, 0);
   const canToggleUpcoming = !selectedDateKey && hiddenUpcomingCount > 0;
-  const detailTitle = selectedDateKey ? formatLongDate(selectedDateKey) : t('calendar.upcomingTitle');
+  const detailTitle = selectedDateKey
+    ? formatLongDate(selectedDateKey)
+    : t('calendar.upcomingTitle');
   const emptyMessage = selectedDateKey ? t('calendar.emptyDate') : t('calendar.emptyUpcoming');
 
   function handleMonthShift(offset: number) {
@@ -599,9 +601,12 @@ export default function DeadlineCalendar({
                   >
                     {showAllUpcoming
                       ? t('calendar.showLess')
-                      : t(hiddenUpcomingCount === 1 ? 'calendar.showMoreOne' : 'calendar.showMore', {
-                          count: hiddenUpcomingCount,
-                        })}
+                      : t(
+                          hiddenUpcomingCount === 1 ? 'calendar.showMoreOne' : 'calendar.showMore',
+                          {
+                            count: hiddenUpcomingCount,
+                          }
+                        )}
                   </button>
                 )}
               </>
