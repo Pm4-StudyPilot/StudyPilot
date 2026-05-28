@@ -1,6 +1,7 @@
 import type { Express } from 'express';
 import type { Readable } from 'node:stream';
 import path from 'node:path';
+import { OfficeParser, type OfficeChunk, type SupportedFileType } from 'officeparser';
 import { prisma } from '../config/database';
 import { storage } from '../config/minio';
 import { CourseShareService } from './course-share.service';
@@ -81,6 +82,50 @@ type ListDocumentsOptions = {
   search?: string;
 };
 
+export type ReadCourseDocumentsOptions = {
+  documentIds?: string[];
+  query?: string;
+  maxCharacters?: number;
+};
+
+export type ReadCourseDocumentChunk = {
+  documentId: string;
+  filename: string;
+  index: number;
+  text: string;
+  score?: number;
+  truncated: boolean;
+  metadata?: {
+    sourceType?: string;
+    pageNumber?: number;
+    slideNumber?: number;
+    closestHeading?: string;
+    startIndex?: number;
+    endIndex?: number;
+  };
+};
+
+export type ReadCourseDocumentsResult = {
+  courseId: string;
+  documents: Array<{
+    id: string;
+    filename: string;
+    fileSize: number | null;
+    fileType: string | null;
+    createdAt: Date;
+    courseId: string;
+    readableType: 'text' | SupportedFileType | null;
+  }>;
+  chunks: ReadCourseDocumentChunk[];
+  skipped: Array<{ documentId: string; filename: string; reason: string }>;
+  errors: Array<{ documentId: string; filename: string; message: string }>;
+  warnings: string[];
+  totalDocuments: number;
+  returnedCharacters: number;
+  maxCharacters: number;
+  truncated: boolean;
+};
+
 /**
  * Name of the MinIO bucket used to store uploaded course documents.
  */
@@ -90,6 +135,26 @@ const DOCUMENTS_BUCKET = 'documents';
  * Default sort order for document listings.
  */
 const DEFAULT_DOCUMENT_SORT: DocumentSort = 'createdAt:desc';
+const DEFAULT_READ_MAX_CHARACTERS = 25_000;
+const MAX_READ_CHARACTERS = 60_000;
+const DOCUMENT_CHUNK_SIZE = 1_200;
+const DOCUMENT_CHUNK_OVERLAP = 120;
+type ReadableOfficeType = 'pdf' | 'docx' | 'pptx';
+
+type StoredDocumentForReading = {
+  id: string;
+  filename: string;
+  bucket: string;
+  objectKey: string;
+  fileSize: number | null;
+  fileType: string | null;
+  createdAt: Date;
+  courseId: string;
+};
+
+type CandidateChunk = ReadCourseDocumentChunk & {
+  order: number;
+};
 
 /**
  * Builds a Prisma-compatible orderBy clause from a generic sort query value.
@@ -126,6 +191,130 @@ function getDocumentOrderBy(sort: string = DEFAULT_DOCUMENT_SORT) {
   return {
     [field]: direction,
   };
+}
+
+function normalizeText(text: string): string {
+  return text
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function normalizeMaxCharacters(value?: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return DEFAULT_READ_MAX_CHARACTERS;
+  }
+
+  return Math.min(MAX_READ_CHARACTERS, Math.max(1, Math.floor(value)));
+}
+
+function filenameExtension(filename: string): string {
+  return path.extname(filename).toLowerCase().replace(/^\./, '');
+}
+
+function getReadableDocumentType(
+  fileType: string | null,
+  filename: string
+): 'text' | ReadableOfficeType | null {
+  const extension = filenameExtension(filename);
+
+  if (fileType === 'text/plain' || extension === 'txt') return 'text';
+  if (fileType === 'application/pdf' || extension === 'pdf') return 'pdf';
+
+  if (
+    fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    extension === 'docx'
+  ) {
+    return 'docx';
+  }
+
+  if (
+    fileType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ||
+    extension === 'pptx'
+  ) {
+    return 'pptx';
+  }
+
+  return null;
+}
+
+function getUnsupportedReason(fileType: string | null, filename: string): string {
+  const extension = filenameExtension(filename);
+
+  if (fileType === 'application/msword' || extension === 'doc') {
+    return 'Legacy .doc files are not supported for AI reading. Please upload a .docx version.';
+  }
+
+  if (fileType === 'application/vnd.ms-powerpoint' || extension === 'ppt') {
+    return 'Legacy .ppt files are not supported for AI reading. Please upload a .pptx version.';
+  }
+
+  return 'This document type is not supported for AI reading.';
+}
+
+function queryTerms(query?: string): string[] {
+  return Array.from(
+    new Set(
+      (query ?? '')
+        .toLowerCase()
+        .split(/[^a-z0-9]+/i)
+        .map((term) => term.trim())
+        .filter((term) => term.length >= 2)
+    )
+  );
+}
+
+function scoreChunk(text: string, terms: string[]): number | undefined {
+  if (terms.length === 0) return undefined;
+
+  const normalized = text.toLowerCase();
+  return terms.reduce((score, term) => {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const matches = normalized.match(new RegExp(escaped, 'g'));
+    return score + (matches?.length ?? 0);
+  }, 0);
+}
+
+function splitTextIntoChunks(text: string, chunkSize = DOCUMENT_CHUNK_SIZE): string[] {
+  const normalized = normalizeText(text);
+  if (!normalized) return [];
+
+  const chunks: string[] = [];
+  let start = 0;
+
+  while (start < normalized.length) {
+    const hardEnd = Math.min(normalized.length, start + chunkSize);
+    let end = hardEnd;
+
+    if (hardEnd < normalized.length) {
+      const preferredBreak = Math.max(
+        normalized.lastIndexOf('\n\n', hardEnd),
+        normalized.lastIndexOf('\n', hardEnd),
+        normalized.lastIndexOf('. ', hardEnd),
+        normalized.lastIndexOf(' ', hardEnd)
+      );
+
+      if (preferredBreak > start + Math.floor(chunkSize * 0.5)) {
+        end = preferredBreak + (normalized[preferredBreak] === '.' ? 1 : 0);
+      }
+    }
+
+    const chunk = normalizeText(normalized.slice(start, end));
+    if (chunk) chunks.push(chunk);
+
+    if (end >= normalized.length) break;
+    start = Math.max(end - DOCUMENT_CHUNK_OVERLAP, start + 1);
+  }
+
+  return chunks;
+}
+
+function formatIssue(issue: { code?: unknown; message?: unknown }): string {
+  const message = typeof issue.message === 'string' ? issue.message : 'Unknown parser warning';
+  const code = typeof issue.code === 'string' ? issue.code : undefined;
+  return code ? `${code}: ${message}` : message;
 }
 
 /**
@@ -255,10 +444,10 @@ class DocumentService {
   }
 
   /**
-   * Returns all documents for a course owned by the authenticated user.
+   * Returns all documents for a course the authenticated user can access.
    *
    * Workflow:
-   * 1. Verify that the course exists and belongs to the authenticated user
+   * 1. Verify that the course exists and is accessible to the authenticated user
    * 2. Build a dynamic filter object based on provided options
    * 3. Apply sorting using a validated generic sort key
    * 4. Query document metadata from the database
@@ -278,7 +467,7 @@ class DocumentService {
    *
    * Notes:
    * - Only metadata is returned, not the binary file content
-   * - Results are always scoped to the authenticated user's course
+   * - Results are always scoped to a course the authenticated user can access
    * - Default sorting is by newest documents first
    *
    * @param courseId ID of the course
@@ -287,17 +476,12 @@ class DocumentService {
    *
    * @returns List of document metadata entries
    *
-   * @throws Error if the course does not exist or does not belong to the user
+   * @throws Error if the course does not exist or is not accessible to the user
    */
   async listByCourse(courseId: string, ownerId: string, options: ListDocumentsOptions = {}) {
-    const course = await prisma.course.findFirst({
-      where: {
-        id: courseId,
-        ownerId,
-      },
-    });
+    const hasAccess = await this.courseShareService.checkAccess(courseId, ownerId);
 
-    if (!course) {
+    if (!hasAccess) {
       throw new Error('Course not found.');
     }
 
@@ -305,7 +489,7 @@ class DocumentService {
      * Build dynamic Prisma "where" filter object.
      *
      * Base filter:
-     * - restrict to course and owner
+     * - restrict to course
      *
      * Optional filters:
      * - fileType: exact match on MIME type
@@ -313,12 +497,10 @@ class DocumentService {
      */
     const where: {
       courseId: string;
-      ownerId: string;
       fileType?: string;
       filename?: { contains: string; mode: 'insensitive' };
     } = {
       courseId,
-      ownerId,
     };
 
     if (options.fileType) {
@@ -354,6 +536,240 @@ class DocumentService {
         courseId: true,
       },
     });
+  }
+
+  /**
+   * Reads uploaded course documents for AI context.
+   *
+   * The method intentionally returns structured text chunks instead of raw
+   * binary files. This keeps the MCP tool safe to expose to the agent while
+   * preserving citation metadata such as document id, filename, page/slide,
+   * and truncation state.
+   */
+  async readCourseDocuments(
+    courseId: string,
+    userId: string,
+    options: ReadCourseDocumentsOptions = {}
+  ): Promise<ReadCourseDocumentsResult> {
+    const hasAccess = await this.courseShareService.checkAccess(courseId, userId);
+
+    if (!hasAccess) {
+      throw new Error('Course not found.');
+    }
+
+    const maxCharacters = normalizeMaxCharacters(options.maxCharacters);
+    const requestedDocumentIds = Array.isArray(options.documentIds)
+      ? Array.from(new Set(options.documentIds.filter((id) => id.trim().length > 0)))
+      : [];
+
+    const documents = await prisma.document.findMany({
+      where: {
+        courseId,
+        ...(requestedDocumentIds.length > 0 ? { id: { in: requestedDocumentIds } } : {}),
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        id: true,
+        filename: true,
+        bucket: true,
+        objectKey: true,
+        fileSize: true,
+        fileType: true,
+        createdAt: true,
+        courseId: true,
+      },
+    });
+
+    const terms = queryTerms(options.query);
+    const chunks: CandidateChunk[] = [];
+    const skipped: ReadCourseDocumentsResult['skipped'] = [];
+    const errors: ReadCourseDocumentsResult['errors'] = [];
+    const warnings: string[] = [];
+    let order = 0;
+
+    for (const document of documents) {
+      const readableType = getReadableDocumentType(document.fileType, document.filename);
+
+      if (!readableType) {
+        skipped.push({
+          documentId: document.id,
+          filename: document.filename,
+          reason: getUnsupportedReason(document.fileType, document.filename),
+        });
+        continue;
+      }
+
+      try {
+        const buffer = await storage.downloadBuffer(document.bucket, document.objectKey);
+        const extracted = await this.extractReadableChunks(
+          document,
+          readableType,
+          buffer,
+          warnings
+        );
+
+        if (extracted.length === 0) {
+          warnings.push(`No readable text was extracted from "${document.filename}".`);
+          continue;
+        }
+
+        for (const chunk of extracted) {
+          const text = normalizeText(chunk.text);
+          if (!text) continue;
+
+          const score = scoreChunk(text, terms);
+          chunks.push({
+            documentId: document.id,
+            filename: document.filename,
+            index: chunk.index,
+            text,
+            ...(score !== undefined ? { score } : {}),
+            truncated: false,
+            metadata: chunk.metadata,
+            order,
+          });
+          order += 1;
+        }
+      } catch (error) {
+        logger.warn(
+          { err: error, documentId: document.id, courseId },
+          'Failed to extract document text for AI context'
+        );
+        errors.push({
+          documentId: document.id,
+          filename: document.filename,
+          message: error instanceof Error ? error.message : 'Failed to read document.',
+        });
+      }
+    }
+
+    const rankedChunks =
+      terms.length === 0
+        ? chunks
+        : [...chunks].sort((a, b) => (b.score ?? 0) - (a.score ?? 0) || a.order - b.order);
+
+    const cappedChunks: ReadCourseDocumentChunk[] = [];
+    let returnedCharacters = 0;
+    let truncated = false;
+
+    for (const chunk of rankedChunks) {
+      if (returnedCharacters >= maxCharacters) {
+        truncated = true;
+        break;
+      }
+
+      const remaining = maxCharacters - returnedCharacters;
+      const textFits = chunk.text.length <= remaining;
+      const text = textFits ? chunk.text : chunk.text.slice(0, remaining).trimEnd();
+
+      if (!text) {
+        truncated = true;
+        break;
+      }
+
+      cappedChunks.push({
+        documentId: chunk.documentId,
+        filename: chunk.filename,
+        index: chunk.index,
+        text,
+        ...(chunk.score !== undefined ? { score: chunk.score } : {}),
+        truncated: !textFits,
+        metadata: chunk.metadata,
+      });
+
+      returnedCharacters += text.length;
+
+      if (!textFits) {
+        truncated = true;
+        break;
+      }
+    }
+
+    if (!truncated && cappedChunks.length < rankedChunks.length) {
+      truncated = true;
+    }
+
+    return {
+      courseId,
+      documents: documents.map((document) => ({
+        id: document.id,
+        filename: document.filename,
+        fileSize: document.fileSize,
+        fileType: document.fileType,
+        createdAt: document.createdAt,
+        courseId: document.courseId,
+        readableType: getReadableDocumentType(document.fileType, document.filename),
+      })),
+      chunks: cappedChunks,
+      skipped,
+      errors,
+      warnings,
+      totalDocuments: documents.length,
+      returnedCharacters,
+      maxCharacters,
+      truncated,
+    };
+  }
+
+  private async extractReadableChunks(
+    document: StoredDocumentForReading,
+    readableType: 'text' | ReadableOfficeType,
+    buffer: Buffer,
+    warnings: string[]
+  ): Promise<
+    Array<{
+      index: number;
+      text: string;
+      metadata?: ReadCourseDocumentChunk['metadata'];
+    }>
+  > {
+    if (readableType === 'text') {
+      return splitTextIntoChunks(buffer.toString('utf8')).map((text, index) => ({
+        index,
+        text,
+        metadata: {
+          sourceType: 'text',
+        },
+      }));
+    }
+
+    const parserWarnings: string[] = [];
+    const ast = await OfficeParser.parseOffice(buffer, {
+      fileType: readableType,
+      ocr: false,
+      onWarning: (issue) => parserWarnings.push(formatIssue(issue)),
+    });
+    const conversion = await ast.to('chunks', {
+      chunksConfig: {
+        strategy: 'document-structure',
+        maxChunkSize: DOCUMENT_CHUNK_SIZE,
+        addStartIndex: true,
+      },
+    });
+
+    const officeChunks = Array.isArray(conversion.value) ? (conversion.value as OfficeChunk[]) : [];
+
+    const conversionWarnings = conversion.messages.map(formatIssue);
+    const astWarnings = ast.warnings.map(formatIssue);
+
+    for (const warning of [...parserWarnings, ...astWarnings, ...conversionWarnings]) {
+      warnings.push(`${document.filename}: ${warning}`);
+    }
+
+    return officeChunks.map((chunk, index) => ({
+      index,
+      text: chunk.text,
+      metadata: {
+        sourceType: chunk.metadata.sourceType,
+        pageNumber: chunk.metadata.pageNumber,
+        slideNumber: chunk.metadata.slideNumber,
+        closestHeading: chunk.metadata.closestHeading,
+        startIndex: chunk.startIndex,
+        endIndex: chunk.endIndex,
+      },
+    }));
   }
 
   /**
