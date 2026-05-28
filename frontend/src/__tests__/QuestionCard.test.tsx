@@ -557,4 +557,30 @@ describe('QuestionCard', () => {
 
     expect(screen.getByText('Berlin').closest('.answer-card--selected')).not.toBeNull();
   });
+  it('allows to update a question to have an empty description', async () => {
+    render(
+      <QuestionCard
+        question={questionFixture}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={mockUpdateQuestion}
+        onCreateAnswer={mockCreateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
+    );
+
+    const questionDescription = screen.getByDisplayValue('Choose the correct capital city.');
+
+    await act(async () => {
+      await userEvent.clear(questionDescription);
+      fireEvent.blur(questionDescription);
+    });
+
+    expect(mockUpdateQuestion).toHaveBeenCalledWith(questionFixture.id, {
+      title: questionFixture.title.trim(),
+      description: '',
+      type: questionFixture.type,
+    });
+  });
 });
