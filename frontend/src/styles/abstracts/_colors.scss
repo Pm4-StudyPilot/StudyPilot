@@ -73,27 +73,27 @@
   --color-overlay: rgba(20, 20, 28, 0.45);
   --color-white: #fff;
 
-  /* Brand / Accent — keep brand orange, darken support colors for contrast on white */
+  /* Brand / Accent — keep brand orange for solids/backgrounds, darken text-facing tones for contrast on white */
   --color-primary-bold: #ff4b26;
-  --color-primary: #f06d47;
+  --color-primary: #c2421e;
   --color-primary-accent: rgb(255 75 38 / 0.1);
-  --color-secondary-light: #2c6ee0;
-  --color-secondary: #2c6ee0;
+  --color-secondary-light: #1f5bc4;
+  --color-secondary: #1f5bc4;
   --color-secondary-accent: rgba(44, 110, 224, 0.12);
-  --color-tertiary: #2e9c4a;
-  --color-tertiary-light: #2e9c4a;
+  --color-tertiary: #1f7a36;
+  --color-tertiary-light: #1f7a36;
   --color-tertiary-accent: rgba(46, 156, 74, 0.14);
-  --color-quaternary: #7d4ed9;
+  --color-quaternary: #5f31b8;
   --color-quarternary-accent: rgba(125, 78, 217, 0.14);
 
-  --color-danger: #c03a52;
-  --color-success: #2b9c4a;
-  --color-warning: #c08020;
+  --color-danger: #a82a40;
+  --color-success: #1f7a36;
+  --color-warning: #8a5a0f;
 
   /* Text */
   --color-text-primary: #15151a;
-  --color-text-secondary: #4a4750;
-  --color-text-muted: #757079;
+  --color-text-secondary: #3a373f;
+  --color-text-muted: #5d5862;
 
   /* Structure */
   --color-border: rgba(15, 15, 25, 0.12);
