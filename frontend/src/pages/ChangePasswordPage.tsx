@@ -60,15 +60,11 @@ export default function ChangePasswordPage() {
         </Link>
         <header className="dashboard-page-header">
           <div>
-            <p className="dashboard-page-header__eyebrow">
-              {t('settings.changePassword.eyebrow')}
-            </p>
+            <p className="dashboard-page-header__eyebrow">{t('settings.changePassword.eyebrow')}</p>
 
             <h1>{t('settings.changePassword.title')}</h1>
 
-            <p className="dashboard-page-header__subline">
-              {t('settings.changePassword.subline')}
-            </p>
+            <p className="dashboard-page-header__subline">{t('settings.changePassword.subline')}</p>
           </div>
         </header>
 

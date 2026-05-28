@@ -89,15 +89,15 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
                 />
                 <Link
                   to={`/courses/${course.id}`}
-                  className="course-card__name fw-semibold text-white text-decoration-none"
+                  className="course-card__name fw-semibold text-decoration-none"
                 >
                   {course.name}
                 </Link>
               </div>
-              <div className="course-card__date text-secondary">
+              <div className="course-card__date">
                 {t('courses.card.addedDate', { date: formattedDate })}
               </div>
-              <div className="course-card__progress-text text-secondary">
+              <div className="course-card__progress-text">
                 {t('courses.card.progressText', {
                   open: progress.openTasks,
                   inProgress: progress.inProgressTasks,
@@ -153,7 +153,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
             )}
 
             {!tasksLoading && tasks !== null && tasks.length === 0 && (
-              <p className="course-card__empty text-secondary mb-0">{t('courses.card.noTasks')}</p>
+              <p className="course-card__empty mb-0">{t('courses.card.noTasks')}</p>
             )}
 
             {!tasksLoading && tasks !== null && tasks.length > 0 && (
@@ -164,12 +164,10 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
                       key={task.id}
                       className="course-card__task d-flex align-items-center justify-content-between py-1"
                     >
-                      <span className="course-card__task-title text-white">{task.title}</span>
+                      <span className="course-card__task-title">{task.title}</span>
                       <div className="d-flex align-items-center gap-2">
                         {task.dueDate && (
-                          <span className="course-card__task-date text-secondary">
-                            {formatDate(task.dueDate)}
-                          </span>
+                          <span className="course-card__task-date">{formatDate(task.dueDate)}</span>
                         )}
                         <span
                           className={`course-card__task-status badge ${STATUS_BADGE[task.status]}`}
@@ -182,7 +180,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
                 </ul>
                 <Link
                   to={`/courses/${course.id}`}
-                  className="course-card__tasks-link text-secondary text-decoration-none"
+                  className="course-card__tasks-link text-decoration-none"
                 >
                   {t('courses.card.viewAllTasks')}
                 </Link>

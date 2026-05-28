@@ -90,8 +90,11 @@ describe('locales', () => {
 
   it('preserves {{tokens}} across locales', () => {
     const enFlat = flatten(resources.en.translation as NestedRecord);
-    const mismatches: Array<{ key: string; en: string[]; missingInLang: Record<string, string[]> }> =
-      [];
+    const mismatches: Array<{
+      key: string;
+      en: string[];
+      missingInLang: Record<string, string[]>;
+    }> = [];
 
     for (const [key, enValue] of Object.entries(enFlat)) {
       if (typeof enValue !== 'string') continue;

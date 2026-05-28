@@ -17,6 +17,14 @@ vi.mock('../context/useAuth', () => ({
   }),
 }));
 
+vi.mock('../context/useTheme', () => ({
+  useTheme: () => ({
+    theme: 'dark',
+    toggleTheme: vi.fn(),
+    setTheme: vi.fn(),
+  }),
+}));
+
 function renderLayout({
   showSearch = true,
   searchValue = '',

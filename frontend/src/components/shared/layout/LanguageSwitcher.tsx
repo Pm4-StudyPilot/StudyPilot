@@ -70,9 +70,7 @@ export default function LanguageSwitcher() {
                   <span className="language-switcher__option-label">
                     {t(LANGUAGE_DISPLAY[lng].labelKey)}
                   </span>
-                  {isActive && (
-                    <i className="fa-solid fa-check ms-auto" aria-hidden="true" />
-                  )}
+                  {isActive && <i className="fa-solid fa-check ms-auto" aria-hidden="true" />}
                 </button>
               </li>
             );
