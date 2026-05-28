@@ -230,7 +230,6 @@
     &:hover,
     &:focus-visible {
       background-color: var(--color-card-bg);
-      transform: translateY(-1px);
     }
   }
 
@@ -256,8 +255,8 @@
 
   &__day-dot {
     position: absolute;
-    right: 0.34rem;
-    bottom: 0.3rem;
+    right: calc(50% - 0.18rem);
+    bottom: 0.2rem;
     display: inline-block;
     width: 0.36rem;
     height: 0.36rem;
