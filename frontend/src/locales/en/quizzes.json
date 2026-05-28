@@ -74,6 +74,8 @@
   "play": {
     "backToQuiz": "Back to quiz",
     "notFound": "Quiz not found",
+    "empty": "Add Questions before playing the quiz.",
+    "error": "An error occured while loading the quiz",
     "progress": "Question {{current}} / {{total}}",
     "selectHint": "Select an answer or reveal the solution.",
     "correct": "Correct",

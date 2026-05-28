@@ -341,4 +341,21 @@ describe('PlayQuizPage', () => {
 
     expect(await screen.findByText(/1.5 \/ 2 Points/)).toBeInTheDocument();
   });
+  it('indicates when the quiz is not playable due to no questions existing', async () => {
+    mockedApi.get.mockImplementation((url: string) => {
+      if (url.includes('/questions')) {
+        return Promise.resolve([]);
+      }
+
+      return Promise.resolve(mockQuiz);
+    });
+
+    render(
+      <MemoryRouter>
+        <PlayQuizPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Add Questions before playing the quiz.')).toBeInTheDocument();
+  });
 });

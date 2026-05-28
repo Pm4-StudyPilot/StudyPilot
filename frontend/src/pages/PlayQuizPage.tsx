@@ -65,7 +65,7 @@ export default function PlayQuizPage() {
         );
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : t('quizzes.detail.loadFailed'));
+        setError(err instanceof Error ? err.message : t('quizzes.play.notFound'));
       })
       .finally(() => {
         setLoading(false);
@@ -174,7 +174,11 @@ export default function PlayQuizPage() {
           if (error || !quiz || !currentQuestion)
             return (
               <div className="dashboard-state panel dashboard-state--error">
-                {error || t('quizzes.play.notFound')}
+                {(() => {
+                  if (error) return error || t('quizzes.play.error');
+                  if (!quiz) return t('quizzes.play.notFound');
+                  if (!currentQuestion) return t('quizzes.play.empty');
+                })()}
               </div>
             );
           if (showStats) {

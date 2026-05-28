@@ -337,7 +337,7 @@ export default function QuizDetailPage() {
                 )}
 
                 <div className="quiz-detail__actions">
-                  {editMode ? (
+                  {editMode || !questions.length ? (
                     <button
                       type="button"
                       className="btn btn-primary quiz-detail__play-button"
