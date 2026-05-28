@@ -44,6 +44,9 @@ export function toGeminiSchema(schema: unknown): unknown {
 
   const node: Record<string, unknown> = { ...(schema as Record<string, unknown>) };
 
+  delete node.exclusiveMinimum;
+  delete node.exclusiveMaximum;
+
   if (Array.isArray(node.type)) {
     const types = (node.type as unknown[]).filter((t) => t !== 'null');
     if ((node.type as unknown[]).includes('null')) {
