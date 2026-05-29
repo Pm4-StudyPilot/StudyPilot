@@ -4,6 +4,10 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   test: {
+    // Only run unit/component tests under src/. The Playwright E2E specs in
+    // e2e/ use the Playwright runner and must not be picked up by Vitest's
+    // default *.spec.ts glob.
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test/setup.ts',

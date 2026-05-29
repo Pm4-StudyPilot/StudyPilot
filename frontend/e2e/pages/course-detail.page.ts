@@ -67,6 +67,37 @@ export class CourseDetailPage {
     await modal.getByRole('button', { name: 'Create Quiz' }).click();
   }
 
+  /**
+   * Drags a task (by title) to the bottom of the list via its drag handle.
+   * dnd-kit's PointerSensor is RAF-based and finicky in headless browsers, so
+   * we: press on the handle, nudge to activate the sensor, assert the card
+   * entered the dragging state (a real wait + diagnostic), then move down past
+   * the last card in many small steps before releasing.
+   */
+  async dragTaskToLast(title: string) {
+    const dragged = this.taskCard(title);
+    const handle = dragged.getByTestId('task-drag-handle');
+    const cards = this.page.getByTestId('task-card');
+
+    const hb = await handle.boundingBox();
+    const lastBox = await cards.last().boundingBox();
+    if (!hb || !lastBox) throw new Error('drag boxes not found');
+
+    const x = hb.x + hb.width / 2;
+    const startY = hb.y + hb.height / 2;
+    const endY = lastBox.y + lastBox.height + 24;
+
+    await this.page.mouse.move(x, startY);
+    await this.page.mouse.down();
+    // Nudge past dnd-kit's activation threshold, then confirm the drag started.
+    await this.page.mouse.move(x, startY + 8, { steps: 6 });
+    await expect(dragged).toHaveClass(/opacity-50/);
+    // Move down through the list in many small increments, then settle below.
+    await this.page.mouse.move(x, endY, { steps: 25 });
+    await this.page.mouse.move(x, endY + 4, { steps: 4 });
+    await this.page.mouse.up();
+  }
+
   /** Drag-handle ordering: list of task titles in current DOM order. */
   async taskTitlesInOrder(): Promise<string[]> {
     const handles = this.page.getByTestId('task-card');
