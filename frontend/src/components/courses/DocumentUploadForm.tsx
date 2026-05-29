@@ -103,6 +103,7 @@ export default function DocumentUploadForm({ courseId, onUploadSuccess }: Docume
       <input
         ref={fileInputRef}
         id="document-upload"
+        data-testid="document-upload-input"
         type="file"
         style={{ display: 'none' }}
         onChange={handleFileChange}
