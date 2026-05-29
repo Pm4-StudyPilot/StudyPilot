@@ -68,34 +68,29 @@ export class CourseDetailPage {
   }
 
   /**
-   * Drags a task (by title) to the bottom of the list via its drag handle.
-   * dnd-kit's PointerSensor is RAF-based and finicky in headless browsers, so
-   * we: press on the handle, nudge to activate the sensor, assert the card
-   * entered the dragging state (a real wait + diagnostic), then move down past
-   * the last card in many small steps before releasing.
+   * Reorders a task (by title) to the bottom of the list using dnd-kit's
+   * keyboard sensor: focus the drag handle, Space to pick up, Arrow Down for
+   * each remaining position, Space to drop. Keyboard drag is deterministic
+   * across environments, unlike synthetic pointer drag which dnd-kit's
+   * PointerSensor does not reliably activate under headless CI.
    */
   async dragTaskToLast(title: string) {
-    const dragged = this.taskCard(title);
-    const handle = dragged.getByTestId('task-drag-handle');
-    const cards = this.page.getByTestId('task-card');
+    const count = await this.page.getByTestId('task-card').count();
+    const card = this.taskCard(title);
+    const handle = card.getByTestId('task-drag-handle');
 
-    const hb = await handle.boundingBox();
-    const lastBox = await cards.last().boundingBox();
-    if (!hb || !lastBox) throw new Error('drag boxes not found');
-
-    const x = hb.x + hb.width / 2;
-    const startY = hb.y + hb.height / 2;
-    const endY = lastBox.y + lastBox.height + 24;
-
-    await this.page.mouse.move(x, startY);
-    await this.page.mouse.down();
-    // Nudge past dnd-kit's activation threshold, then confirm the drag started.
-    await this.page.mouse.move(x, startY + 8, { steps: 6 });
-    await expect(dragged).toHaveClass(/opacity-50/);
-    // Move down through the list in many small increments, then settle below.
-    await this.page.mouse.move(x, endY, { steps: 25 });
-    await this.page.mouse.move(x, endY + 4, { steps: 4 });
-    await this.page.mouse.up();
+    // press() focuses the handle then sends the key; Space picks the item up.
+    await handle.press('Space');
+    await expect(card).toHaveClass(/opacity-50/); // confirm it was picked up
+    // dnd-kit attaches its keyboard move/end listener a tick after activation
+    // (no observable DOM signal for it), so pace the keys with a short settle.
+    for (let i = 0; i < count - 1; i += 1) {
+      await this.page.waitForTimeout(150);
+      await this.page.keyboard.press('ArrowDown');
+    }
+    await this.page.waitForTimeout(150);
+    await this.page.keyboard.press('Space'); // drop
+    await expect(card).not.toHaveClass(/opacity-50/); // confirm it was dropped
   }
 
   /** Drag-handle ordering: list of task titles in current DOM order. */
