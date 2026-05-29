@@ -26,16 +26,14 @@ env:
   GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
 
 jobs:
-  # ─── Playwright E2E (sharded) ──────────────────────────────────
+  # ─── Playwright E2E ────────────────────────────────────────────
+  # Single job: the suite runs in seconds, so sharding would only add
+  # per-shard overhead (npm ci, browser install, DB + stack boot). Revisit
+  # sharding if total runtime grows into the multi-minute range.
   e2e:
-    name: E2E (shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
+    name: Playwright E2E
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        shardIndex: [1, 2, 3, 4]
-        shardTotal: [4]
 
     services:
       postgres:
@@ -97,48 +95,13 @@ jobs:
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
-      - name: Run Playwright tests (shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
+      - name: Run Playwright tests
         working-directory: frontend
         # playwright.config.ts webServer boots the backend (bun) + frontend (vite dev) itself.
-        run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
-
-      - name: Upload blob report
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: blob-report-${{ matrix.shardIndex }}
-          path: frontend/blob-report
-          retention-days: 7
-
-  # ─── Merge shard reports into one HTML report ──────────────────
-  merge-report:
-    name: Merge reports
-    if: ${{ !cancelled() }}
-    needs: [e2e]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Download blob reports
-        uses: actions/download-artifact@v4
-        with:
-          path: all-blob-reports
-          pattern: blob-report-*
-          merge-multiple: true
-
-      - name: Merge into a single HTML report
-        working-directory: frontend
-        run: npx playwright merge-reports --reporter html ../all-blob-reports
+        run: npx playwright test
 
       - name: Upload HTML report
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
