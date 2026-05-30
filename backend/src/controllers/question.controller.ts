@@ -115,11 +115,6 @@ export class QuestionController {
         return;
       }
 
-      if (data.description !== undefined && data.description !== null && !data.description.trim()) {
-        res.status(400).json({ message: 'Question description cannot be empty' });
-        return;
-      }
-
       if (data.type !== undefined && !VALID_TYPES.includes(data.type)) {
         res.status(400).json({ message: 'Invalid question type' });
         return;

@@ -64,7 +64,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
 
   return (
     <>
-      <div className="course-card panel mb-2" style={courseAccentStyle}>
+      <div className="course-card panel mb-2" style={courseAccentStyle} data-testid="course-card">
         <div className="d-flex align-items-center justify-content-between p-3">
           <div className="d-flex align-items-center gap-3">
             <ProgressRing
@@ -116,21 +116,23 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
               {t('courses.card.openLabel')}
             </Link>
             <button
-              className="btn btn-sm btn-link text-secondary p-0"
+              className="btn btn-sm btn-link text-secondary p-0 course-card__action"
               onClick={() => setEditOpen(true)}
               aria-label={t('courses.card.editAria')}
+              data-testid="course-edit-button"
             >
               <i className="fa-solid fa-pen-to-square" />
             </button>
             <button
-              className="btn btn-sm btn-link text-danger p-0"
+              className="btn btn-sm btn-link text-danger p-0 course-card__action"
               onClick={() => setDeleteOpen(true)}
               aria-label={t('courses.card.deleteAria')}
+              data-testid="course-delete-button"
             >
               <i className="fa-solid fa-trash" />
             </button>
             <button
-              className="btn btn-sm btn-link text-secondary p-0"
+              className="btn btn-sm btn-link text-secondary p-0 course-card__action"
               onClick={handleToggle}
               aria-label={t('courses.card.toggleAria')}
               aria-expanded={expanded}

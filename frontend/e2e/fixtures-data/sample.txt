@@ -1,0 +1,2 @@
+StudyPilot E2E document fixture.
+This file is uploaded by the documents spec to exercise the MinIO upload/download/delete flow.

@@ -177,7 +177,10 @@ export default function RegisterPage() {
             />
 
             <div className="mb-3">
-              <ProgressBar value={getPasswordStrength(values.password)} />
+              <ProgressBar
+                value={getPasswordStrength(values.password)}
+                label={t('auth.passwordStrength')}
+              />
             </div>
 
             <div className="d-flex flex-column gap-2 mb-3">

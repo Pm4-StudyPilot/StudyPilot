@@ -106,7 +106,10 @@ export default function ResetPasswordPage() {
                 autoComplete="new-password"
               />
 
-              <ProgressBar value={getPasswordStrength(values.newPassword)} />
+              <ProgressBar
+                value={getPasswordStrength(values.newPassword)}
+                label={t('auth.passwordStrength')}
+              />
 
               <div className="mt-2 mb-3 small">
                 {checkRows.map(({ key, valid }) => (

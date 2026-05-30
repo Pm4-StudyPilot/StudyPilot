@@ -72,12 +72,14 @@ export default function AiInput() {
           value={value}
           onChange={(event) => setValue(event.target.value)}
           aria-label={t('ai.ariaLabel')}
+          data-testid="ai-input-field"
         />
         <button
           type="submit"
           className="ai-input__send"
           disabled={!value.trim() || isLoading}
           aria-label={t('ai.sendAria')}
+          data-testid="ai-send-button"
         >
           <Icon icon={MdSend} size={18} aria-label={t('ai.sendAria')} />
         </button>
