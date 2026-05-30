@@ -250,6 +250,18 @@ describe('PlayQuizPage', () => {
 
     expect(await screen.findByText('Internal Server Error')).toBeInTheDocument();
   });
+  it('indicates when there was an unknown server error while loading the quiz', async () => {
+    mockedApi.get.mockImplementation(() => {
+      return Promise.reject(new Error(''));
+    });
+    render(
+      <MemoryRouter>
+        <PlayQuizPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('An error occured while loading the quiz')).toBeInTheDocument();
+  });
   it('saves history by highlighting selected answers even after revealing the answers', async () => {
     render(
       <MemoryRouter>

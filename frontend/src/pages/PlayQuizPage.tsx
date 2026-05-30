@@ -68,7 +68,7 @@ export default function PlayQuizPage() {
         );
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : t('quizzes.play.notFound'));
+        setError(err.message || t('quizzes.play.error'));
       })
       .finally(() => {
         setLoading(false);
