@@ -320,7 +320,7 @@ describe('PlayQuizPage', () => {
     expect(await screen.findByText(/0 \/ 2 Points/)).toBeInTheDocument();
     expect(screen.queryByText(/2 \/ 2 Points/)).not.toBeInTheDocument();
   });
-  it('calculates partial points when a multiple choice question was partially corect', async () => {
+  it('calculates partial points when a multiple choice question was partially correct', async () => {
     render(
       <MemoryRouter>
         <PlayQuizPage />
@@ -357,5 +357,21 @@ describe('PlayQuizPage', () => {
     );
 
     expect(await screen.findByText('Add Questions before playing the quiz.')).toBeInTheDocument();
+  });
+  it('indicates when the requested quiz does not exist', async () => {
+    mockedApi.get.mockImplementation((url: string) => {
+      if (url.includes('/questions')) {
+        return Promise.resolve([]);
+      }
+
+      return Promise.resolve(undefined);
+    });
+    render(
+      <MemoryRouter>
+        <PlayQuizPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Quiz not found')).toBeInTheDocument();
   });
 });

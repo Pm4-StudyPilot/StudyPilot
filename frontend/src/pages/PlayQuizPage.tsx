@@ -46,6 +46,8 @@ export default function PlayQuizPage() {
       api.get<QuestionWithAnswersDto[]>(`/courses/${courseId}/quizzes/${quizId}/questions`),
     ])
       .then(([quizResponse, questionResponse]) => {
+        if (!quizResponse) return;
+        if (!questionResponse) return;
         let loadedQuestions = [...questionResponse];
 
         if (quizResponse.isOrderRandom) {
