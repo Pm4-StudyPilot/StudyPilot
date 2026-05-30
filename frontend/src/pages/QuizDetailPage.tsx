@@ -110,7 +110,7 @@ export default function QuizDetailPage() {
     questionId: string,
     data: {
       title: string;
-      description: string;
+      description?: string;
       type: QuestionWithAnswersDto['type'];
     }
   ) {
