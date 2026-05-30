@@ -155,6 +155,65 @@ documentRouter.get('/course/:courseId', generalLimiter, authenticate, (req, res)
 
 /**
  * @openapi
+ * /documents:
+ *   get:
+ *     tags:
+ *       - Documents
+ *     summary: List documents owned by the authenticated user
+ *     description: |
+ *       Returns uploaded document metadata across all courses owned by
+ *       the authenticated user.
+ *
+ *       Supports:
+ *       - sorting
+ *       - filtering by file type
+ *       - filename search
+ *       - limiting the number of returned documents
+ *
+ *       Intended for the Resources overview page and recent uploads widgets.
+ *
+ *     security:
+ *       - bearerAuth: []
+ *
+ *     parameters:
+ *       - in: query
+ *         name: sort
+ *         required: false
+ *         schema:
+ *           type: string
+ *         example: createdAt:desc
+ *
+ *       - in: query
+ *         name: fileType
+ *         required: false
+ *         schema:
+ *           type: string
+ *
+ *       - in: query
+ *         name: search
+ *         required: false
+ *         schema:
+ *           type: string
+ *
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         example: 3
+ *
+ *     responses:
+ *       200:
+ *         description: Documents returned successfully.
+ *       401:
+ *         description: Unauthorized.
+ */
+documentRouter.get('/', generalLimiter, authenticate, (req, res) =>
+  documentController.listByOwner(req, res)
+);
+
+/**
+ * @openapi
  * /documents/{id}:
  *   get:
  *     tags:

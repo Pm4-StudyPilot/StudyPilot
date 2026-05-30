@@ -70,6 +70,7 @@ type DocumentSort = SortKey<DocumentSortableFields>;
  *   Example: "createdAt:desc", "filename:asc", "fileSize:desc"
  * - fileType: optional MIME type filter, e.g. "application/pdf"
  * - search: case-insensitive search string for filename matching
+ * - limit: optional maximum number of documents to return
  *
  * These values are mapped from HTTP query parameters.
  * The sort value is accepted as a string because query parameters are untrusted input
@@ -79,6 +80,7 @@ type ListDocumentsOptions = {
   sort?: string;
   fileType?: string;
   search?: string;
+  limit?: number;
 };
 
 /**
@@ -482,6 +484,83 @@ class DocumentService {
         'Failed to delete document object from storage'
       );
     }
+  }
+
+  /**
+   * Returns all documents owned by the authenticated user.
+   *
+   * Workflow:
+   * 1. Build a dynamic filter object based on provided options
+   * 2. Apply optional filtering by MIME type
+   * 3. Apply optional filename search
+   * 4. Apply validated sorting
+   * 5. Return document metadata together with basic course information
+   *
+   * Filtering capabilities:
+   * - fileType: restrict results to a specific MIME type
+   * - search: case-insensitive partial match on filename
+   *
+   * Sorting capabilities:
+   * - createdAt
+   * - filename
+   * - fileSize
+   * - fileType
+   *
+   * Sort format:
+   * - "<field>:<asc|desc>", e.g. "createdAt:desc"
+   *
+   * Notes:
+   * - Only metadata is returned, not the binary file content
+   * - Results are scoped to the authenticated user
+   * - Related course information is included to provide context in the
+   *   Resources overview page
+   * - Results are ordered by newest documents first by default
+   *
+   * @param ownerId ID of the authenticated user
+   * @param options Optional filter and sort configuration
+   *
+   * @returns List of document metadata entries including course information
+   */
+  async listByOwner(ownerId: string, options: ListDocumentsOptions = {}) {
+    const where: {
+      ownerId: string;
+      fileType?: string;
+      filename?: { contains: string; mode: 'insensitive' };
+    } = {
+      ownerId,
+    };
+
+    if (options.fileType) {
+      where.fileType = options.fileType;
+    }
+
+    if (options.search) {
+      where.filename = {
+        contains: options.search,
+        mode: 'insensitive',
+      };
+    }
+
+    return prisma.document.findMany({
+      where,
+      orderBy: getDocumentOrderBy(options?.sort),
+      take: Math.min(Math.max(options.limit ?? 3, 1), 50),
+      select: {
+        id: true,
+        filename: true,
+        fileSize: true,
+        fileType: true,
+        createdAt: true,
+        courseId: true,
+        course: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
+      },
+    });
   }
 }
 
