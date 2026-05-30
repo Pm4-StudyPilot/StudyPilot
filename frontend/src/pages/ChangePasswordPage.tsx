@@ -94,7 +94,10 @@ export default function ChangePasswordPage() {
                   autoComplete="new-password"
                 />
 
-                <ProgressBar value={getPasswordStrength(values.newPassword)} />
+                <ProgressBar
+                  value={getPasswordStrength(values.newPassword)}
+                  label={t('auth.passwordStrength')}
+                />
 
                 <div className="mt-2 mb-3 small">...</div>
 

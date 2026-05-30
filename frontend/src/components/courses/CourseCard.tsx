@@ -72,7 +72,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
               inProgressTasks={progress.inProgressTasks}
               completedTasks={progress.completedTasks}
               totalTasks={progress.totalTasks}
-              variant="primary"
+              accentColor={course.color}
               className="course-card__progress-ring flex-shrink-0"
               label={t('courses.card.progressLabel', {
                 open: progress.openTasks,
@@ -116,7 +116,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
               {t('courses.card.openLabel')}
             </Link>
             <button
-              className="btn btn-sm btn-link text-secondary p-0"
+              className="btn btn-sm btn-link text-secondary p-0 course-card__action"
               onClick={() => setEditOpen(true)}
               aria-label={t('courses.card.editAria')}
               data-testid="course-edit-button"
@@ -124,7 +124,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
               <i className="fa-solid fa-pen-to-square" />
             </button>
             <button
-              className="btn btn-sm btn-link text-danger p-0"
+              className="btn btn-sm btn-link text-danger p-0 course-card__action"
               onClick={() => setDeleteOpen(true)}
               aria-label={t('courses.card.deleteAria')}
               data-testid="course-delete-button"
@@ -132,7 +132,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
               <i className="fa-solid fa-trash" />
             </button>
             <button
-              className="btn btn-sm btn-link text-secondary p-0"
+              className="btn btn-sm btn-link text-secondary p-0 course-card__action"
               onClick={handleToggle}
               aria-label={t('courses.card.toggleAria')}
               aria-expanded={expanded}

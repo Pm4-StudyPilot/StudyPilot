@@ -24,6 +24,15 @@
     color: inherit;
   }
 
+  // Icon-only actions keep a 24px hit area (WCAG 2.2 SC 2.5.8 Target Size).
+  &__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    min-height: 24px;
+  }
+
   &__progress-ring {
     width: 40px;
     height: 40px;

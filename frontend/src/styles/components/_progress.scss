@@ -3,6 +3,7 @@
 }
 
 .progress-ring {
+  --progress-accent: var(--color-primary-bold);
   --progress-open-color: color-mix(in srgb, var(--progress-accent) 28%, var(--color-panel-bg));
   --progress-in-progress-color: color-mix(in srgb, var(--progress-accent) 62%, white);
   --progress-completed-color: var(--progress-accent);
@@ -34,25 +35,5 @@
     font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0.01em;
-  }
-
-  &--primary {
-    --progress-accent: var(--color-primary-bold);
-    --progress-glow: var(--glow-primary);
-  }
-
-  &--secondary {
-    --progress-accent: var(--color-secondary);
-    --progress-glow: var(--glow-secondary);
-  }
-
-  &--tertiary {
-    --progress-accent: var(--color-tertiary);
-    --progress-glow: var(--glow-tertiary);
-  }
-
-  &--quaternary {
-    --progress-accent: var(--color-quaternary);
-    --progress-glow: var(--glow-quaternary);
   }
 }
