@@ -29,6 +29,9 @@ function authenticatedScans() {
   test('dashboard', async ({ page, app, makeAxeBuilder }) => {
     await page.goto('/');
     await expect(app.coursesLink).toBeVisible();
+    // The deadline calendar paints after its fetch settles; wait for the grid's
+    // "today" cell so axe scans the rendered calendar, not a spinner.
+    await expect(page.locator('.deadline-calendar__day--today')).toBeVisible();
 
     const results = await makeAxeBuilder().analyze();
     expect(results.violations, formatViolations(results.violations)).toEqual([]);
