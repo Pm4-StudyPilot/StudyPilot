@@ -1,0 +1,109 @@
+name: E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/studypilot_test
+  JWT_SECRET: test-jwt-secret
+  PORT: 3000
+  MINIO_ENDPOINT: localhost
+  MINIO_PORT: 9000
+  MINIO_ACCESS_KEY: minioadmin
+  MINIO_SECRET_KEY: minioadmin
+  MINIO_BUCKET: test-bucket
+  MINIO_USE_SSL: false
+  VITE_API_URL: http://localhost:3000
+  RESEND_API_KEY: test-resend-key
+  # E2E test user — provisioned idempotently by e2e/setup/auth.setup.ts via the API.
+  E2E_USER: e2e@studypilot.test
+  E2E_USERNAME: e2e_user
+  E2E_PASS: ${{ secrets.E2E_PASS || 'E2ePassw0rd!23' }}
+  # Optional: when present the live-agent smoke test runs; otherwise it self-skips.
+  GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+
+jobs:
+  # ─── Playwright E2E ────────────────────────────────────────────
+  # Single job: the suite runs in seconds, so sharding would only add
+  # per-shard overhead (npm ci, browser install, DB + stack boot). Revisit
+  # sharding if total runtime grows into the multi-minute range.
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: studypilot_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      minio:
+        image: fclairamb/minio-github-actions
+        ports:
+          - 9000:9000
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: backend
+        run: bunx prisma generate --config prisma/prisma.config.ts
+
+      - name: Run database migrations
+        working-directory: backend
+        run: bunx prisma migrate deploy --config prisma/prisma.config.ts
+
+      - name: Seed baseline data
+        working-directory: backend
+        run: bun run prisma/seed.ts
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        working-directory: frontend
+        # playwright.config.ts webServer boots the backend (bun) + frontend (vite dev) itself.
+        run: npx playwright test
+
+      - name: Upload HTML report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 14

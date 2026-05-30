@@ -64,7 +64,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
 
   return (
     <>
-      <div className="course-card panel mb-2" style={courseAccentStyle}>
+      <div className="course-card panel mb-2" style={courseAccentStyle} data-testid="course-card">
         <div className="d-flex align-items-center justify-content-between p-3">
           <div className="d-flex align-items-center gap-3">
             <ProgressRing
@@ -119,6 +119,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
               className="btn btn-sm btn-link text-secondary p-0"
               onClick={() => setEditOpen(true)}
               aria-label={t('courses.card.editAria')}
+              data-testid="course-edit-button"
             >
               <i className="fa-solid fa-pen-to-square" />
             </button>
@@ -126,6 +127,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
               className="btn btn-sm btn-link text-danger p-0"
               onClick={() => setDeleteOpen(true)}
               aria-label={t('courses.card.deleteAria')}
+              data-testid="course-delete-button"
             >
               <i className="fa-solid fa-trash" />
             </button>

@@ -230,7 +230,11 @@ function EditQuestionCard({
   }
 
   return (
-    <article className="question-card question-card--editable">
+    <article
+      className="question-card question-card--editable"
+      data-testid="question-editor-card"
+      data-question-title={question.title}
+    >
       <header className="question-card__header">
         <div className="question-card__title-group question-editor">
           <div className="question-editor__fields">
@@ -305,6 +309,7 @@ function EditQuestionCard({
             }))
           }
           placeholder={t('quizzes.answers.newPlaceholder')}
+          data-testid="answer-content-input"
         />
 
         <CheckField
@@ -325,6 +330,7 @@ function EditQuestionCard({
           className="btn btn-primary btn-sm answer-editor__add-button mb-3"
           disabled={!newAnswer.content.trim() || addingAnswer}
           onClick={handleCreateAnswer}
+          data-testid="add-answer-button"
         >
           <i className="fa-solid fa-plus" />
           {addingAnswer ? t('quizzes.answers.addingButton') : t('quizzes.answers.addButton')}
