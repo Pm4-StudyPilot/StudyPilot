@@ -16,6 +16,11 @@ import { defineConfig, devices } from '@playwright/test';
 const FRONTEND_URL = process.env.BASE_URL ?? 'http://localhost:5173';
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
 
+// When set, an external stack is already serving the app (e.g. the prod Docker
+// image in the lighthouse-perf workflow), so we don't boot the dev servers and
+// instead audit BASE_URL/BACKEND_URL directly.
+const EXTERNAL_SERVER = !!process.env.PW_EXTERNAL_SERVER;
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -48,24 +53,40 @@ export default defineConfig({
       },
       dependencies: ['setup'],
     },
-  ],
-  webServer: [
     {
-      command: 'bun src/index.ts',
-      cwd: '../backend',
-      url: `${BACKEND_URL}/api/health`,
-      reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
-      stdout: 'pipe',
-      stderr: 'pipe',
-    },
-    {
-      command: 'npm run dev',
-      url: FRONTEND_URL,
-      reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
-      stdout: 'pipe',
-      stderr: 'pipe',
+      // Lighthouse audits with category thresholds (see e2e/lighthouse/audit.ts).
+      // playwright-lighthouse attaches to Chromium over CDP, so this project must
+      // launch with a fixed remote-debugging port. The flag is scoped here, so the
+      // functional `chromium` project is unaffected.
+      name: 'lighthouse',
+      testMatch: /lighthouse\/.*\.lh\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/user.json',
+        launchOptions: { args: ['--remote-debugging-port=9222'] },
+      },
+      dependencies: ['setup'],
     },
   ],
+  webServer: EXTERNAL_SERVER
+    ? undefined
+    : [
+        {
+          command: 'bun src/index.ts',
+          cwd: '../backend',
+          url: `${BACKEND_URL}/api/health`,
+          reuseExistingServer: !process.env.CI,
+          timeout: 120_000,
+          stdout: 'pipe',
+          stderr: 'pipe',
+        },
+        {
+          command: 'npm run dev',
+          url: FRONTEND_URL,
+          reuseExistingServer: !process.env.CI,
+          timeout: 120_000,
+          stdout: 'pipe',
+          stderr: 'pipe',
+        },
+      ],
 });

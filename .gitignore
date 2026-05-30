@@ -4,6 +4,7 @@ test-results/
 blob-report/
 /frontend/playwright/.cache/
 /frontend/playwright/.auth/
+/frontend/lighthouse-report/
 
 # Logs
 logs

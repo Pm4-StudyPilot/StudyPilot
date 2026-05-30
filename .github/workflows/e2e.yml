@@ -98,6 +98,9 @@ jobs:
       - name: Run Playwright tests
         working-directory: frontend
         # playwright.config.ts webServer boots the backend (bun) + frontend (vite dev) itself.
+        # This run includes the `lighthouse` project, which gates accessibility +
+        # best-practices on the dev server. Performance is audited separately against
+        # the prod build in the non-blocking lighthouse-perf.yml workflow.
         run: npx playwright test
 
       - name: Upload HTML report
@@ -106,4 +109,12 @@ jobs:
         with:
           name: playwright-report
           path: frontend/playwright-report
+          retention-days: 14
+
+      - name: Upload Lighthouse reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-a11y-report
+          path: frontend/lighthouse-report
           retention-days: 14
