@@ -302,4 +302,32 @@ describe('QuestionList', () => {
     expect(titleInput).toHaveValue('');
     expect(descriptionInput).toHaveValue('');
   });
+  it('allows to make the question description empty', async () => {
+    const onCreateQuestion = vi.fn().mockResolvedValue(undefined);
+
+    renderComponent({ editable: true, onCreateQuestion });
+
+    const titleInput = screen.getByTestId('input-title');
+    const descriptionInput = screen.getByTestId('textarea-description');
+    const button = screen.getByRole('button', { name: /add question/i });
+
+    fireEvent.change(titleInput, { target: { value: 'Question title' } });
+    fireEvent.change(descriptionInput, {
+      target: { value: 'Temporary description' },
+    });
+
+    fireEvent.change(descriptionInput, { target: { value: '' } });
+
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(onCreateQuestion).toHaveBeenCalledWith({
+        title: 'Question title',
+        description: '',
+        type: 'SINGLE_CHOICE',
+      });
+    });
+
+    expect(descriptionInput).toHaveValue('');
+  });
 });
