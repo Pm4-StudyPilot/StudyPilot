@@ -46,13 +46,16 @@ export default function PlayQuizPage() {
       api.get<QuestionWithAnswersDto[]>(`/courses/${courseId}/quizzes/${quizId}/questions`),
     ])
       .then(([quizResponse, questionResponse]) => {
+        if (!quizResponse) return;
+        setQuiz(quizResponse);
+        if (!questionResponse) return;
+
         let loadedQuestions = [...questionResponse];
 
         if (quizResponse.isOrderRandom) {
           loadedQuestions = loadedQuestions.sort(() => Math.random() - 0.5);
         }
 
-        setQuiz(quizResponse);
         setQuestions(loadedQuestions);
         setHistory(
           loadedQuestions.map((question) => {
