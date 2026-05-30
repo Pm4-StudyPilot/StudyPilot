@@ -14,6 +14,11 @@
   --color-primary-bold: #ff4b26;
   --color-primary: #ff886b;
   --color-primary-accent: rgb(255 75 38 / 0.12);
+  /* Text that sits on the bright brand orange (solid buttons) — kept dark in
+     both themes for WCAG AA contrast against #ff4b26. */
+  --color-on-primary: #15151a;
+  /* Background for muted/secondary badges — dark enough for white badge text. */
+  --color-badge-muted: #5b5560;
   --color-secondary-light: #a7bcff;
   --color-secondary: #448aff;
   --color-secondary-accent: rgba(68, 138, 255, 0.18);
@@ -77,6 +82,8 @@
   --color-primary-bold: #ff4b26;
   --color-primary: #c2421e;
   --color-primary-accent: rgb(255 75 38 / 0.1);
+  --color-on-primary: #15151a;
+  --color-badge-muted: #5d5862;
   --color-secondary-light: #1f5bc4;
   --color-secondary: #1f5bc4;
   --color-secondary-accent: rgba(44, 110, 224, 0.12);

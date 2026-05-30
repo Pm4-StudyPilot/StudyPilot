@@ -1,4 +1,5 @@
 import { test as base, expect, APIRequestContext } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import { E2E, BACKEND_URL } from './env';
 import { DataFactory } from './data-factory';
 import { LoginPage } from '../pages/login.page';
@@ -9,6 +10,13 @@ import { CourseDetailPage } from '../pages/course-detail.page';
 import { QuizPage } from '../pages/quiz.page';
 import { SettingsPage } from '../pages/settings.page';
 import { AiChat } from '../pages/ai-chat.page';
+
+/**
+ * WCAG 2.2 conformance tags (Level A + AA) that axe-core can check
+ * automatically. Excludes axe's `best-practice` rules, which are not part of any
+ * WCAG success criterion.
+ */
+const WCAG_AA_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 interface WorkerFixtures {
   /** A JWT for the shared E2E user, obtained once per worker via the API. */
@@ -28,6 +36,12 @@ interface TestFixtures {
   quizPage: QuizPage;
   settingsPage: SettingsPage;
   aiChat: AiChat;
+  /**
+   * Builds an `AxeBuilder` pre-scoped to the WCAG 2.2 AA tag set against the
+   * current page. A factory (rather than a prebuilt instance) lets a single scan
+   * chain `.exclude()` for a specific widget without re-declaring the tags.
+   */
+  makeAxeBuilder: () => AxeBuilder;
 }
 
 export const test = base.extend<TestFixtures, WorkerFixtures>({
@@ -68,6 +82,10 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
   quizPage: async ({ page }, use) => use(new QuizPage(page)),
   settingsPage: async ({ page }, use) => use(new SettingsPage(page)),
   aiChat: async ({ page }, use) => use(new AiChat(page)),
+
+  makeAxeBuilder: async ({ page }, use) => {
+    await use(() => new AxeBuilder({ page }).withTags(WCAG_AA_TAGS));
+  },
 });
 
 export { expect };
