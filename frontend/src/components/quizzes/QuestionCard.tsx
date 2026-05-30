@@ -174,8 +174,12 @@ function EditQuestionCard({
         description: draftQuestion.description.trim(),
         type: draftQuestion.type,
       });
-    } catch {
-      setQuestionError(t('validation.failedToSaveQuestion'));
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setQuestionError(e.message);
+      } else {
+        setQuestionError(t('validation.failedToSaveQuestion'));
+      }
     } finally {
       setSavingQuestion(false);
     }
@@ -196,8 +200,12 @@ function EditQuestionCard({
         content: draft.content.trim(),
         isCorrect: draft.isCorrect,
       });
-    } catch {
-      setQuestionError(t('validation.failedToSaveAnswer'));
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setQuestionError(e.message);
+      } else {
+        setQuestionError(t('validation.failedToSaveAnswer'));
+      }
     } finally {
       setSavingAnswerId(null);
     }

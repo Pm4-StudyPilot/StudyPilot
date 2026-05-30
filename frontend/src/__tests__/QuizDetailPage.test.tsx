@@ -617,4 +617,30 @@ describe('QuizDetailPage', () => {
       expect(screen.getByRole('button', { name: /play/i })).toBeDisabled();
     });
   });
+  it('disables the play button when there are no questions yet', async () => {
+    mockQuizDetailApi({ questions: [] });
+
+    renderWithRoute();
+
+    // wait until page finishes loading
+    await screen.findByText('No questions yet');
+
+    const playButton = screen.getByRole('button', { name: /play/i });
+
+    expect(playButton).toBeDisabled();
+  });
+
+  it('enables the play button when there are questions', async () => {
+    mockQuizDetailApi();
+
+    renderWithRoute();
+
+    // wait until questions are rendered
+    await screen.findByText('What is the capital of France?');
+
+    const playLink = screen.getByRole('link', { name: /play/i });
+
+    expect(playLink).toBeInTheDocument();
+    expect(playLink).not.toHaveAttribute('disabled');
+  });
 });

@@ -208,7 +208,7 @@ describe('QuestionCard', () => {
     expect(button).toBeDisabled();
   });
   it('shows error when question update fails', async () => {
-    const failingUpdate = vi.fn().mockRejectedValue(new Error('fail'));
+    const failingUpdate = vi.fn().mockRejectedValue(new Error('Some fail message'));
 
     render(
       <QuestionCard
@@ -224,7 +224,7 @@ describe('QuestionCard', () => {
 
     fireEvent.blur(screen.getByDisplayValue(questionFixture.title));
 
-    expect(await screen.findByText('Failed to save question')).toBeInTheDocument();
+    expect(await screen.findByText('Some fail message')).toBeInTheDocument();
   });
   it('shows error when creating answer fails', async () => {
     const failingCreate = vi.fn().mockRejectedValue(new Error('fail'));
@@ -477,7 +477,7 @@ describe('QuestionCard', () => {
     );
   });
   it('indicates when saveAnswer failed', async () => {
-    const failingUpdate = vi.fn().mockRejectedValue(new Error('fail'));
+    const failingUpdate = vi.fn().mockRejectedValue(new Error('Some fail message'));
 
     render(
       <QuestionCard
@@ -499,7 +499,7 @@ describe('QuestionCard', () => {
       fireEvent.blur(answerContent);
     });
 
-    expect(await screen.findByText('Failed to save answer')).toBeInTheDocument();
+    expect(await screen.findByText('Some fail message')).toBeInTheDocument();
   });
   it('toggles answers open and closed in view mode', () => {
     render(<QuestionCard question={questionFixture} />);
@@ -556,5 +556,31 @@ describe('QuestionCard', () => {
     );
 
     expect(screen.getByText('Berlin').closest('.answer-card--selected')).not.toBeNull();
+  });
+  it('allows to update a question to have an empty description', async () => {
+    render(
+      <QuestionCard
+        question={questionFixture}
+        mode="edit"
+        onDeleteQuestion={mockDeleteQuestion}
+        onUpdateQuestion={mockUpdateQuestion}
+        onCreateAnswer={mockCreateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+      />
+    );
+
+    const questionDescription = screen.getByDisplayValue('Choose the correct capital city.');
+
+    await act(async () => {
+      await userEvent.clear(questionDescription);
+      fireEvent.blur(questionDescription);
+    });
+
+    expect(mockUpdateQuestion).toHaveBeenCalledWith(questionFixture.id, {
+      title: questionFixture.title.trim(),
+      description: '',
+      type: questionFixture.type,
+    });
   });
 });
