@@ -172,6 +172,7 @@ export default function CourseList({ searchTerm = '' }: CourseListProps) {
             className="btn btn-sm btn-primary bold"
             onClick={() => setModalOpen(true)}
             aria-label={t('courses.list.addAria')}
+            data-testid="add-course-button"
           >
             <i className="fa-solid fa-plus" />
           </button>

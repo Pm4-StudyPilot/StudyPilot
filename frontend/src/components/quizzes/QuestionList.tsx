@@ -125,7 +125,7 @@ export default function QuestionList({
       })}
 
       {editable && (
-        <section className="question-list__new-question">
+        <section className="question-list__new-question" data-testid="new-question-form">
           <div className="question-list__new-question-header">
             <h3>{t('quizzes.questions.addHeading')}</h3>
           </div>
@@ -177,6 +177,7 @@ export default function QuestionList({
             className="btn btn-primary question-list__create-button"
             disabled={!newQuestion.title.trim() || saving}
             onClick={handleCreateQuestion}
+            data-testid="add-question-button"
           >
             <i className="fa-solid fa-plus" />
             {saving ? t('quizzes.questions.adding') : t('quizzes.questions.addButton')}

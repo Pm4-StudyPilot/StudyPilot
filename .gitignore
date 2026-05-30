@@ -1,3 +1,10 @@
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+/frontend/playwright/.cache/
+/frontend/playwright/.auth/
+
 # Logs
 logs
 *.log
