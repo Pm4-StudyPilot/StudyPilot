@@ -1,7 +1,10 @@
 import { ReactNode } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Logo from '../Logo';
+import LanguageSwitcher from './LanguageSwitcher';
 import { useAuth } from '../../../context/useAuth';
+import { useTheme } from '../../../context/useTheme';
 
 /**
  * DashboardLayout
@@ -47,12 +50,16 @@ export default function DashboardLayout({
   showSearch = false,
   searchValue = '',
   onSearchChange,
-  searchPlaceholder = 'Search for courses, notes, or deadlines...',
+  searchPlaceholder,
 }: DashboardLayoutProps) {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const username = user?.username ?? 'A';
+  const nextThemeLabel = theme === 'dark' ? 'light' : 'dark';
+  const effectivePlaceholder = searchPlaceholder ?? t('common.search.default');
 
   /**
    * Logs out the current user and redirects to the login page.
@@ -61,7 +68,7 @@ export default function DashboardLayout({
    * so it can be displayed after the redirect.
    */
   function handleLogout() {
-    sessionStorage.setItem('logoutMessage', 'Successfully logged out');
+    sessionStorage.setItem('logoutMessage', t('common.logoutSuccess'));
     logout();
     navigate('/login');
   }
@@ -81,14 +88,14 @@ export default function DashboardLayout({
               className={({ isActive }) => navItemClass(isActive || activeNav === 'dashboard')}
             >
               <i className="fa-solid fa-table-cells-large" />
-              <span>Dashboard</span>
+              <span>{t('common.nav.dashboard')}</span>
             </NavLink>
             <NavLink
               to="/courses"
               className={({ isActive }) => navItemClass(isActive || activeNav === 'courses')}
             >
               <i className="fa-solid fa-book-open" />
-              <span>Courses</span>
+              <span>{t('common.nav.courses')}</span>
             </NavLink>
             <NavLink
               to="/settings"
@@ -97,7 +104,7 @@ export default function DashboardLayout({
               }
             >
               <i className="fa-solid fa-gear" />
-              <span>Settings</span>
+              <span>{t('common.nav.settings')}</span>
             </NavLink>
           </nav>
         </div>
@@ -109,7 +116,7 @@ export default function DashboardLayout({
             onClick={handleLogout}
           >
             <i className="fa-solid fa-arrow-right-from-bracket" />
-            <span>Logout</span>
+            <span>{t('common.nav.logout')}</span>
           </button>
           <div className="dashboard-sidebar__username">@{username}</div>
         </div>
@@ -130,7 +137,7 @@ export default function DashboardLayout({
               id="dashboard-search"
               type="search"
               value={searchValue}
-              placeholder={searchPlaceholder}
+              placeholder={effectivePlaceholder}
               onChange={(event) => onSearchChange?.(event.target.value)}
               tabIndex={showSearch ? 0 : -1}
               readOnly={!showSearch}
@@ -139,16 +146,27 @@ export default function DashboardLayout({
           <div className="dashboard-search dashboard-search--placeholder" aria-hidden="true" />
 
           <div className="dashboard-topbar__actions">
+            <LanguageSwitcher />
+            <button
+              type="button"
+              className="dashboard-topbar__icon dashboard-topbar__theme-toggle"
+              aria-label={`Switch to ${nextThemeLabel} mode`}
+              aria-pressed={theme === 'light'}
+              title={`Switch to ${nextThemeLabel} mode`}
+              onClick={toggleTheme}
+            >
+              <i className={`fa-solid ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`} />
+            </button>
             <button
               type="button"
               className="dashboard-topbar__icon dashboard-topbar__settings"
-              aria-label="Settings"
+              aria-label={t('common.nav.settingsAriaLabel')}
               onClick={() => navigate('/settings', { state: { from: location.pathname } })}
             >
               <i className="fa-solid fa-gear" />
             </button>
             <div className="dashboard-topbar__divider" />
-            <div className="dashboard-avatar" aria-label="Profile">
+            <div className="dashboard-avatar" aria-label={t('common.nav.profileAriaLabel')}>
               {username.slice(0, 1).toUpperCase()}
             </div>
           </div>

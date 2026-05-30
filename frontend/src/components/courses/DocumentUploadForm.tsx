@@ -1,4 +1,5 @@
 import { useRef, useState, ChangeEvent, DragEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type DocumentUploadFormProps = {
   courseId: string;
@@ -10,6 +11,7 @@ export default function DocumentUploadForm({ courseId, onUploadSuccess }: Docume
   const [formMessage, setFormMessage] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { t } = useTranslation();
 
   function selectFile(file: File | null) {
     setSelectedFile(file);
@@ -23,13 +25,13 @@ export default function DocumentUploadForm({ courseId, onUploadSuccess }: Docume
       return;
     }
 
-    setFormMessage('Uploading...');
+    setFormMessage(t('courses.upload.uploading'));
 
     try {
       const token = localStorage.getItem('token');
 
       if (!token) {
-        setFormMessage('You are not authenticated.');
+        setFormMessage(t('courses.upload.notAuthenticated'));
         return;
       }
 
@@ -47,16 +49,16 @@ export default function DocumentUploadForm({ courseId, onUploadSuccess }: Docume
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || 'Upload failed.');
+        throw new Error(error.message || t('courses.upload.failed'));
       }
 
       const result = await response.json();
 
-      setFormMessage(`Upload successful: ${result.filename}`);
+      setFormMessage(t('courses.upload.success', { filename: result.filename }));
       setSelectedFile(null);
       onUploadSuccess();
     } catch (error) {
-      setFormMessage(error instanceof Error ? error.message : 'Upload failed.');
+      setFormMessage(error instanceof Error ? error.message : t('courses.upload.failed'));
     } finally {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -101,6 +103,7 @@ export default function DocumentUploadForm({ courseId, onUploadSuccess }: Docume
       <input
         ref={fileInputRef}
         id="document-upload"
+        data-testid="document-upload-input"
         type="file"
         style={{ display: 'none' }}
         onChange={handleFileChange}
@@ -135,17 +138,17 @@ export default function DocumentUploadForm({ courseId, onUploadSuccess }: Docume
         </span>
 
         <div className="course-detail__upload-zone-copy">
-          <p className="course-detail__upload-zone-title mb-1">Upload Document</p>
+          <p className="course-detail__upload-zone-title mb-1">{t('courses.upload.title')}</p>
           <p className="course-detail__upload-zone-hint mb-0">
-            Drag &amp; drop a file here, or click to browse.
+            {t('courses.upload.hint')}
             <br />
-            Max file size: 50MB.
+            {t('courses.upload.maxSize')}
           </p>
         </div>
 
         {selectedFile && (
           <div className="course-detail__upload-selected">
-            Selected file: <strong>{selectedFile.name}</strong>
+            {t('courses.upload.selectedFile', { name: selectedFile.name })}
           </div>
         )}
 

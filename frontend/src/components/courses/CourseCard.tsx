@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { CourseDto, TaskDto } from '../../types/dto';
 import { api } from '../../services/api';
 import EditCourseModal from './EditCourseModal';
 import DeleteCourseModal from './DeleteCourseModal';
 import ProgressRing from '../shared/ProgressRing';
 import { withOpacity } from '../../utils/courseColors';
+import { formatDate } from '../../utils/formatDate';
 
 type CourseCardProps = {
   course: CourseDto;
@@ -19,37 +21,13 @@ const STATUS_BADGE: Record<TaskDto['status'], string> = {
   DONE: 'bg-success',
 };
 
-const STATUS_LABEL: Record<TaskDto['status'], string> = {
-  OPEN: 'Open',
-  IN_PROGRESS: 'In Progress',
-  DONE: 'Done',
-};
-
-/**
- * CourseCard
- *
- * Renders a single course as a collapsible card row inside the course list.
- *
- * Responsibilities:
- * - Display the course name as a link to the detail page
- * - Show the formatted creation date
- * - Toggle expanded state to reveal course content
- * - Open the EditCourseModal and notify the parent when the course is updated
- * - Open the DeleteCourseModal and notify the parent when the course is deleted
- *
- * Workflow:
- * 1. Course data is received via props
- * 2. Clicking the header row toggles the expanded state
- * 3. Clicking the course name navigates to /courses/:id without toggling
- * 4. Clicking the edit button opens the EditCourseModal
- * 5. Clicking the delete button opens the DeleteCourseModal
- */
 export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [tasks, setTasks] = useState<TaskDto[] | null>(null);
   const [tasksLoading, setTasksLoading] = useState(false);
+  const { t } = useTranslation();
   const progress = course.taskProgress ?? {
     totalTasks: 0,
     completedTasks: 0,
@@ -72,11 +50,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
     });
   }
 
-  const formattedDate = new Date(course.createdAt).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  const formattedDate = formatDate(course.createdAt);
 
   function handleUpdated(updated: CourseDto) {
     onUpdated(updated);
@@ -90,7 +64,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
 
   return (
     <>
-      <div className="course-card panel mb-2" style={courseAccentStyle}>
+      <div className="course-card panel mb-2" style={courseAccentStyle} data-testid="course-card">
         <div className="d-flex align-items-center justify-content-between p-3">
           <div className="d-flex align-items-center gap-3">
             <ProgressRing
@@ -100,7 +74,11 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
               totalTasks={progress.totalTasks}
               variant="primary"
               className="course-card__progress-ring flex-shrink-0"
-              label={`${progress.openTasks} open, ${progress.inProgressTasks} in progress, ${progress.completedTasks} completed`}
+              label={t('courses.card.progressLabel', {
+                open: progress.openTasks,
+                inProgress: progress.inProgressTasks,
+                completed: progress.completedTasks,
+              })}
             />
             <div>
               <div className="d-flex align-items-center gap-2 mb-1">
@@ -111,15 +89,20 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
                 />
                 <Link
                   to={`/courses/${course.id}`}
-                  className="course-card__name fw-semibold text-white text-decoration-none"
+                  className="course-card__name fw-semibold text-decoration-none"
                 >
                   {course.name}
                 </Link>
               </div>
-              <div className="course-card__date text-secondary">Added {formattedDate}</div>
-              <div className="course-card__progress-text text-secondary">
-                {progress.openTasks} open · {progress.inProgressTasks} in progress ·{' '}
-                {progress.completedTasks} completed
+              <div className="course-card__date">
+                {t('courses.card.addedDate', { date: formattedDate })}
+              </div>
+              <div className="course-card__progress-text">
+                {t('courses.card.progressText', {
+                  open: progress.openTasks,
+                  inProgress: progress.inProgressTasks,
+                  completed: progress.completedTasks,
+                })}
               </div>
             </div>
           </div>
@@ -128,28 +111,30 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
             <Link
               to={`/courses/${course.id}`}
               className="btn btn-sm btn-link text-secondary p-0 text-decoration-none"
-              aria-label="Open course"
+              aria-label={t('courses.card.openAria')}
             >
-              Open
+              {t('courses.card.openLabel')}
             </Link>
             <button
               className="btn btn-sm btn-link text-secondary p-0"
               onClick={() => setEditOpen(true)}
-              aria-label="Edit course"
+              aria-label={t('courses.card.editAria')}
+              data-testid="course-edit-button"
             >
               <i className="fa-solid fa-pen-to-square" />
             </button>
             <button
               className="btn btn-sm btn-link text-danger p-0"
               onClick={() => setDeleteOpen(true)}
-              aria-label="Delete course"
+              aria-label={t('courses.card.deleteAria')}
+              data-testid="course-delete-button"
             >
               <i className="fa-solid fa-trash" />
             </button>
             <button
               className="btn btn-sm btn-link text-secondary p-0"
               onClick={handleToggle}
-              aria-label="Toggle course"
+              aria-label={t('courses.card.toggleAria')}
               aria-expanded={expanded}
             >
               <i
@@ -164,13 +149,13 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
             {tasksLoading && (
               <div className="d-flex justify-content-center py-2">
                 <div className="spinner-border spinner-border-sm text-secondary" role="status">
-                  <span className="visually-hidden">Loading tasks...</span>
+                  <span className="visually-hidden">{t('courses.card.loadingTasks')}</span>
                 </div>
               </div>
             )}
 
             {!tasksLoading && tasks !== null && tasks.length === 0 && (
-              <p className="course-card__empty text-secondary mb-0">No tasks yet.</p>
+              <p className="course-card__empty mb-0">{t('courses.card.noTasks')}</p>
             )}
 
             {!tasksLoading && tasks !== null && tasks.length > 0 && (
@@ -181,20 +166,15 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
                       key={task.id}
                       className="course-card__task d-flex align-items-center justify-content-between py-1"
                     >
-                      <span className="course-card__task-title text-white">{task.title}</span>
+                      <span className="course-card__task-title">{task.title}</span>
                       <div className="d-flex align-items-center gap-2">
                         {task.dueDate && (
-                          <span className="course-card__task-date text-secondary">
-                            {new Date(task.dueDate).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </span>
+                          <span className="course-card__task-date">{formatDate(task.dueDate)}</span>
                         )}
                         <span
                           className={`course-card__task-status badge ${STATUS_BADGE[task.status]}`}
                         >
-                          {STATUS_LABEL[task.status]}
+                          {t(`courses.card.status.${task.status}`)}
                         </span>
                       </div>
                     </li>
@@ -202,9 +182,9 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
                 </ul>
                 <Link
                   to={`/courses/${course.id}`}
-                  className="course-card__tasks-link text-secondary text-decoration-none"
+                  className="course-card__tasks-link text-decoration-none"
                 >
-                  View all tasks →
+                  {t('courses.card.viewAllTasks')}
                 </Link>
               </>
             )}

@@ -1,16 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import { CourseDto, TaskDto } from '../../types/dto';
 import CourseCard from './CourseCard';
 import CreateCourseModal from './CreateCourseModal';
 
 type CourseListProps = {
-  /**
-   * Current search term used to filter courses and related course content.
-   *
-   * The value is controlled by the parent component through the shared
-   * DashboardLayout search input.
-   */
   searchTerm?: string;
 };
 
@@ -39,12 +34,6 @@ type CourseSearchData = {
   quizzes: QuizDto[];
 };
 
-/**
- * Loads searchable content for a single course.
- *
- * This allows the course library search to match not only course names,
- * but also related tasks, documents, and quizzes.
- */
 async function loadCourseSearchData(course: CourseDto): Promise<CourseSearchData> {
   const [tasksResult, documentsResult, quizzesResult] = await Promise.allSettled([
     api.get<TaskDto[]>(`/courses/${course.id}/tasks`),
@@ -60,9 +49,6 @@ async function loadCourseSearchData(course: CourseDto): Promise<CourseSearchData
   };
 }
 
-/**
- * Checks whether a course or its related content matches the search term.
- */
 function courseMatchesSearch(data: CourseSearchData, normalizedSearch: string) {
   const courseMatches = data.course.name.toLowerCase().includes(normalizedSearch);
 
@@ -83,33 +69,13 @@ function courseMatchesSearch(data: CourseSearchData, normalizedSearch: string) {
   return courseMatches || taskMatches || documentMatches || quizMatches;
 }
 
-/**
- * CourseList
- *
- * Fetches and displays all courses belonging to the authenticated user.
- *
- * Responsibilities:
- * - Fetch the list of courses from the backend on mount
- * - Fetch searchable course-related content for each course
- * - Render a CourseCard for each matching course
- * - Filter courses by course name, task title, document filename, document type, or quiz title
- * - Show loading, error, empty, and no-search-results states
- * - Open the CreateCourseModal and prepend the new course to the list on success
- * - Update the course in the list when it is edited
- * - Remove the course from the list when it is deleted
- *
- * Search behavior:
- * - Search is controlled by the parent component
- * - Filtering is case-insensitive
- * - Search runs locally on already loaded course data
- * - The backend result is not refetched when the search term changes
- */
 export default function CourseList({ searchTerm = '' }: CourseListProps) {
   const [courses, setCourses] = useState<CourseDto[]>([]);
   const [courseSearchData, setCourseSearchData] = useState<CourseSearchData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     let isCancelled = false;
@@ -127,7 +93,7 @@ export default function CourseList({ searchTerm = '' }: CourseListProps) {
       } catch (err: unknown) {
         if (isCancelled) return;
 
-        setError(err instanceof Error ? err.message : 'Failed to load courses');
+        setError(err instanceof Error ? err.message : t('courses.list.errorLoad'));
       } finally {
         if (!isCancelled) {
           setLoading(false);
@@ -140,14 +106,8 @@ export default function CourseList({ searchTerm = '' }: CourseListProps) {
     return () => {
       isCancelled = true;
     };
-  }, []);
+  }, [t]);
 
-  /**
-   * Handles a newly created course.
-   *
-   * Prepends the course to the existing list and adds it to the local
-   * search dataset with empty related content.
-   */
   function handleCreated(course: CourseDto) {
     setCourses((prev) => [course, ...prev]);
     setCourseSearchData((prev) => [
@@ -162,12 +122,6 @@ export default function CourseList({ searchTerm = '' }: CourseListProps) {
     setModalOpen(false);
   }
 
-  /**
-   * Handles an updated course.
-   *
-   * Replaces the matching course in both the rendered course list
-   * and the searchable course data.
-   */
   function handleUpdated(updated: CourseDto) {
     setCourses((prev) => prev.map((course) => (course.id === updated.id ? updated : course)));
 
@@ -183,62 +137,53 @@ export default function CourseList({ searchTerm = '' }: CourseListProps) {
     );
   }
 
-  /**
-   * Handles a deleted course.
-   *
-   * Removes the matching course from both the rendered course list
-   * and the searchable course data.
-   */
   function handleDeleted(id: string) {
     setCourses((prev) => prev.filter((course) => course.id !== id));
     setCourseSearchData((prev) => prev.filter((entry) => entry.course.id !== id));
   }
 
-  /**
-   * Normalized search term used for case-insensitive filtering.
-   */
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
-  /**
-   * Filters course search data by course name and related course content.
-   *
-   * If no search term is provided, all loaded courses are returned.
-   */
   const filteredCourseSearchData = normalizedSearch
     ? courseSearchData.filter((entry) => courseMatchesSearch(entry, normalizedSearch))
     : courseSearchData;
 
-  /**
-   * Extracts CourseDto objects from the filtered search data for rendering.
-   */
   const filteredCourses = filteredCourseSearchData.map((entry) => entry.course);
+
+  const totalCourses = courses.length;
+  const shownCourses = filteredCourses.length;
+  let subtitle: string;
+  if (loading) {
+    subtitle = ' ';
+  } else if (totalCourses === 1) {
+    subtitle = t('courses.list.courseShown', { shown: shownCourses, total: totalCourses });
+  } else {
+    subtitle = t('courses.list.coursesShown', { shown: shownCourses, total: totalCourses });
+  }
 
   return (
     <>
       <div className="panel background">
         <div className="d-flex align-items-center justify-content-between mb-1">
-          <h2 className="course-list__title text-white fw-bold mb-0">My Courses</h2>
+          <h2 className="course-list__title text-white fw-bold mb-0">
+            {t('courses.list.heading')}
+          </h2>
           <button
             className="btn btn-sm btn-primary bold"
             onClick={() => setModalOpen(true)}
-            aria-label="Add course"
+            aria-label={t('courses.list.addAria')}
+            data-testid="add-course-button"
           >
             <i className="fa-solid fa-plus" />
           </button>
         </div>
 
-        <p className="course-list__subtitle text-secondary mb-4">
-          {loading
-            ? '\u00a0'
-            : `${filteredCourses.length} of ${courses.length} course${
-                courses.length !== 1 ? 's' : ''
-              } shown`}
-        </p>
+        <p className="course-list__subtitle text-secondary mb-4">{subtitle}</p>
 
         {loading && (
           <div className="d-flex justify-content-center py-4">
             <div className="spinner-border text-secondary" role="status">
-              <span className="visually-hidden">Loading...</span>
+              <span className="visually-hidden">{t('common.loading')}</span>
             </div>
           </div>
         )}
@@ -246,12 +191,14 @@ export default function CourseList({ searchTerm = '' }: CourseListProps) {
         {error && <div className="course-list__error alert alert-danger py-2">{error}</div>}
 
         {!loading && !error && courses.length === 0 && (
-          <p className="course-list__empty text-secondary text-center py-4 mb-0">No courses yet.</p>
+          <p className="course-list__empty text-secondary text-center py-4 mb-0">
+            {t('courses.list.empty')}
+          </p>
         )}
 
         {!loading && !error && courses.length > 0 && filteredCourses.length === 0 && (
           <p className="course-list__empty text-secondary text-center py-4 mb-0">
-            No courses match your search.
+            {t('courses.list.emptySearch')}
           </p>
         )}
 

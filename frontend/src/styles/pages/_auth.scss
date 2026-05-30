@@ -15,12 +15,12 @@
 
   &__muted-link {
     font-size: 14px;
-    color: #ff835f;
+    color: var(--color-primary);
 
     transition: color 0.2s ease;
 
     &:hover {
-      color: #f06d47;
+      color: var(--color-primary-bold);
     }
   }
 }

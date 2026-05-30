@@ -176,11 +176,11 @@ describe('RegisterPage', () => {
       },
     });
 
-    expect(screen.getByText(/minLength/i)).toBeInTheDocument();
-    expect(screen.getByText(/uppercase/i)).toBeInTheDocument();
-    expect(screen.getByText(/lowercase/i)).toBeInTheDocument();
-    expect(screen.getByText(/number/i)).toBeInTheDocument();
-    expect(screen.getByText(/specialChar/i)).toBeInTheDocument();
+    expect(screen.getByText(/at least 12 characters/i)).toBeInTheDocument();
+    expect(screen.getByText(/at least one uppercase letter/i)).toBeInTheDocument();
+    expect(screen.getByText(/at least one lowercase letter/i)).toBeInTheDocument();
+    expect(screen.getByText(/at least one number/i)).toBeInTheDocument();
+    expect(screen.getByText(/at least one special character/i)).toBeInTheDocument();
   });
 
   /**

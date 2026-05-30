@@ -1,5 +1,6 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import Button from '../components/shared/Button';
 import Form from '../components/shared/form/Form';
@@ -7,7 +8,7 @@ import PasswordField from '../components/shared/form/PasswordField';
 import ProgressBar from '../components/shared/feedback/ProgressBar';
 import DashboardLayout from '../components/shared/layout/DashboardLayout';
 import { useForm } from '../hooks/useForm';
-import { changePasswordSchema } from '../validation/schemas';
+import { createChangePasswordSchema } from '../validation/schemas';
 import { getPasswordStrength } from '../utils/passwordStrength';
 
 export default function ChangePasswordPage() {
@@ -15,8 +16,10 @@ export default function ChangePasswordPage() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
-  const { values, errors, handleChange, validate } = useForm(changePasswordSchema, {
+  const schema = useMemo(() => createChangePasswordSchema(t), [t]);
+  const { values, errors, handleChange, validate } = useForm(schema, {
     currentPassword: '',
     newPassword: '',
     confirmNewPassword: '',
@@ -39,7 +42,7 @@ export default function ChangePasswordPage() {
       });
       setSuccess(data.message);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof Error ? err.message : t('common.somethingWentWrong'));
     } finally {
       setLoading(false);
     }
@@ -53,17 +56,15 @@ export default function ChangePasswordPage() {
           className="course-detail__back-link text-secondary text-decoration-none d-inline-flex align-items-center gap-2"
         >
           <i className="fa-solid fa-chevron-left" />
-          Back to Settings
+          {t('settings.changePassword.back')}
         </Link>
         <header className="dashboard-page-header">
           <div>
-            <p className="dashboard-page-header__eyebrow">Security</p>
+            <p className="dashboard-page-header__eyebrow">{t('settings.changePassword.eyebrow')}</p>
 
-            <h1>Change Password</h1>
+            <h1>{t('settings.changePassword.title')}</h1>
 
-            <p className="dashboard-page-header__subline">
-              Update your password to keep your account secure.
-            </p>
+            <p className="dashboard-page-header__subline">{t('settings.changePassword.subline')}</p>
           </div>
         </header>
 
@@ -78,7 +79,7 @@ export default function ChangePasswordPage() {
 
               <Form onSubmit={handleSubmit} error={error}>
                 <PasswordField
-                  label="Current Password"
+                  label={t('settings.changePassword.currentLabel')}
                   value={values.currentPassword}
                   onChange={(e) => handleChange('currentPassword', e.target.value)}
                   error={errors.currentPassword}
@@ -86,7 +87,7 @@ export default function ChangePasswordPage() {
                 />
 
                 <PasswordField
-                  label="New Password"
+                  label={t('settings.changePassword.newLabel')}
                   value={values.newPassword}
                   onChange={(e) => handleChange('newPassword', e.target.value)}
                   error={errors.newPassword}
@@ -98,7 +99,7 @@ export default function ChangePasswordPage() {
                 <div className="mt-2 mb-3 small">...</div>
 
                 <PasswordField
-                  label="Confirm New Password"
+                  label={t('settings.changePassword.confirmLabel')}
                   value={values.confirmNewPassword}
                   onChange={(e) => handleChange('confirmNewPassword', e.target.value)}
                   error={errors.confirmNewPassword}
@@ -113,7 +114,7 @@ export default function ChangePasswordPage() {
                   >
                     <span className="auth-check__icon">{passwordsMatch ? 'OK' : 'NO'}</span>
 
-                    <span>Passwords match</span>
+                    <span>{t('auth.passwordChecks.match')}</span>
                   </div>
                 )}
 
@@ -123,7 +124,7 @@ export default function ChangePasswordPage() {
                     loading={loading}
                     className="btn btn-primary bold settings-page__button"
                   >
-                    Change Password
+                    {t('settings.changePassword.submit')}
                   </Button>
 
                   <Button
@@ -131,7 +132,7 @@ export default function ChangePasswordPage() {
                     onClick={() => navigate('/settings')}
                     className="btn btn-primary bold settings-page__button"
                   >
-                    Cancel
+                    {t('settings.changePassword.cancel')}
                   </Button>
                 </div>
               </Form>

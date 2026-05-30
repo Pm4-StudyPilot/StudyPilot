@@ -69,6 +69,14 @@ vi.mock('../context/useAuth', () => ({
   }),
 }));
 
+vi.mock('../context/useTheme', () => ({
+  useTheme: () => ({
+    theme: 'dark',
+    toggleTheme: vi.fn(),
+    setTheme: vi.fn(),
+  }),
+}));
+
 const courseFixture = {
   id: 'c1',
   name: 'Machine Learning Fundamentals',
@@ -244,7 +252,7 @@ describe('CourseDetailPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Machine Learning Fundamentals')).toBeInTheDocument();
-      expect(screen.getByText(/Created March 26, 2026/i)).toBeInTheDocument();
+      expect(screen.getByText(/Created 26\.03\.2026/i)).toBeInTheDocument();
     });
   });
 

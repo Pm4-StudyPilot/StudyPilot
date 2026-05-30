@@ -1,5 +1,6 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import { useAuth } from '../context/useAuth';
 import { AuthResponse, AvailabilityResponse } from '../types/dto';
@@ -15,11 +16,12 @@ import { useForm } from '../hooks/useForm';
 
 import { getPasswordChecks, getPasswordStrength } from '../utils/passwordStrength';
 
-import { registerSchema } from '../validation/schemas';
+import { createRegisterSchema } from '../validation/schemas';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { t } = useTranslation();
 
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,6 +29,7 @@ export default function RegisterPage() {
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
 
+  const registerSchema = useMemo(() => createRegisterSchema(t), [t]);
   const { values, errors, handleChange, validate } = useForm(registerSchema, {
     username: '',
     email: '',
@@ -103,7 +106,7 @@ export default function RegisterPage() {
 
       navigate('/');
     } catch (err: unknown) {
-      setServerError(err instanceof Error ? err.message : 'Something went wrong');
+      setServerError(err instanceof Error ? err.message : t('common.somethingWentWrong'));
     } finally {
       setLoading(false);
     }
@@ -117,11 +120,11 @@ export default function RegisterPage() {
             <Logo />
           </div>
 
-          <p className="auth-card__eyebrow">Get started</p>
+          <p className="auth-card__eyebrow">{t('auth.register.eyebrow')}</p>
 
-          <h1 className="auth-card__title text-center mb-2">Create Account</h1>
+          <h1 className="auth-card__title text-center mb-2">{t('auth.register.title')}</h1>
 
-          <p className="auth-card__lead text-center mb-4">Create your StudyPilot account.</p>
+          <p className="auth-card__lead text-center mb-4">{t('auth.register.lead')}</p>
 
           {serverError && (
             <div className="alert alert-danger" role="alert">
@@ -131,7 +134,7 @@ export default function RegisterPage() {
 
           <Form onSubmit={handleSubmit}>
             <InputField
-              label="Username"
+              label={t('auth.register.username')}
               type="text"
               value={values.username}
               onChange={(e) => handleChange('username', e.target.value)}
@@ -140,13 +143,15 @@ export default function RegisterPage() {
             />
 
             {usernameExists === true && (
-              <small className="text-danger">Username already taken</small>
+              <small className="text-danger">{t('auth.register.usernameTaken')}</small>
             )}
 
-            {usernameExists === false && <small className="text-success">Username available</small>}
+            {usernameExists === false && (
+              <small className="text-success">{t('auth.register.usernameAvailable')}</small>
+            )}
 
             <InputField
-              label="Email"
+              label={t('auth.register.email')}
               type="email"
               value={values.email}
               onChange={(e) => handleChange('email', e.target.value)}
@@ -154,12 +159,16 @@ export default function RegisterPage() {
               autoComplete="email"
             />
 
-            {emailExists === true && <small className="text-danger">E-mail already in use</small>}
+            {emailExists === true && (
+              <small className="text-danger">{t('auth.register.emailTaken')}</small>
+            )}
 
-            {emailExists === false && <small className="text-success">E-mail available</small>}
+            {emailExists === false && (
+              <small className="text-success">{t('auth.register.emailAvailable')}</small>
+            )}
 
             <PasswordField
-              label="Password"
+              label={t('auth.register.password')}
               showToggle={true}
               value={values.password}
               onChange={(e) => handleChange('password', e.target.value)}
@@ -172,20 +181,20 @@ export default function RegisterPage() {
             </div>
 
             <div className="d-flex flex-column gap-2 mb-3">
-              {Object.entries(passwordChecks).map(([label, valid]) => (
+              {Object.entries(passwordChecks).map(([rule, valid]) => (
                 <div
-                  key={label}
+                  key={rule}
                   className={`auth-check ${valid ? 'auth-check--valid' : 'auth-check--invalid'}`}
                 >
                   <span className="auth-check__icon">{valid ? 'OK' : 'X'}</span>
 
-                  <span>{label}</span>
+                  <span>{t(`auth.passwordChecks.${rule}`)}</span>
                 </div>
               ))}
             </div>
 
             <PasswordField
-              label="Confirm Password"
+              label={t('auth.register.confirmPassword')}
               showToggle={true}
               value={values.confirmPassword}
               onChange={(e) => handleChange('confirmPassword', e.target.value)}
@@ -195,18 +204,20 @@ export default function RegisterPage() {
 
             {values.confirmPassword.length > 0 && (
               <small className={passwordsMatch ? 'text-success' : 'text-danger'}>
-                {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
+                {passwordsMatch
+                  ? t('auth.register.passwordsMatch')
+                  : t('auth.register.passwordsDoNotMatch')}
               </small>
             )}
 
             <Button type="submit" className="w-100 mt-3" loading={loading}>
-              Register
+              {t('auth.register.submit')}
             </Button>
           </Form>
 
           <div className="text-center mt-3">
             <Link to="/login" className="auth-card__muted-link">
-              Already have an account? Sign in
+              {t('auth.register.haveAccount')}
             </Link>
           </div>
         </div>

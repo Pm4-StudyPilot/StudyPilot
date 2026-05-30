@@ -28,6 +28,14 @@ vi.mock('../context/useAuth', () => ({
   }),
 }));
 
+vi.mock('../context/useTheme', () => ({
+  useTheme: () => ({
+    theme: 'dark',
+    toggleTheme: vi.fn(),
+    setTheme: vi.fn(),
+  }),
+}));
+
 /**
  * Mock QuestionList (IMPORTANT: isolates QuizDetailPage behavior)
  *
@@ -235,7 +243,7 @@ describe('QuizDetailPage', () => {
     });
 
     expect(screen.getByRole('link', { name: /play/i })).toBeInTheDocument();
-    expect(screen.getByText(/Updated May 2, 2026/i)).toBeInTheDocument();
+    expect(screen.getByText(/Updated 02\.05\.2026/i)).toBeInTheDocument();
   });
 
   it('renders calculated quiz stats', async () => {
@@ -472,7 +480,7 @@ describe('QuizDetailPage', () => {
       fireEvent.click(editBtn);
 
       const titleInput = await screen.findByLabelText('Quiz title');
-      const descriptionInput = screen.getByLabelText('Quiz description');
+      const descriptionInput = screen.getByLabelText('Description');
       const randomCheckbox = screen.getByLabelText(/randomize question order/i);
 
       expect(titleInput).toHaveValue(quizFixture.title);
@@ -544,7 +552,7 @@ describe('QuizDetailPage', () => {
       const editBtn = await screen.findByRole('button', { name: /edit/i });
       fireEvent.click(editBtn);
 
-      const descriptionInput = await screen.findByLabelText('Quiz description');
+      const descriptionInput = await screen.findByLabelText('Description');
       fireEvent.change(descriptionInput, { target: { value: 'A new description.' } });
       fireEvent.blur(descriptionInput);
 
@@ -608,5 +616,31 @@ describe('QuizDetailPage', () => {
 
       expect(screen.getByRole('button', { name: /play/i })).toBeDisabled();
     });
+  });
+  it('disables the play button when there are no questions yet', async () => {
+    mockQuizDetailApi({ questions: [] });
+
+    renderWithRoute();
+
+    // wait until page finishes loading
+    await screen.findByText('No questions yet');
+
+    const playButton = screen.getByRole('button', { name: /play/i });
+
+    expect(playButton).toBeDisabled();
+  });
+
+  it('enables the play button when there are questions', async () => {
+    mockQuizDetailApi();
+
+    renderWithRoute();
+
+    // wait until questions are rendered
+    await screen.findByText('What is the capital of France?');
+
+    const playLink = screen.getByRole('link', { name: /play/i });
+
+    expect(playLink).toBeInTheDocument();
+    expect(playLink).not.toHaveAttribute('disabled');
   });
 });

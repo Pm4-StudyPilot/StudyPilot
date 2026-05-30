@@ -116,6 +116,7 @@
   margin-bottom: 2.5rem;
   background: var(--color-app-bg);
   position: sticky;
+  z-index: 9999;
 
   &__actions {
     display: flex;
@@ -335,7 +336,7 @@
     text-decoration: none;
 
     &:hover {
-      color: white;
+      color: var(--color-primary);
     }
   }
 }
@@ -458,7 +459,7 @@
     text-decoration: none;
 
     &:hover {
-      color: white;
+      color: var(--color-primary);
     }
   }
 

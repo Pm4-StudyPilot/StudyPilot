@@ -40,7 +40,8 @@ describe('ChatController.send', () => {
     expect(mockChatService.send).toHaveBeenCalledWith(
       'What courses do I have?',
       'user-1',
-      'thread-9'
+      'thread-9',
+      undefined
     );
     // The controller forwards the agent reply verbatim, including used tools.
     expect(res.json).toHaveBeenCalledWith(serviceResult);
@@ -57,7 +58,38 @@ describe('ChatController.send', () => {
 
     await controller.send(req, res);
 
-    expect(mockChatService.send).toHaveBeenCalledWith('hi', 'user-1', expect.any(String));
+    expect(mockChatService.send).toHaveBeenCalledWith(
+      'hi',
+      'user-1',
+      expect.any(String),
+      undefined
+    );
+  });
+
+  it('forwards pageContext to the service when present', async () => {
+    const mockChatService = {
+      send: mock(async () => ({ reply: 'ok' })),
+    };
+    const controller = new ChatController(mockChatService as unknown as ChatService);
+
+    const req = {
+      user: authUser,
+      body: {
+        message: 'What is this course?',
+        threadId: 'thread-9',
+        pageContext: 'The user is on the course detail page for course id abc-123.',
+      },
+    } as unknown as Request;
+    const res = createMockResponse();
+
+    await controller.send(req, res);
+
+    expect(mockChatService.send).toHaveBeenCalledWith(
+      'What is this course?',
+      'user-1',
+      'thread-9',
+      'The user is on the course detail page for course id abc-123.'
+    );
   });
 
   it('returns 400 when the message is missing or blank', async () => {

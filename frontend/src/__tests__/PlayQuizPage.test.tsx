@@ -134,6 +134,14 @@ describe('PlayQuizPage', () => {
         logout: vi.fn(),
       }),
     }));
+
+    vi.mock('../context/useTheme', () => ({
+      useTheme: () => ({
+        theme: 'dark',
+        toggleTheme: vi.fn(),
+        setTheme: vi.fn(),
+      }),
+    }));
   });
   it('renders quiz title', async () => {
     render(
@@ -242,6 +250,18 @@ describe('PlayQuizPage', () => {
 
     expect(await screen.findByText('Internal Server Error')).toBeInTheDocument();
   });
+  it('indicates when there was an unknown server error while loading the quiz', async () => {
+    mockedApi.get.mockImplementation(() => {
+      return Promise.reject(new Error(''));
+    });
+    render(
+      <MemoryRouter>
+        <PlayQuizPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('An error occured while loading the quiz')).toBeInTheDocument();
+  });
   it('saves history by highlighting selected answers even after revealing the answers', async () => {
     render(
       <MemoryRouter>
@@ -312,7 +332,7 @@ describe('PlayQuizPage', () => {
     expect(await screen.findByText(/0 \/ 2 Points/)).toBeInTheDocument();
     expect(screen.queryByText(/2 \/ 2 Points/)).not.toBeInTheDocument();
   });
-  it('calculates partial points when a multiple choice question was partially corect', async () => {
+  it('calculates partial points when a multiple choice question was partially correct', async () => {
     render(
       <MemoryRouter>
         <PlayQuizPage />
@@ -332,5 +352,55 @@ describe('PlayQuizPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: /view stats/i }));
 
     expect(await screen.findByText(/1.5 \/ 2 Points/)).toBeInTheDocument();
+  });
+  it('indicates when the quiz is not playable due to no questions being returned from the api', async () => {
+    mockedApi.get.mockImplementation((url: string) => {
+      if (url.includes('/questions')) {
+        return Promise.resolve(undefined);
+      }
+
+      return Promise.resolve(mockQuiz);
+    });
+
+    render(
+      <MemoryRouter>
+        <PlayQuizPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Add Questions before playing the quiz.')).toBeInTheDocument();
+  });
+  it('indicates when the quiz is not playable due to no questions existing', async () => {
+    mockedApi.get.mockImplementation((url: string) => {
+      if (url.includes('/questions')) {
+        return Promise.resolve([]);
+      }
+
+      return Promise.resolve(mockQuiz);
+    });
+
+    render(
+      <MemoryRouter>
+        <PlayQuizPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Add Questions before playing the quiz.')).toBeInTheDocument();
+  });
+  it('indicates when the requested quiz does not exist', async () => {
+    mockedApi.get.mockImplementation((url: string) => {
+      if (url.includes('/questions')) {
+        return Promise.resolve([]);
+      }
+
+      return Promise.resolve(undefined);
+    });
+    render(
+      <MemoryRouter>
+        <PlayQuizPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Quiz not found')).toBeInTheDocument();
   });
 });

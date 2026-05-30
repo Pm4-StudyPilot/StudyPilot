@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AnswerDto, QuestionWithAnswersDto } from '../../types/dto';
-import { AnswerFormState, QuestionFormState, questionTypeOptions } from './types';
+import { AnswerFormState, QuestionFormState, questionTypes, type QuestionTypeValue } from './types';
 import InputField from '../shared/form/InputField';
 import TextareaField from '../shared/form/TextareaField';
 import SelectField from '../shared/form/SelectField';
@@ -41,33 +42,36 @@ type PlayProps = BaseProps & {
 
 type QuestionCardProps = ViewProps | EditProps | PlayProps;
 
-function formatQuestionType(type: QuestionWithAnswersDto['type']) {
-  return type
-    .toLowerCase()
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-}
-
 function ViewQuestionCard({ question, revealed = false, score, selectedAnswers = [] }: ViewProps) {
+  const { t } = useTranslation();
   const correctAnswers = question.answers.filter((answer) => answer.isCorrect).length;
   const [expanded, setExpanded] = useState(false);
   function handleToggle() {
-    setExpanded((prev) => {
-      return !prev;
-    });
+    setExpanded((prev) => !prev);
   }
   return (
     <article className="question-card">
       <header className="question-card__header">
         <div className="question-card__title-group">
           <div className="question-card__meta">
-            <span className="question-card__type">{formatQuestionType(question.type)}</span>
-            <span>
-              {question.answers.length} answer{question.answers.length !== 1 ? 's' : ''}
+            <span className="question-card__type">
+              {t(`quizzes.questions.typeOptions.${question.type}`)}
             </span>
             <span>
-              {correctAnswers} correct answer{correctAnswers !== 1 ? 's' : ''}
+              {t(
+                question.answers.length === 1
+                  ? 'quizzes.questions.card.answersCount'
+                  : 'quizzes.questions.card.answersCount_other',
+                { count: question.answers.length }
+              )}
+            </span>
+            <span>
+              {t(
+                correctAnswers === 1
+                  ? 'quizzes.questions.card.correctCount'
+                  : 'quizzes.questions.card.correctCount_other',
+                { count: correctAnswers }
+              )}
             </span>
           </div>
 
@@ -79,7 +83,12 @@ function ViewQuestionCard({ question, revealed = false, score, selectedAnswers =
         </div>
         {typeof score === 'number' && (
           <div className="question-card__score">
-            {score} Point{score === 1 ? '' : 's'}{' '}
+            {t(
+              score === 1
+                ? 'quizzes.questions.card.scorePoints'
+                : 'quizzes.questions.card.scorePoints_other',
+              { count: score }
+            )}{' '}
           </div>
         )}
       </header>
@@ -88,10 +97,10 @@ function ViewQuestionCard({ question, revealed = false, score, selectedAnswers =
         <button
           className="question-card__toggle btn btn-sm btn-link text-secondary p-0"
           onClick={handleToggle}
-          aria-label="Toggle answers"
+          aria-label={t('quizzes.questions.card.toggleAria')}
           aria-expanded={expanded}
         >
-          View Answers
+          {t('quizzes.questions.card.viewAnswers')}
           <i
             className={`question-card__chevron fa-solid fa-chevron-${expanded ? 'down' : 'right'}`}
           />
@@ -115,6 +124,7 @@ function EditQuestionCard({
   onUpdateAnswer,
   onDeleteAnswer,
 }: EditProps) {
+  const { t } = useTranslation();
   const [draftQuestion, setDraftQuestion] = useState<QuestionFormState>({
     title: question.title,
     description: question.description ?? '',
@@ -140,10 +150,19 @@ function EditQuestionCard({
   const [addingAnswer, setAddingAnswer] = useState(false);
   const [questionError, setQuestionError] = useState<string | null>(null);
 
+  const questionTypeOptions = useMemo(
+    () =>
+      questionTypes.map((value: QuestionTypeValue) => ({
+        value,
+        label: t(`quizzes.questions.typeOptions.${value}`),
+      })),
+    [t]
+  );
+
   async function handleSaveQuestion() {
     setQuestionError(null);
     if (!draftQuestion.title.trim()) {
-      setQuestionError('Question title is required');
+      setQuestionError(t('validation.questionTitleRequired'));
       return;
     }
 
@@ -159,7 +178,7 @@ function EditQuestionCard({
       if (e instanceof Error) {
         setQuestionError(e.message);
       } else {
-        setQuestionError('Failed to save question');
+        setQuestionError(t('validation.failedToSaveQuestion'));
       }
     } finally {
       setSavingQuestion(false);
@@ -170,7 +189,7 @@ function EditQuestionCard({
     const draft = overrideDraft ?? draftAnswers[answerId];
     setQuestionError(null);
     if (!draft?.content.trim()) {
-      setQuestionError('Answer content is required');
+      setQuestionError(t('validation.answerContentRequired'));
       return;
     }
 
@@ -185,7 +204,7 @@ function EditQuestionCard({
       if (e instanceof Error) {
         setQuestionError(e.message);
       } else {
-        setQuestionError('Failed to save answer');
+        setQuestionError(t('validation.failedToSaveAnswer'));
       }
     } finally {
       setSavingAnswerId(null);
@@ -195,7 +214,7 @@ function EditQuestionCard({
   async function handleCreateAnswer() {
     setQuestionError(null);
     if (!newAnswer.content.trim()) {
-      setQuestionError('Answer content is required');
+      setQuestionError(t('validation.answerContentRequired'));
       return;
     }
 
@@ -212,18 +231,23 @@ function EditQuestionCard({
         isCorrect: false,
       });
     } catch {
-      setQuestionError('Failed to create question');
+      setQuestionError(t('validation.failedToCreateQuestion'));
     } finally {
       setAddingAnswer(false);
     }
   }
+
   return (
-    <article className="question-card question-card--editable">
+    <article
+      className="question-card question-card--editable"
+      data-testid="question-editor-card"
+      data-question-title={question.title}
+    >
       <header className="question-card__header">
         <div className="question-card__title-group question-editor">
           <div className="question-editor__fields">
             <InputField
-              label="Question title"
+              label={t('quizzes.questions.titleLabel')}
               className="form-control"
               value={draftQuestion.title}
               onChange={(event) =>
@@ -236,7 +260,7 @@ function EditQuestionCard({
             />
 
             <TextareaField
-              label="Description"
+              label={t('quizzes.questions.descriptionLabel')}
               className="form-control"
               value={draftQuestion.description}
               onChange={(event) =>
@@ -250,7 +274,7 @@ function EditQuestionCard({
             />
 
             <SelectField
-              label="Question type"
+              label={t('quizzes.questions.typeLabel')}
               className="form-select"
               value={draftQuestion.type}
               onChange={(event) =>
@@ -266,7 +290,7 @@ function EditQuestionCard({
         </div>
       </header>
 
-      <span className="question-editor__field">Answers</span>
+      <span className="question-editor__field">{t('quizzes.questions.card.answersHeading')}</span>
 
       {!!question.answers.length && (
         <div className="answer-list answer-list--editable">
@@ -283,7 +307,7 @@ function EditQuestionCard({
 
       <div className="answer-editor answer-editor--new">
         <InputField
-          label="New answer"
+          label={t('quizzes.answers.newLabel')}
           className="answer-editor__content form-control"
           value={newAnswer.content}
           onChange={(event) =>
@@ -292,11 +316,12 @@ function EditQuestionCard({
               content: event.target.value,
             }))
           }
-          placeholder="Add another possible answer"
+          placeholder={t('quizzes.answers.newPlaceholder')}
+          data-testid="answer-content-input"
         />
 
         <CheckField
-          label="Correct"
+          label={t('quizzes.answers.correctCheckbox')}
           type="checkbox"
           checked={newAnswer.isCorrect}
           onChange={(event) =>
@@ -313,9 +338,10 @@ function EditQuestionCard({
           className="btn btn-primary btn-sm answer-editor__add-button mb-3"
           disabled={!newAnswer.content.trim() || addingAnswer}
           onClick={handleCreateAnswer}
+          data-testid="add-answer-button"
         >
           <i className="fa-solid fa-plus" />
-          {addingAnswer ? 'Adding...' : 'Add answer'}
+          {addingAnswer ? t('quizzes.answers.addingButton') : t('quizzes.answers.addButton')}
         </button>
       </div>
       <div className="question-editor__actions">
@@ -325,9 +351,9 @@ function EditQuestionCard({
           onClick={() => onDeleteQuestion?.(question.id)}
         >
           <i className="fa-solid fa-trash me-1" />
-          Delete
+          {t('quizzes.questions.card.delete')}
         </button>
-        {(savingAnswerId || savingQuestion) && <>Saving...</>}
+        {(savingAnswerId || savingQuestion) && <>{t('common.saving')}</>}
         {questionError && <div className="text-danger">{questionError}</div>}
       </div>
     </article>
@@ -340,12 +366,15 @@ function PlayQuestionCard({
   onPlayed,
   selectedAnswers = [],
 }: PlayProps) {
+  const { t } = useTranslation();
   return (
     <article className="question-card question-card--play">
       <header className="question-card__header">
         <div className="question-card__title-group">
           <div className="question-card__meta">
-            <span className="question-card__type">{formatQuestionType(question.type)}</span>
+            <span className="question-card__type">
+              {t(`quizzes.questions.typeOptions.${question.type}`)}
+            </span>
           </div>
 
           <h3 className="question-card__title">{question.title}</h3>
@@ -368,7 +397,7 @@ function PlayQuestionCard({
 
       {question.type !== 'SINGLE_CHOICE' && !revealed && (
         <button type="button" className="btn btn-outline-primary mt-4" onClick={() => onPlayed?.()}>
-          Reveal answer
+          {t('quizzes.questions.card.revealAnswer')}
         </button>
       )}
     </article>
