@@ -9,8 +9,6 @@ import { api } from '../services/api';
 import { CourseDto, TaskDto } from '../types/dto';
 import { formatDate } from '../utils/formatDate';
 
-type RingVariant = 'primary' | 'secondary' | 'tertiary' | 'quaternary';
-
 type DashboardAssignment = {
   id: string;
   title: string;
@@ -52,12 +50,6 @@ type DashboardCourseData = {
   documentError?: string;
   quizError?: string;
 };
-
-const COURSE_VARIANTS: RingVariant[] = ['primary', 'secondary', 'tertiary', 'quaternary'];
-
-function getVariant(index: number): RingVariant {
-  return COURSE_VARIANTS[index % COURSE_VARIANTS.length];
-}
 
 function formatTaskStatus(status: TaskDto['status'], t: TFunction): string {
   return t(`tasks.status.${status}`);
@@ -311,7 +303,7 @@ function FeaturedCourseCard({
             completedTasks={progress.completedTasks}
             totalTasks={progress.totalTasks}
             label={t('home.percentComplete', { percent: progress.completionPercentage })}
-            variant="primary"
+            accentColor={data.course.color}
             size={152}
             className="dashboard-featured-card__ring"
           />
@@ -332,7 +324,7 @@ function FeaturedCourseCard({
   );
 }
 
-function CompactCourseCard({ data, index }: { data: DashboardCourseData; index: number }) {
+function CompactCourseCard({ data }: { data: DashboardCourseData; index: number }) {
   const { t } = useTranslation();
   const progress = data.course.taskProgress ?? {
     totalTasks: 0,
@@ -342,7 +334,6 @@ function CompactCourseCard({ data, index }: { data: DashboardCourseData; index: 
     completionPercentage: 0,
   };
 
-  const variant = getVariant(index);
   const quizLabel =
     data.quizzes.length > 0
       ? t(data.quizzes.length === 1 ? 'home.quizCountShort' : 'home.quizCountShort_other', {
@@ -359,7 +350,7 @@ function CompactCourseCard({ data, index }: { data: DashboardCourseData; index: 
           completedTasks={progress.completedTasks}
           totalTasks={progress.totalTasks}
           label={t('home.percentComplete', { percent: progress.completionPercentage })}
-          variant={variant}
+          accentColor={data.course.color}
           size={96}
         />
         <div className="dashboard-course-card__ring-center">{progress.completionPercentage}%</div>

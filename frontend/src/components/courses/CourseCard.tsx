@@ -72,7 +72,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
               inProgressTasks={progress.inProgressTasks}
               completedTasks={progress.completedTasks}
               totalTasks={progress.totalTasks}
-              variant="primary"
+              accentColor={course.color}
               className="course-card__progress-ring flex-shrink-0"
               label={t('courses.card.progressLabel', {
                 open: progress.openTasks,

@@ -194,7 +194,7 @@ export default function CourseDetailPage() {
                     label={t('courses.detail.percentComplete', {
                       percent: progress.completionPercentage,
                     })}
-                    variant="primary"
+                    accentColor={course.color}
                     size={148}
                   />
                   <div className="course-detail__progress-center">
