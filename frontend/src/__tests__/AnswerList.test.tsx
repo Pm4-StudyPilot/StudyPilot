@@ -4,6 +4,7 @@ import AnswerList from '../components/quizzes/AnswerList';
 import { AnswerDto, QuestionWithAnswersDto } from '../types/dto';
 import React, { InputHTMLAttributes } from 'react';
 import userEvent from '@testing-library/user-event';
+import { reorderAnswers } from '../components/quizzes/types.ts';
 
 vi.mock('../components/shared/form/CheckField', () => ({
   default: ({
@@ -68,6 +69,7 @@ describe('AnswerList', () => {
   let handleSaveAnswer: (answerId: string) => void;
   let onDeleteAnswer: (questionId: string, answerId: string) => void;
   let onPlayed: (answerId?: string) => void;
+  let onReorderAnswers: (questionId: string, reorderedAnswers: AnswerDto[]) => Promise<void>;
 
   beforeEach(() => {
     setDraftAnswers = vi.fn((updater) => {
@@ -77,6 +79,7 @@ describe('AnswerList', () => {
     });
 
     handleSaveAnswer = vi.fn();
+    onReorderAnswers = vi.fn();
     onDeleteAnswer = vi.fn();
     onPlayed = vi.fn();
   });
@@ -104,6 +107,7 @@ describe('AnswerList', () => {
         setDraftAnswers={setDraftAnswers}
         handleSaveAnswer={handleSaveAnswer}
         onDeleteAnswer={onDeleteAnswer}
+        onReorderAnswers={onReorderAnswers}
       />
     );
 
@@ -119,6 +123,7 @@ describe('AnswerList', () => {
         setDraftAnswers={setDraftAnswers}
         handleSaveAnswer={handleSaveAnswer}
         onDeleteAnswer={onDeleteAnswer}
+        onReorderAnswers={onReorderAnswers}
       />
     );
 
@@ -137,6 +142,7 @@ describe('AnswerList', () => {
         setDraftAnswers={setDraftAnswers}
         handleSaveAnswer={handleSaveAnswer}
         onDeleteAnswer={onDeleteAnswer}
+        onReorderAnswers={onReorderAnswers}
       />
     );
 
@@ -155,6 +161,7 @@ describe('AnswerList', () => {
         setDraftAnswers={setDraftAnswers}
         handleSaveAnswer={handleSaveAnswer}
         onDeleteAnswer={onDeleteAnswer}
+        onReorderAnswers={onReorderAnswers}
       />
     );
 
@@ -174,11 +181,12 @@ describe('AnswerList', () => {
         setDraftAnswers={setDraftAnswers}
         handleSaveAnswer={handleSaveAnswer}
         onDeleteAnswer={onDeleteAnswer}
+        onReorderAnswers={onReorderAnswers}
       />
     );
 
     const buttons = screen.getAllByRole('button');
-    fireEvent.click(buttons[0]);
+    fireEvent.click(buttons[1]);
 
     expect(onDeleteAnswer).toHaveBeenCalledWith('q1', 'a1');
   });
@@ -273,5 +281,12 @@ describe('AnswerList', () => {
 
     expect(screen.getByText('Answer 1').closest('.answer-card--selected')).not.toBeNull();
     expect(screen.getByText('Answer 2').closest('.answer-card--selected')).toBeNull();
+  });
+  it('reorders answers correctly', async () => {
+    const answers = choiceQuestion.answers;
+
+    const result = reorderAnswers(answers as AnswerDto[], 'a1', 'a2');
+
+    expect(result.map((a) => a.id)).toEqual(['a2', 'a1']);
   });
 });
