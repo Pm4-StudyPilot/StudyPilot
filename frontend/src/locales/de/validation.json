@@ -18,5 +18,6 @@
   "answerContentRequired": "Antwortinhalt ist erforderlich",
   "failedToCreateQuestion": "Frage konnte nicht erstellt werden",
   "failedToSaveQuestion": "Frage konnte nicht gespeichert werden",
-  "failedToSaveAnswer": "Antwort konnte nicht gespeichert werden"
+  "failedToSaveAnswer": "Antwort konnte nicht gespeichert werden",
+  "shareUsernameRequired": "Benutzername oder E-Mail erforderlich"
 }

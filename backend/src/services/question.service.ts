@@ -5,18 +5,26 @@ import {
   QuestionWithAnswersDto,
   UpdateQuestionRequest,
 } from '../types';
+import { CourseShareService } from './course-share.service';
 import type { PrismaClient } from '../generated/prisma/client';
 
 export class QuestionService {
-  constructor(private readonly db: PrismaClient = prisma) {}
+  constructor(
+    private readonly db: PrismaClient = prisma,
+    private readonly courseShareService = new CourseShareService()
+  ) {}
 
   async create(
     data: CreateQuestionRequest,
     quizId: string,
-    ownerId: string
+    userId: string
   ): Promise<QuestionDto | null> {
-    const quiz = await this.db.quiz.findFirst({ where: { id: quizId, course: { ownerId } } });
+    const quiz = await this.db.quiz.findFirst({ where: { id: quizId }, include: { course: true } });
     if (!quiz) return null;
+
+    // Check if user has access to the course (owner OR shared with them)
+    const hasAccess = await this.courseShareService.checkAccess(quiz.courseId, userId);
+    if (!hasAccess) return null;
 
     const maxResult = await this.db.question.aggregate({
       where: { quizId },
@@ -37,12 +45,10 @@ export class QuestionService {
 
   async updateForOwner(
     id: string,
-    ownerId: string,
+    userId: string,
     data: UpdateQuestionRequest
   ): Promise<QuestionDto | null> {
-    const existing = await this.db.question.findFirst({
-      where: { id, quiz: { course: { ownerId } } },
-    });
+    const existing = await this.findByIdForOwner(id, userId);
     if (!existing) return null;
 
     const updateData: Record<string, unknown> = {};
@@ -56,22 +62,30 @@ export class QuestionService {
     }) as Promise<QuestionDto>;
   }
 
-  async findByIdForOwner(id: string, ownerId: string): Promise<QuestionDto | null> {
-    return this.db.question.findFirst({
-      where: {
-        id,
-        quiz: { course: { ownerId } },
-      },
-    }) as Promise<QuestionDto | null>;
+  async findByIdForOwner(id: string, userId: string): Promise<QuestionDto | null> {
+    const question = await this.db.question.findFirst({
+      where: { id },
+      include: { quiz: { include: { course: true } } },
+    });
+    if (!question) return null;
+
+    // Check if user has access to the course (owner OR shared with them)
+    const hasAccess = await this.courseShareService.checkAccess(question.quiz.courseId, userId);
+    return hasAccess ? (question as QuestionDto) : null;
   }
 
-  async listByQuiz(quizId: string, ownerId: string): Promise<QuestionWithAnswersDto[]> {
+  async listByQuiz(quizId: string, userId: string): Promise<QuestionWithAnswersDto[]> {
+    // Get quiz to find course ID
+    const quiz = await this.db.quiz.findFirst({ where: { id: quizId } });
+    if (!quiz) return [];
+
+    // Check if user has access to the course (owner OR shared with them)
+    const hasAccess = await this.courseShareService.checkAccess(quiz.courseId, userId);
+    if (!hasAccess) return [];
+
     return this.db.question.findMany({
       where: {
         quizId,
-        quiz: {
-          course: { ownerId },
-        },
       },
       include: {
         answers: {
@@ -82,9 +96,13 @@ export class QuestionService {
     }) as Promise<QuestionWithAnswersDto[]>;
   }
 
-  async reorderQuestions(quizId: string, ownerId: string, questionIds: string[]): Promise<boolean> {
-    const quiz = await this.db.quiz.findFirst({ where: { id: quizId, course: { ownerId } } });
+  async reorderQuestions(quizId: string, userId: string, questionIds: string[]): Promise<boolean> {
+    const quiz = await this.db.quiz.findFirst({ where: { id: quizId }, include: { course: true } });
     if (!quiz) return false;
+
+    // Check if user has access to the course (owner OR shared with them)
+    const hasAccess = await this.courseShareService.checkAccess(quiz.courseId, userId);
+    if (!hasAccess) return false;
 
     const existingQuestions = await this.db.question.findMany({
       where: { quizId },
@@ -108,13 +126,20 @@ export class QuestionService {
     return true;
   }
 
-  async deleteForOwner(id: string, ownerId: string): Promise<boolean> {
+  async deleteForOwner(id: string, userId: string): Promise<boolean> {
+    const question = await this.db.question.findFirst({
+      where: { id },
+      include: { quiz: { include: { course: true } } },
+    });
+    if (!question) return false;
+
+    // Check if user has access to the course (owner OR shared with them)
+    const hasAccess = await this.courseShareService.checkAccess(question.quiz.courseId, userId);
+    if (!hasAccess) return false;
+
     return this.db.question
       .deleteMany({
-        where: {
-          id,
-          quiz: { course: { ownerId } },
-        },
+        where: { id },
       })
       .then((result) => result.count > 0);
   }

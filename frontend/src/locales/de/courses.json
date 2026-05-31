@@ -125,6 +125,13 @@
     "title": "Kurs teilen",
     "description": "Teile diesen Kurs mit anderen Benutzern, indem du ihre E-Mail oder ihren Benutzernamen eingibst.",
     "usernameOrEmailLabel": "Benutzername oder E-Mail",
-    "submit": "Teilen"
+    "submit": "Teilen",
+    "success": "Kurs erfolgreich geteilt",
+    "error": {
+      "unknown": "Fehler beim Teilen des Kurses",
+      "selfShare": "Du kannst einen Kurs nicht mit dir selbst teilen",
+      "userNotFound": "Benutzer nicht gefunden",
+      "alreadyShared": "Kurs ist bereits mit diesem Benutzer geteilt"
+    }
   }
 }

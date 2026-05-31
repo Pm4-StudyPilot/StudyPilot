@@ -207,15 +207,9 @@ class DocumentService {
    * @throws Error if the MinIO upload fails
    */
   async upload({ file, courseId, ownerId }: UploadDocumentInput) {
-    // Verify that the selected course exists and belongs to the authenticated user
-    const course = await prisma.course.findFirst({
-      where: {
-        id: courseId,
-        ownerId,
-      },
-    });
-
-    if (!course) {
+    // Check if user has access to the course (owner OR shared with them)
+    const hasAccess = await this.courseShareService.checkAccess(courseId, ownerId);
+    if (!hasAccess) {
       throw new Error('Course not found.');
     }
 
@@ -453,9 +447,7 @@ class DocumentService {
       select: {
         bucket: true,
         objectKey: true,
-        course: {
-          select: { ownerId: true },
-        },
+        courseId: true,
       },
     });
 
@@ -463,7 +455,9 @@ class DocumentService {
       throw new Error('DOCUMENT_NOT_FOUND');
     }
 
-    if (document.course.ownerId !== userId) {
+    // Check if user has access to the course (owner OR shared with them)
+    const hasAccess = await this.courseShareService.checkAccess(document.courseId, userId);
+    if (!hasAccess) {
       throw new Error('DOCUMENT_FORBIDDEN');
     }
 

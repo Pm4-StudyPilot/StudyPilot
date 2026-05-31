@@ -125,6 +125,13 @@
     "title": "Share Course",
     "description": "Share this course with other users by entering their email or username.",
     "usernameOrEmailLabel": "Username or Email",
-    "submit": "Share"
+    "submit": "Share",
+    "success": "Course shared successfully",
+    "error": {
+      "unknown": "Failed to share course",
+      "selfShare": "You cannot share a course with yourself",
+      "userNotFound": "User not found",
+      "alreadyShared": "Course is already shared with this user"
+    }
   }
 }
