@@ -26,7 +26,6 @@
     font-size: 0.78rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    word-wrap: anywhere;
   }
 }
 
@@ -40,6 +39,7 @@
     font-size: 2.1rem;
     font-weight: 800;
     letter-spacing: -0.03em;
+    overflow-wrap: normal;
   }
 
   &__meta {

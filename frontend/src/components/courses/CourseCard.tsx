@@ -81,7 +81,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
               })}
             />
             <div>
-              <div className="d-flex align-items-center gap-2 mb-1">
+              <div className="d-flex align-items-center gap-2 mb-1 flex-shrink-0">
                 <span
                   className="course-card__color-dot"
                   style={{ backgroundColor: course.color }}
@@ -107,7 +107,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
             </div>
           </div>
 
-          <div className="d-flex align-items-center gap-2">
+          <div className="d-flex align-items-center gap-2 flex-shrink-0">
             <Link
               to={`/courses/${course.id}`}
               className="btn btn-sm btn-link text-secondary p-0 text-decoration-none"

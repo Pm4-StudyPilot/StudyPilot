@@ -65,8 +65,12 @@
     gap: 0.35rem;
     min-width: 0;
     overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
+    & > :last-child {
+      display: inline-block;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
   }
 
   &__filter-dot {

@@ -64,7 +64,7 @@ export default function TaskCard({
           <span className="fw-semibold">{task.title}</span>
         </button>
 
-        <div className="d-flex align-items-center gap-2 ms-auto">
+        <div className="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
           {formattedDueDate && (
             <span className="task-card__due-date text-secondary">
               <i className="fa-regular fa-calendar me-1" />

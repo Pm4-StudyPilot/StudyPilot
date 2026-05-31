@@ -403,7 +403,7 @@ export default function DeadlineCalendar({
                           aria-hidden="true"
                         />
                       )}
-                      {activeCourseLabel}
+                      <span>{activeCourseLabel}</span>
                     </span>
                     <i className="fa-solid fa-chevron-down" aria-hidden="true" />
                   </button>
