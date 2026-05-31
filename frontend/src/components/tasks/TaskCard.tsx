@@ -37,13 +37,17 @@ export default function TaskCard({
   const formattedDueDate = task.dueDate ? formatDate(task.dueDate) : null;
 
   return (
-    <div className={`task-card rounded p-3 mb-2${isDragging ? ' opacity-50' : ''}`}>
+    <div
+      className={`task-card rounded p-3 mb-2${isDragging ? ' opacity-50' : ''}`}
+      data-testid="task-card"
+    >
       <div className="d-flex align-items-center gap-2">
         {dragHandleProps && (
           <span
             {...dragHandleProps}
             className="task-card__drag-handle text-secondary"
             aria-label={t('tasks.card.dragHandleAria')}
+            data-testid="task-drag-handle"
           >
             <i className="fa-solid fa-grip-vertical" />
           </span>
@@ -77,6 +81,7 @@ export default function TaskCard({
             className="btn btn-link p-0 text-secondary"
             onClick={() => onEdit(task)}
             aria-label={t('tasks.card.editAria')}
+            data-testid="task-edit-button"
           >
             <i className="fa-solid fa-pen-to-square" />
           </button>
@@ -84,6 +89,7 @@ export default function TaskCard({
             className="btn btn-link p-0 text-secondary"
             onClick={() => onDelete(task)}
             aria-label={t('tasks.card.deleteAria')}
+            data-testid="task-delete-button"
           >
             <i className="fa-solid fa-trash" />
           </button>

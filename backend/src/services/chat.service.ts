@@ -6,7 +6,12 @@ import { runAgent, type AgentReply } from 'agent';
  * leaks into other consumers of `backend/services` (e.g. the MCP server).
  */
 export class ChatService {
-  async send(message: string, userId: string, threadId: string): Promise<AgentReply> {
-    return runAgent({ message, userId, threadId });
+  async send(
+    message: string,
+    userId: string,
+    threadId: string,
+    pageContext?: string
+  ): Promise<AgentReply> {
+    return runAgent({ message, userId, threadId, pageContext });
   }
 }

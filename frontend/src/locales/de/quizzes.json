@@ -37,7 +37,13 @@
     "itemsCount_other": "{{count}} Elemente",
     "preview": "Vorschau",
     "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "deleteAria": "Quiz löschen",
     "summaryAria": "Quiz-Zusammenfassung"
+  },
+  "delete": {
+    "title": "Quiz löschen",
+    "confirm": "Möchtest du <strong>{{title}}</strong> wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
   },
   "questions": {
     "noneViewTitle": "Noch keine Fragen",
@@ -74,6 +80,8 @@
   "play": {
     "backToQuiz": "Zurück zum Quiz",
     "notFound": "Quiz nicht gefunden",
+    "error": "Beim Laden des Quizzes ist ein Fehler aufgetreten.",
+    "empty": "Füge dem Quiz Fragen hinzu, um es spielen zu können.",
     "progress": "Frage {{current}} / {{total}}",
     "selectHint": "Wähle eine Antwort oder zeige die Lösung an.",
     "correct": "Richtig",

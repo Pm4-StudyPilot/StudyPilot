@@ -23,7 +23,6 @@
   },
   "dependencies": {
     "agent": "*",
-    "@casl/ability": "^6.7.2",
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "bcrypt": "^5.1.1",
@@ -35,6 +34,7 @@
     "minio": "^8.0.5",
     "morgan": "^1.10.1",
     "multer": "^2.1.1",
+    "officeparser": "^7.1.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.20.0",

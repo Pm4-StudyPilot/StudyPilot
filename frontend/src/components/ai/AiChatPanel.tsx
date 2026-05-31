@@ -28,7 +28,12 @@ export default function AiChatPanel({ messages, loading = false, onClose }: AiCh
       </div>
       <div className="ai-input__messages">
         {messages.map((message) => (
-          <div key={message.id} className={`ai-input__message ai-input__message--${message.role}`}>
+          <div
+            key={message.id}
+            className={`ai-input__message ai-input__message--${message.role}`}
+            data-testid="ai-message"
+            data-role={message.role}
+          >
             {message.role === 'assistant' ? (
               <div className="ai-input__markdown">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
@@ -37,13 +42,13 @@ export default function AiChatPanel({ messages, loading = false, onClose }: AiCh
               message.content
             )}
             {message.tools && message.tools.length > 0 && (
-              <details className="ai-input__tools">
+              <details className="ai-input__tools" data-testid="ai-tools">
                 <summary className="ai-input__tools-summary">
                   {t(message.tools.length === 1 ? 'ai.toolsUsed' : 'ai.toolsUsed_other', {
                     count: message.tools.length,
                   })}
                 </summary>
-                <ol className="ai-input__tools-list">
+                <ol className="ai-input__tools-list" data-testid="ai-tools-list">
                   {message.tools.map((toolName, index) => (
                     <li key={`${toolName}-${index}`}>{toolName}</li>
                   ))}

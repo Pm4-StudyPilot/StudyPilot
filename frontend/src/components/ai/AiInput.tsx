@@ -1,9 +1,11 @@
 import { FormEvent, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { MdSend } from 'react-icons/md';
 import { useTranslation } from 'react-i18next';
 import Icon from '../shared/Icon';
 import AiChatPanel from './AiChatPanel';
 import { ChatMessage } from './types';
+import { describeCurrentPage } from './pageContext';
 import { api } from '../../services/api';
 
 export default function AiInput() {
@@ -13,6 +15,7 @@ export default function AiInput() {
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const threadIdRef = useRef<string | null>(null);
+  const { pathname } = useLocation();
   const { t } = useTranslation();
 
   function appendMessage(role: ChatMessage['role'], content: string, tools?: string[]) {
@@ -33,6 +36,7 @@ export default function AiInput() {
     const message = value.trim();
     if (!message || isLoading) return;
 
+    const isFirstMessage = !threadIdRef.current;
     if (!threadIdRef.current) {
       threadIdRef.current = crypto.randomUUID();
     }
@@ -46,6 +50,7 @@ export default function AiInput() {
       const { reply, tools } = await api.post<{ reply: string; tools: string[] }>('/chat', {
         message,
         threadId: threadIdRef.current,
+        ...(isFirstMessage ? { pageContext: describeCurrentPage(pathname) ?? undefined } : {}),
       });
       appendMessage('assistant', reply, tools);
     } catch {
@@ -67,12 +72,14 @@ export default function AiInput() {
           value={value}
           onChange={(event) => setValue(event.target.value)}
           aria-label={t('ai.ariaLabel')}
+          data-testid="ai-input-field"
         />
         <button
           type="submit"
           className="ai-input__send"
           disabled={!value.trim() || isLoading}
           aria-label={t('ai.sendAria')}
+          data-testid="ai-send-button"
         >
           <Icon icon={MdSend} size={18} aria-label={t('ai.sendAria')} />
         </button>

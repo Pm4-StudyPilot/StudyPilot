@@ -14,6 +14,19 @@ const taskDelete = mock(async () => true);
 const quizCreate = mock(async () => ({ id: 'q1', title: 'Midterm' }));
 const quizUpdate = mock(async () => ({ id: 'q1', title: 'Midterm 2' }));
 const quizDelete = mock(async () => true);
+const documentList = mock(async () => []);
+const documentRead = mock(async () => ({
+  courseId: 'c1',
+  documents: [],
+  chunks: [],
+  skipped: [],
+  errors: [],
+  warnings: [],
+  totalDocuments: 0,
+  returnedCharacters: 0,
+  maxCharacters: 25000,
+  truncated: false,
+}));
 
 class CourseService {
   listByUser = courseList;
@@ -38,7 +51,8 @@ class QuizService {
   deleteForOwner = quizDelete;
 }
 class DocumentService {
-  listByCourse = mock(async () => []);
+  listByCourse = documentList;
+  readCourseDocuments = documentRead;
 }
 
 mock.module('backend/services', () => ({
@@ -97,6 +111,7 @@ const EXPECTED_TOOLS = [
   'update_quiz',
   'delete_quiz',
   'list_documents',
+  'read_course_documents',
 ];
 
 beforeEach(() => {
@@ -110,6 +125,8 @@ beforeEach(() => {
     quizCreate,
     quizUpdate,
     quizDelete,
+    documentList,
+    documentRead,
   ]) {
     m.mockClear();
   }
@@ -169,5 +186,32 @@ describe('task + quiz write tools', () => {
   it('delete_quiz calls deleteForOwner(quizId, userId)', async () => {
     await handlerFor('delete_quiz')({ userId: 'u1', quizId: 'q1' });
     expect(quizDelete).toHaveBeenCalledWith('q1', 'u1');
+  });
+});
+
+describe('document tools', () => {
+  it('read_course_documents calls readCourseDocuments with options', async () => {
+    const result = await handlerFor('read_course_documents')({
+      userId: 'u1',
+      courseId: 'c1',
+      documentIds: ['d1'],
+      query: 'photosynthesis',
+      maxCharacters: 5000,
+    });
+
+    expect(documentRead).toHaveBeenCalledWith('c1', 'u1', {
+      documentIds: ['d1'],
+      query: 'photosynthesis',
+      maxCharacters: 5000,
+    });
+    expect(textOf(result)).toContain('"courseId": "c1"');
+  });
+
+  it('read_course_documents returns a permission message when the service rejects access', async () => {
+    documentRead.mockRejectedValueOnce(new Error('Course not found.'));
+
+    const result = await handlerFor('read_course_documents')({ userId: 'u1', courseId: 'x' });
+
+    expect(textOf(result)).toBe('Not found or you do not have permission.');
   });
 });

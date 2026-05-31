@@ -132,7 +132,7 @@ documentRouter.post('/', sensitiveLimiter, authenticate, handleDocumentUpload, (
  *     tags:
  *       - Documents
  *     summary: List documents for a course
- *     description: Returns all uploaded document metadata for a course owned by the authenticated user. Results are sorted by newest first.
+ *     description: Returns all uploaded document metadata for a course the authenticated user can access. Results are sorted by newest first.
  *     security:
  *       - bearerAuth: []
  *     parameters:

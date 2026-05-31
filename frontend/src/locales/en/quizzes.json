@@ -37,7 +37,13 @@
     "itemsCount_other": "{{count}} items",
     "preview": "Preview",
     "edit": "Edit",
+    "delete": "Delete",
+    "deleteAria": "Delete quiz",
     "summaryAria": "Quiz summary"
+  },
+  "delete": {
+    "title": "Delete Quiz",
+    "confirm": "Are you sure you want to delete <strong>{{title}}</strong>? This action cannot be undone."
   },
   "questions": {
     "noneViewTitle": "No questions yet",
@@ -74,6 +80,8 @@
   "play": {
     "backToQuiz": "Back to quiz",
     "notFound": "Quiz not found",
+    "empty": "Add Questions before playing the quiz.",
+    "error": "An error occured while loading the quiz",
     "progress": "Question {{current}} / {{total}}",
     "selectHint": "Select an answer or reveal the solution.",
     "correct": "Correct",
