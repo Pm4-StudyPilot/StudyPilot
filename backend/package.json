@@ -23,7 +23,6 @@
   },
   "dependencies": {
     "agent": "*",
-    "@casl/ability": "^6.7.2",
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "bcrypt": "^5.1.1",
