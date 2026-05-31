@@ -239,11 +239,21 @@
     color: var(--color-text-muted);
   }
 
-  &__day--selected,
-  &__day--today {
+  &__day--selected {
     background-color: var(--color-primary-bold);
     // Dark text on the bright brand orange for AA contrast (matches buttons).
     color: var(--color-on-primary);
+  }
+
+  &__day--today {
+    background-color: var(--color-primary-bold);
+    color: var(--color-on-primary);
+  }
+
+  &__day--today-muted {
+    border: 1px solid var(--color-primary);
+    background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+    color: var(--color-primary);
   }
 
   // Days with deadlines are flagged by their dot; keep the default readable text
