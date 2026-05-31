@@ -1,6 +1,6 @@
 .ai-input {
   position: fixed;
-  bottom: var(--space-lg);
+  bottom: var(--ai-input-bottom-offset);
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -14,7 +14,7 @@
     flex-direction: column;
     // Fixed height, but never taller than the screen (leaving room for the
     // input row and surrounding margins). Content scrolls when it overflows.
-    height: min(800px, calc(100vh - 8rem));
+    height: min(800px, calc(100vh - var(--ai-input-content-offset) - var(--space-lg)));
     padding: var(--space-md);
     background: var(--background-shiny);
     border: 1px solid var(--color-border);
@@ -294,6 +294,12 @@
       // viewBox, so geometric centering looks off-center without this.
       transform: translateX(1px);
     }
+  }
+}
+
+@media (max-width: 720px) {
+  .ai-input {
+    width: min(600px, calc(100vw - 2 * var(--space-md)));
   }
 }
 
