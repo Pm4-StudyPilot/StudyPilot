@@ -3,9 +3,15 @@
   grid-template-columns: 292px minmax(0, 1fr);
   min-height: 100vh;
   background: var(--background-moody);
+  --dashboard-ai-input-content-offset: 0px;
+
+  &--with-ai-input {
+    --dashboard-ai-input-content-offset: var(--ai-input-content-offset);
+  }
 }
 .dashboard-main {
   overflow-y: auto;
+  scroll-padding-bottom: var(--dashboard-ai-input-content-offset);
 }
 .dashboard-sidebar {
   display: flex;
@@ -107,6 +113,10 @@
   & > * {
     padding: 1.35rem 1.35rem 1.5rem 1.6rem;
   }
+}
+
+.dashboard-shell--with-ai-input .dashboard-main > :last-child {
+  padding-bottom: calc(1.5rem + var(--dashboard-ai-input-content-offset));
 }
 
 .dashboard-topbar {

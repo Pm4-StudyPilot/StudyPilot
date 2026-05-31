@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Logo from '../Logo';
 import LanguageSwitcher from './LanguageSwitcher';
+import { isAiInputVisible } from '../aiInputVisibility';
 import { useAuth } from '../../../context/useAuth';
 import { useTheme } from '../../../context/useTheme';
 
@@ -60,6 +61,7 @@ export default function DashboardLayout({
   const username = user?.username ?? 'A';
   const nextThemeLabel = theme === 'dark' ? 'light' : 'dark';
   const effectivePlaceholder = searchPlaceholder ?? t('common.search.default');
+  const hasAiInput = isAiInputVisible(location.pathname);
 
   /**
    * Logs out the current user and redirects to the login page.
@@ -74,7 +76,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="dashboard-shell">
+    <div className={`dashboard-shell${hasAiInput ? ' dashboard-shell--with-ai-input' : ''}`}>
       <aside className="dashboard-sidebar">
         <div>
           <div className="dashboard-brand">

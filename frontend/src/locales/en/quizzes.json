@@ -37,7 +37,13 @@
     "itemsCount_other": "{{count}} items",
     "preview": "Preview",
     "edit": "Edit",
+    "delete": "Delete",
+    "deleteAria": "Delete quiz",
     "summaryAria": "Quiz summary"
+  },
+  "delete": {
+    "title": "Delete Quiz",
+    "confirm": "Are you sure you want to delete <strong>{{title}}</strong>? This action cannot be undone."
   },
   "questions": {
     "noneViewTitle": "No questions yet",

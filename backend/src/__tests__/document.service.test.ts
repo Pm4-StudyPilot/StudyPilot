@@ -60,7 +60,24 @@ const mockDocumentDelete = mock(async (): Promise<void> => undefined);
 const mockEnsureBucket = mock(async (): Promise<void> => undefined);
 const mockStorageUpload = mock(async (): Promise<void> => undefined);
 const mockStorageDownload = mock(async (): Promise<Readable> => Readable.from([]));
+const mockStorageDownloadBuffer = mock(async (): Promise<Buffer> => Buffer.from(''));
 const mockStorageDelete = mock(async (): Promise<void> => undefined);
+const mockParseOffice = mock(
+  async (): Promise<unknown> => ({
+    warnings: [],
+    to: mock(async () => ({
+      value: [
+        {
+          text: 'Parsed office text',
+          metadata: { sourceType: 'pdf', pageNumber: 1 },
+          startIndex: 0,
+          endIndex: 18,
+        },
+      ],
+      messages: [],
+    })),
+  })
+);
 /**
  * Mock Prisma database module.
  */
@@ -86,12 +103,47 @@ mock.module('../config/minio', () => ({
     ensureBucket: mockEnsureBucket,
     upload: mockStorageUpload,
     download: mockStorageDownload,
+    downloadBuffer: mockStorageDownloadBuffer,
     delete: mockStorageDelete,
+  },
+}));
+
+mock.module('officeparser', () => ({
+  OfficeParser: {
+    parseOffice: mockParseOffice,
   },
 }));
 
 // Import service after mocks are defined
 const { DocumentService } = await import('../services/document.service');
+
+function buildServiceWithAccess(hasAccess: boolean) {
+  const checkAccess = mock(async () => hasAccess);
+  const fakeShareService = { checkAccess } as unknown as ConstructorParameters<
+    typeof DocumentService
+  >[0];
+  const service = new DocumentService(fakeShareService);
+  return { service, checkAccess };
+}
+
+function buildOfficeAst(
+  chunks: Array<{
+    text: string;
+    metadata: Record<string, unknown>;
+    startIndex?: number;
+    endIndex?: number;
+  }>,
+  warnings: Array<{ code: string; message: string }> = [],
+  messages: Array<{ code: string; message: string }> = []
+) {
+  return {
+    warnings,
+    to: mock(async () => ({
+      value: chunks,
+      messages,
+    })),
+  };
+}
 
 /**
  * Unit tests for DocumentService.
@@ -113,7 +165,9 @@ describe('DocumentService', () => {
     mockEnsureBucket.mockClear();
     mockStorageUpload.mockClear();
     mockStorageDownload.mockClear();
+    mockStorageDownloadBuffer.mockClear();
     mockStorageDelete.mockClear();
+    mockParseOffice.mockClear();
   });
 
   /**
@@ -124,7 +178,7 @@ describe('DocumentService', () => {
      * Test case: Successful upload
      *
      * Scenario:
-     * - course exists and belongs to the user
+     * - user has owner or shared access to the course
      * - file is uploaded to MinIO
      * - document metadata is stored in Prisma
      *
@@ -315,7 +369,7 @@ describe('DocumentService', () => {
      * - no explicit filter or sort options provided
      *
      * Expected behavior:
-     * - documents are queried for the correct course and owner
+     * - documents are queried for the correct course
      * - default sorting is createdAt desc
      * - only selected metadata is returned
      */
@@ -337,27 +391,16 @@ describe('DocumentService', () => {
           courseId: 'course-1',
         },
       ];
-      mockCourseFindFirst.mockResolvedValueOnce({
-        id: 'course-1',
-        ownerId: 'user-1',
-      });
-
       mockDocumentFindMany.mockResolvedValueOnce(documents);
 
-      const service = new DocumentService();
+      const { service, checkAccess } = buildServiceWithAccess(true);
       const result = await service.listByCourse('course-1', 'user-1');
 
-      expect(mockCourseFindFirst).toHaveBeenCalledWith({
-        where: {
-          id: 'course-1',
-          ownerId: 'user-1',
-        },
-      });
+      expect(checkAccess).toHaveBeenCalledWith('course-1', 'user-1');
 
       expect(mockDocumentFindMany).toHaveBeenCalledWith({
         where: {
           courseId: 'course-1',
-          ownerId: 'user-1',
         },
         orderBy: {
           createdAt: 'desc',
@@ -382,14 +425,9 @@ describe('DocumentService', () => {
      * - fileType is added to Prisma where clause
      */
     it('should apply fileType filter when provided', async () => {
-      mockCourseFindFirst.mockResolvedValueOnce({
-        id: 'course-1',
-        ownerId: 'user-1',
-      });
-
       mockDocumentFindMany.mockResolvedValueOnce([]);
 
-      const service = new DocumentService();
+      const { service } = buildServiceWithAccess(true);
 
       await service.listByCourse('course-1', 'user-1', {
         fileType: 'application/pdf',
@@ -398,7 +436,6 @@ describe('DocumentService', () => {
       expect(mockDocumentFindMany).toHaveBeenCalledWith({
         where: {
           courseId: 'course-1',
-          ownerId: 'user-1',
           fileType: 'application/pdf',
         },
         orderBy: {
@@ -422,14 +459,9 @@ describe('DocumentService', () => {
      * - search term is mapped to case-insensitive filename contains filter
      */
     it('should apply case-insensitive filename search when provided', async () => {
-      mockCourseFindFirst.mockResolvedValueOnce({
-        id: 'course-1',
-        ownerId: 'user-1',
-      });
-
       mockDocumentFindMany.mockResolvedValueOnce([]);
 
-      const service = new DocumentService();
+      const { service } = buildServiceWithAccess(true);
 
       await service.listByCourse('course-1', 'user-1', {
         search: 'agile',
@@ -438,7 +470,6 @@ describe('DocumentService', () => {
       expect(mockDocumentFindMany).toHaveBeenCalledWith({
         where: {
           courseId: 'course-1',
-          ownerId: 'user-1',
           filename: {
             contains: 'agile',
             mode: 'insensitive',
@@ -465,14 +496,9 @@ describe('DocumentService', () => {
      * - selected sort option is translated into Prisma orderBy
      */
     it('should apply custom sort option when provided', async () => {
-      mockCourseFindFirst.mockResolvedValueOnce({
-        id: 'course-1',
-        ownerId: 'user-1',
-      });
-
       mockDocumentFindMany.mockResolvedValueOnce([]);
 
-      const service = new DocumentService();
+      const { service } = buildServiceWithAccess(true);
 
       await service.listByCourse('course-1', 'user-1', {
         sort: 'filename:asc',
@@ -481,7 +507,6 @@ describe('DocumentService', () => {
       expect(mockDocumentFindMany).toHaveBeenCalledWith({
         where: {
           courseId: 'course-1',
-          ownerId: 'user-1',
         },
         orderBy: {
           filename: 'asc',
@@ -504,14 +529,9 @@ describe('DocumentService', () => {
      * - all query options are reflected in the Prisma query
      */
     it('should combine filters, search, and sorting in one query', async () => {
-      mockCourseFindFirst.mockResolvedValueOnce({
-        id: 'course-1',
-        ownerId: 'user-1',
-      });
-
       mockDocumentFindMany.mockResolvedValueOnce([]);
 
-      const service = new DocumentService();
+      const { service } = buildServiceWithAccess(true);
 
       await service.listByCourse('course-1', 'user-1', {
         sort: 'fileSize:desc',
@@ -522,7 +542,6 @@ describe('DocumentService', () => {
       expect(mockDocumentFindMany).toHaveBeenCalledWith({
         where: {
           courseId: 'course-1',
-          ownerId: 'user-1',
           fileType: 'application/pdf',
           filename: {
             contains: 'intro',
@@ -551,13 +570,286 @@ describe('DocumentService', () => {
      * - document query is not executed
      */
     it('should throw if course is not found during listByCourse', async () => {
-      mockCourseFindFirst.mockResolvedValueOnce(null);
-
-      const service = new DocumentService();
+      const { service, checkAccess } = buildServiceWithAccess(false);
 
       await expect(service.listByCourse('course-1', 'user-1')).rejects.toThrow('Course not found.');
 
+      expect(checkAccess).toHaveBeenCalledWith('course-1', 'user-1');
       expect(mockDocumentFindMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('readCourseDocuments', () => {
+    const readSelect = {
+      id: true,
+      filename: true,
+      bucket: true,
+      objectKey: true,
+      fileSize: true,
+      fileType: true,
+      createdAt: true,
+      courseId: true,
+    };
+
+    it('should read text documents when the user has owner or shared course access', async () => {
+      const createdAt = new Date('2026-04-20T10:00:00.000Z');
+      mockDocumentFindMany.mockResolvedValueOnce([
+        {
+          id: 'doc-1',
+          filename: 'notes.txt',
+          bucket: 'documents',
+          objectKey: 'courses/course-1/notes.txt',
+          fileSize: 42,
+          fileType: 'text/plain',
+          createdAt,
+          courseId: 'course-1',
+        },
+      ]);
+      mockStorageDownloadBuffer.mockResolvedValueOnce(
+        Buffer.from('Intro\n\nPhotosynthesis turns light into chemical energy.')
+      );
+
+      const { service, checkAccess } = buildServiceWithAccess(true);
+
+      const result = await service.readCourseDocuments('course-1', 'shared-user');
+
+      expect(checkAccess).toHaveBeenCalledWith('course-1', 'shared-user');
+      expect(mockDocumentFindMany).toHaveBeenCalledWith({
+        where: { courseId: 'course-1' },
+        orderBy: { createdAt: 'desc' },
+        select: readSelect,
+      });
+      expect(mockStorageDownloadBuffer).toHaveBeenCalledWith(
+        'documents',
+        'courses/course-1/notes.txt'
+      );
+      expect(result.documents).toEqual([
+        {
+          id: 'doc-1',
+          filename: 'notes.txt',
+          fileSize: 42,
+          fileType: 'text/plain',
+          createdAt,
+          courseId: 'course-1',
+          readableType: 'text',
+        },
+      ]);
+      expect(result.chunks[0].text).toContain('Photosynthesis');
+      expect(result.errors).toEqual([]);
+      expect(result.skipped).toEqual([]);
+      expect(result.truncated).toBe(false);
+    });
+
+    for (const testCase of [
+      {
+        filename: 'lecture.pdf',
+        fileType: 'application/pdf',
+        expectedFileType: 'pdf',
+        metadata: { sourceType: 'pdf', pageNumber: 2 },
+      },
+      {
+        filename: 'summary.docx',
+        fileType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        expectedFileType: 'docx',
+        metadata: { sourceType: 'docx', closestHeading: 'Chapter 1' },
+      },
+      {
+        filename: 'slides.pptx',
+        fileType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        expectedFileType: 'pptx',
+        metadata: { sourceType: 'pptx', slideNumber: 3 },
+      },
+    ]) {
+      it(`should parse ${testCase.expectedFileType} documents with officeparser`, async () => {
+        mockDocumentFindMany.mockResolvedValueOnce([
+          {
+            id: 'doc-office',
+            filename: testCase.filename,
+            bucket: 'documents',
+            objectKey: `courses/course-1/${testCase.filename}`,
+            fileSize: 1024,
+            fileType: testCase.fileType,
+            createdAt: new Date('2026-04-20T10:00:00.000Z'),
+            courseId: 'course-1',
+          },
+        ]);
+        mockStorageDownloadBuffer.mockResolvedValueOnce(Buffer.from('office-bytes'));
+        mockParseOffice.mockResolvedValueOnce(
+          buildOfficeAst(
+            [
+              {
+                text: `${testCase.expectedFileType} extracted text`,
+                metadata: testCase.metadata,
+                startIndex: 5,
+                endIndex: 30,
+              },
+            ],
+            [{ code: 'PARSER_WARNING', message: 'Non-fatal parser warning' }]
+          )
+        );
+
+        const { service } = buildServiceWithAccess(true);
+        const result = await service.readCourseDocuments('course-1', 'user-1');
+
+        expect(mockParseOffice).toHaveBeenCalledWith(
+          Buffer.from('office-bytes'),
+          expect.objectContaining({
+            fileType: testCase.expectedFileType,
+            ocr: false,
+          })
+        );
+        expect(result.chunks).toEqual([
+          expect.objectContaining({
+            documentId: 'doc-office',
+            filename: testCase.filename,
+            text: `${testCase.expectedFileType} extracted text`,
+            metadata: expect.objectContaining({
+              sourceType: testCase.expectedFileType,
+              startIndex: 5,
+              endIndex: 30,
+            }),
+          }),
+        ]);
+        expect(result.warnings[0]).toContain('Non-fatal parser warning');
+      });
+    }
+
+    it('should throw if the user does not have access to the course', async () => {
+      const { service, checkAccess } = buildServiceWithAccess(false);
+
+      await expect(service.readCourseDocuments('course-1', 'user-x')).rejects.toThrow(
+        'Course not found.'
+      );
+
+      expect(checkAccess).toHaveBeenCalledWith('course-1', 'user-x');
+      expect(mockDocumentFindMany).not.toHaveBeenCalled();
+      expect(mockStorageDownloadBuffer).not.toHaveBeenCalled();
+    });
+
+    it('should filter by document ids when provided', async () => {
+      mockDocumentFindMany.mockResolvedValueOnce([]);
+
+      const { service } = buildServiceWithAccess(true);
+
+      await service.readCourseDocuments('course-1', 'user-1', {
+        documentIds: ['doc-2', 'doc-2', 'doc-3'],
+      });
+
+      expect(mockDocumentFindMany).toHaveBeenCalledWith({
+        where: {
+          courseId: 'course-1',
+          id: { in: ['doc-2', 'doc-3'] },
+        },
+        orderBy: { createdAt: 'desc' },
+        select: readSelect,
+      });
+    });
+
+    it('should skip legacy doc and ppt files with explicit reasons', async () => {
+      mockDocumentFindMany.mockResolvedValueOnce([
+        {
+          id: 'doc-legacy-word',
+          filename: 'old-notes.doc',
+          bucket: 'documents',
+          objectKey: 'courses/course-1/old-notes.doc',
+          fileSize: 100,
+          fileType: 'application/msword',
+          createdAt: new Date('2026-04-20T10:00:00.000Z'),
+          courseId: 'course-1',
+        },
+        {
+          id: 'doc-legacy-slides',
+          filename: 'old-slides.ppt',
+          bucket: 'documents',
+          objectKey: 'courses/course-1/old-slides.ppt',
+          fileSize: 100,
+          fileType: 'application/vnd.ms-powerpoint',
+          createdAt: new Date('2026-04-20T10:00:00.000Z'),
+          courseId: 'course-1',
+        },
+      ]);
+
+      const { service } = buildServiceWithAccess(true);
+      const result = await service.readCourseDocuments('course-1', 'user-1');
+
+      expect(result.skipped).toEqual([
+        expect.objectContaining({
+          documentId: 'doc-legacy-word',
+          reason: expect.stringContaining('.doc'),
+        }),
+        expect.objectContaining({
+          documentId: 'doc-legacy-slides',
+          reason: expect.stringContaining('.ppt'),
+        }),
+      ]);
+      expect(mockStorageDownloadBuffer).not.toHaveBeenCalled();
+      expect(result.chunks).toEqual([]);
+    });
+
+    it('should rank chunks by query relevance deterministically', async () => {
+      mockDocumentFindMany.mockResolvedValueOnce([
+        {
+          id: 'doc-general',
+          filename: 'general.txt',
+          bucket: 'documents',
+          objectKey: 'courses/course-1/general.txt',
+          fileSize: 100,
+          fileType: 'text/plain',
+          createdAt: new Date('2026-04-21T10:00:00.000Z'),
+          courseId: 'course-1',
+        },
+        {
+          id: 'doc-match',
+          filename: 'match.txt',
+          bucket: 'documents',
+          objectKey: 'courses/course-1/match.txt',
+          fileSize: 100,
+          fileType: 'text/plain',
+          createdAt: new Date('2026-04-20T10:00:00.000Z'),
+          courseId: 'course-1',
+        },
+      ]);
+      mockStorageDownloadBuffer
+        .mockResolvedValueOnce(Buffer.from('general course notes'))
+        .mockResolvedValueOnce(Buffer.from('mitosis and more mitosis details'));
+
+      const { service } = buildServiceWithAccess(true);
+      const result = await service.readCourseDocuments('course-1', 'user-1', {
+        query: 'mitosis',
+      });
+
+      expect(result.chunks[0].documentId).toBe('doc-match');
+      expect(result.chunks[0].score).toBe(2);
+      expect(result.chunks[1].documentId).toBe('doc-general');
+      expect(result.chunks[1].score).toBe(0);
+    });
+
+    it('should cap returned text and mark truncated chunks', async () => {
+      mockDocumentFindMany.mockResolvedValueOnce([
+        {
+          id: 'doc-long',
+          filename: 'long.txt',
+          bucket: 'documents',
+          objectKey: 'courses/course-1/long.txt',
+          fileSize: 100,
+          fileType: 'text/plain',
+          createdAt: new Date('2026-04-20T10:00:00.000Z'),
+          courseId: 'course-1',
+        },
+      ]);
+      mockStorageDownloadBuffer.mockResolvedValueOnce(Buffer.from('abcdefghijklmnopqrstuvwxyz'));
+
+      const { service } = buildServiceWithAccess(true);
+      const result = await service.readCourseDocuments('course-1', 'user-1', {
+        maxCharacters: 10,
+      });
+
+      expect(result.chunks).toHaveLength(1);
+      expect(result.chunks[0].text).toBe('abcdefghij');
+      expect(result.chunks[0].truncated).toBe(true);
+      expect(result.returnedCharacters).toBe(10);
+      expect(result.maxCharacters).toBe(10);
+      expect(result.truncated).toBe(true);
     });
   });
 

@@ -29,13 +29,15 @@ function renderLayout({
   showSearch = true,
   searchValue = '',
   onSearchChange = vi.fn(),
+  initialPath = '/',
 }: {
   showSearch?: boolean;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
+  initialPath?: string;
 } = {}) {
   return render(
-    <MemoryRouter initialEntries={['/']}>
+    <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
         <Route
           path="*"
@@ -54,6 +56,10 @@ function renderLayout({
       </Routes>
     </MemoryRouter>
   );
+}
+
+function getShell() {
+  return screen.getByText('Dashboard content').closest('.dashboard-shell');
 }
 
 /**
@@ -94,6 +100,18 @@ describe('DashboardLayout', () => {
     expect(screen.getByText('StudyPilot')).toBeInTheDocument();
     expect(screen.getByText('Dashboard content')).toBeInTheDocument();
     expect(screen.getByLabelText('Profile')).toHaveTextContent('T');
+  });
+
+  it('marks the shell when the AI input is visible on the current route', () => {
+    renderLayout({ initialPath: '/courses/42' });
+
+    expect(getShell()).toHaveClass('dashboard-shell--with-ai-input');
+  });
+
+  it('does not add AI input spacing on routes without the assistant', () => {
+    renderLayout({ initialPath: '/settings' });
+
+    expect(getShell()).not.toHaveClass('dashboard-shell--with-ai-input');
   });
 
   /**
