@@ -19,7 +19,7 @@
   "sorting": {
     "sortBy": "Sort by:",
     "newest": "Newest",
-    "name": "Name",
+    "name": "File name",
     "type": "Type",
     "size": "Size",
     "course": "Course"
