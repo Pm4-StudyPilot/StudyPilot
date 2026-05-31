@@ -82,11 +82,6 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
             />
             <div>
               <div className="d-flex align-items-center gap-2 mb-1">
-                <span
-                  className="course-card__color-dot"
-                  style={{ backgroundColor: course.color }}
-                  aria-hidden="true"
-                />
                 <Link
                   to={`/courses/${course.id}`}
                   className="course-card__name fw-semibold text-decoration-none"
