@@ -320,7 +320,12 @@ export default function CourseDocumentsList({
             const fileIcon = getFileIcon(doc.fileType);
 
             return (
-              <div key={doc.id} className="course-document-item">
+              <div
+                key={doc.id}
+                className="course-document-item"
+                data-testid="document-item"
+                data-document-name={doc.filename}
+              >
                 <div className="course-document-item__header">
                   <div className="course-document-item__file">
                     <i className={`${fileIcon.icon} ${fileIcon.colorClass}`} />
@@ -341,6 +346,7 @@ export default function CourseDocumentsList({
                     onClick={() => handleOpen(doc)}
                     disabled={isPending}
                     aria-label={t('courses.documents.openAria', { filename: doc.filename })}
+                    data-testid="document-open-button"
                   >
                     <i className="fa-solid fa-up-right-from-square" aria-hidden="true" />
                   </button>
@@ -351,6 +357,7 @@ export default function CourseDocumentsList({
                     onClick={() => handleDownload(doc)}
                     disabled={isPending}
                     aria-label={t('courses.documents.downloadAria', { filename: doc.filename })}
+                    data-testid="document-download-button"
                   >
                     <i className="fa-solid fa-download" aria-hidden="true" />
                   </button>
@@ -361,6 +368,7 @@ export default function CourseDocumentsList({
                     onClick={() => setDocumentToDelete(doc)}
                     disabled={isPending}
                     aria-label={t('courses.documents.deleteAria', { filename: doc.filename })}
+                    data-testid="document-delete-button"
                   >
                     <i className="fa-solid fa-trash" aria-hidden="true" />
                   </button>

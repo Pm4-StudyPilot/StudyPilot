@@ -110,7 +110,7 @@ export default function QuizDetailPage() {
     questionId: string,
     data: {
       title: string;
-      description: string;
+      description?: string;
       type: QuestionWithAnswersDto['type'];
     }
   ) {
@@ -337,7 +337,7 @@ export default function QuizDetailPage() {
                 )}
 
                 <div className="quiz-detail__actions">
-                  {editMode ? (
+                  {editMode || !questions.length ? (
                     <button
                       type="button"
                       className="btn btn-primary quiz-detail__play-button"

@@ -1,7 +1,10 @@
 node_modules
 dist
 coverage
-cypress
+e2e
+playwright.config.ts
+playwright-report
+test-results
 *.test.tsx
 *.test.ts
 __tests__

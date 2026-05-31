@@ -6,11 +6,11 @@ import { rateLimit } from 'express-rate-limit';
  * Applied to authenticated endpoints that perform standard database reads
  * or writes (e.g. fetching a user profile, listing courses).
  *
- * Limit: 1000 requests per 15 minutes per IP
+ * Limit: 10000 requests per 15 minutes per IP
  */
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 1000,
+  limit: 10000,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   message: { message: 'Too many requests, please try again later' },
@@ -23,11 +23,11 @@ export const generalLimiter = rateLimit({
  * credential stuffing, brute-force, or enumeration attacks
  * (login, register, availability checks).
  *
- * Limit: 100 requests per 15 minutes per IP
+ * Limit: 2000 requests per 15 minutes per IP
  */
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 100,
+  limit: 2000,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   message: { message: 'Too many attempts, please try again later' },
@@ -40,11 +40,11 @@ export const authLimiter = rateLimit({
  * such as passwords. Provides a tight limit to prevent abuse even
  * from an authenticated session.
  *
- * Limit: 50 requests per 15 minutes per IP
+ * Limit: 1000 requests per 15 minutes per IP
  */
 export const sensitiveLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 50,
+  limit: 1000,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   message: { message: 'Too many attempts, please try again later' },

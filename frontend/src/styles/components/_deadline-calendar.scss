@@ -234,17 +234,22 @@
   }
 
   &__day--outside {
-    color: color-mix(in srgb, var(--color-text-muted) 68%, transparent);
+    // Solid muted tone (no transparency) so out-of-month days still clear the
+    // WCAG AA 4.5:1 text-contrast threshold while staying de-emphasised.
+    color: var(--color-text-muted);
   }
 
   &__day--selected,
   &__day--today {
     background-color: var(--color-primary-bold);
-    color: var(--color-white);
+    // Dark text on the bright brand orange for AA contrast (matches buttons).
+    color: var(--color-on-primary);
   }
 
+  // Days with deadlines are flagged by their dot; keep the default readable text
+  // colour rather than white-on-transparent (which fails contrast in light mode).
   &__day--active:not(.deadline-calendar__day--selected):not(.deadline-calendar__day--today) {
-    color: var(--color-white);
+    color: var(--color-text-primary);
   }
 
   &__day-number {

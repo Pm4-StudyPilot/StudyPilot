@@ -164,8 +164,7 @@ Bootstrap Overwrites
   border-color: var(--color-border);
   color: var(--color-text-secondary);
 
-  &:hover,
-  &:focus {
+  &:hover {
     border-color: var(--color-primary);
     background-color: var(--color-primary-accent);
     color: var(--color-primary);
@@ -181,7 +180,7 @@ Bootstrap Overwrites
   border: 1px solid var(--color-primary-bold);
 
   background: var(--color-primary-bold);
-  color: var(--color-text-primary);
+  color: var(--color-on-primary);
 
   font-weight: 700;
   line-height: 1.5;
@@ -191,11 +190,10 @@ Bootstrap Overwrites
     border-color 0.2s ease,
     transform 0.2s ease;
 
-  &:hover,
-  &:focus {
+  &:hover {
     border-color: var(--color-primary);
     background: var(--color-primary);
-    color: var(--color-text-primary);
+    color: var(--color-on-primary);
 
     transform: translateY(-1px);
   }
@@ -227,7 +225,13 @@ These are written widely in JSX but Bootstrap hardcodes them to fixed colors
 }
 
 .bg-secondary {
-  background-color: var(--color-text-muted) !important;
+  background-color: var(--color-badge-muted) !important;
+}
+
+/* Bootstrap's warning badge stays a light yellow in both themes; force dark text
+   (the global .text-dark remap would otherwise make it light and unreadable). */
+.badge.bg-warning {
+  color: var(--color-on-primary) !important;
 }
 
 .text-danger {

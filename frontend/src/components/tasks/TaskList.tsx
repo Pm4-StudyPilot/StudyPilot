@@ -5,12 +5,14 @@ import {
   DndContext,
   closestCenter,
   DragEndEvent,
+  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
 import {
   SortableContext,
+  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable,
   arrayMove,
@@ -102,7 +104,12 @@ export default function TaskList({
   const [reorderError, setReorderError] = useState('');
   const { t } = useTranslation();
 
-  const sensors = useSensors(useSensor(PointerSensor));
+  // Pointer for mouse/touch drag, Keyboard for accessible drag-and-drop
+  // (focus the handle, Space to pick up, Arrow keys to move, Space to drop).
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
   const displayedTasks = sortTasks(tasks, sortField);
 
   async function handleDragEnd(event: DragEndEvent) {
