@@ -16,6 +16,7 @@ import { registerCreateQuiz } from './create-quiz';
 import { registerUpdateQuiz } from './update-quiz';
 import { registerDeleteQuiz } from './delete-quiz';
 import { registerListDocuments } from './list-documents';
+import { registerReadCourseDocuments } from './read-course-documents';
 
 export function registerTools(server: McpServer): void {
   // Courses
@@ -39,4 +40,5 @@ export function registerTools(server: McpServer): void {
   registerDeleteQuiz(server);
   // Documents (read-only)
   registerListDocuments(server);
+  registerReadCourseDocuments(server);
 }
