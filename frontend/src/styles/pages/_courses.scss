@@ -90,15 +90,6 @@
     }
   }
 
-  &__color-dot {
-    display: inline-block;
-    flex-shrink: 0;
-    width: 0.7rem;
-    height: 0.7rem;
-    border-radius: var(--radius-pill);
-    box-shadow: 0 0 0 3px var(--color-glow-soft);
-  }
-
   &__date {
     font-size: 0.78rem;
     color: var(--color-text-secondary);
@@ -208,12 +199,6 @@
     display: flex;
     align-items: flex-start;
     gap: 1rem;
-  }
-
-  &__color-dot {
-    width: 1rem;
-    height: 1rem;
-    margin-top: 0.9rem;
   }
 
   &__support-note {

@@ -91,12 +91,12 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
             />
             <div>
               <div className="d-flex align-items-center gap-2 mb-1">
-                <span
-                  className="course-card__color-dot"
-                  style={{ backgroundColor: course.color }}
-                  aria-hidden="true"
-                />
-                <span className="course-card__name fw-semibold">{course.name}</span>
+                <Link
+                  to={`/courses/${course.id}`}
+                  className="course-card__name fw-semibold text-decoration-none"
+                >
+                  {course.name}
+                </Link>
               </div>
               <div className="course-card__date">
                 {t('courses.card.addedDate', { date: formattedDate })}
