@@ -251,8 +251,7 @@
   }
 
   &__day--today-muted {
-    border: 1px solid var(--color-primary);
-    background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+    background-color: transparent;
     color: var(--color-primary);
   }
 
