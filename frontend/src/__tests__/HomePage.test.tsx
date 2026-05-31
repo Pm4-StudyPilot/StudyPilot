@@ -617,10 +617,10 @@ describe('HomePage', () => {
    * Dashboard course cards are rendered after a successful fetch.
    *
    * Expected behavior:
-   * - Only the course titles are clickable links
-   * - The surrounding dashboard cards are not rendered as anchor elements
+   * - The surrounding dashboard cards are clickable links
+   * - Task rows inside the featured card navigate to the related course through the card link
    */
-  it('renders only course titles as links inside dashboard cards', async () => {
+  it('renders dashboard course cards as full-card links', async () => {
     mockHomePageApi();
 
     renderPage();
@@ -637,8 +637,9 @@ describe('HomePage', () => {
 
     expect(compactCourseLink).toHaveAttribute('href', '/courses/c2');
 
-    expect(featuredCourseLink.closest('.dashboard-featured-card')).not.toHaveAttribute('href');
+    expect(featuredCourseLink).toHaveClass('dashboard-featured-card');
+    expect(featuredCourseLink).toContainElement(screen.getByText('Train model'));
 
-    expect(compactCourseLink.closest('.dashboard-course-card')).not.toHaveAttribute('href');
+    expect(compactCourseLink).toHaveClass('dashboard-course-card');
   });
 });
