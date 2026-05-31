@@ -31,6 +31,9 @@ type EditProps = BaseProps & {
     data: AnswerFormState
   ) => Promise<void> | void;
   onDeleteAnswer: (questionId: string, answerId: string) => void;
+  onReorderQuestion: (questionId: string, direction: 'up' | 'down') => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
 };
 
 type PlayProps = BaseProps & {
@@ -123,7 +126,11 @@ function EditQuestionCard({
   onCreateAnswer,
   onUpdateAnswer,
   onDeleteAnswer,
+  onReorderQuestion,
+  canMoveUp,
+  canMoveDown,
 }: EditProps) {
+  console.log(canMoveUp);
   const { t } = useTranslation();
   const [draftQuestion, setDraftQuestion] = useState<QuestionFormState>({
     title: question.title,
@@ -344,17 +351,36 @@ function EditQuestionCard({
           {addingAnswer ? t('quizzes.answers.addingButton') : t('quizzes.answers.addButton')}
         </button>
       </div>
-      <div className="question-editor__actions">
+      <div className="question-editor__actions w-100">
         <button
           type="button"
           className="btn btn-outline-danger btn-sm"
           onClick={() => onDeleteQuestion?.(question.id)}
+          aria-label="Delete question"
         >
           <i className="fa-solid fa-trash me-1" />
           {t('quizzes.questions.card.delete')}
         </button>
         {(savingAnswerId || savingQuestion) && <>{t('common.saving')}</>}
         {questionError && <div className="text-danger">{questionError}</div>}
+        <button
+          type="button"
+          className="btn btn-outline-primary btn-sm ms-auto"
+          disabled={!canMoveDown}
+          onClick={() => onReorderQuestion?.(question.id, 'down')}
+          aria-label="Move question down"
+        >
+          <i className="fa-solid fa-chevron-down" />
+        </button>
+        <button
+          type="button"
+          className="btn btn-outline-primary btn-sm"
+          disabled={!canMoveUp}
+          onClick={() => onReorderQuestion?.(question.id, 'up')}
+          aria-label="Move question up"
+        >
+          <i className="fa-solid fa-chevron-up" />
+        </button>
       </div>
     </article>
   );

@@ -150,6 +150,28 @@ export default function QuizDetailPage() {
       )
     );
   }
+  async function handleReorderQuestion(questionId: string, direction: 'up' | 'down') {
+    const currentIndex = questions.findIndex((q) => q.id === questionId);
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+    if (targetIndex < 0 || targetIndex >= questions.length) {
+      return;
+    }
+
+    const reordered = [...questions];
+
+    [reordered[currentIndex], reordered[targetIndex]] = [
+      reordered[targetIndex],
+      reordered[currentIndex],
+    ];
+
+    setQuestions(reordered);
+
+    await api.patch(`/courses/${courseId}/quizzes/${quizId}/questions/order`, {
+      questionIds: reordered.map((q) => q.id),
+    });
+  }
 
   async function handleDeleteQuestion(questionId: string) {
     if (!courseId || !quizId) return;
@@ -483,6 +505,7 @@ export default function QuizDetailPage() {
                 onCreateAnswer={handleCreateAnswer}
                 onUpdateAnswer={handleUpdateAnswer}
                 onDeleteAnswer={handleDeleteAnswer}
+                onReorderQuestion={handleReorderQuestion}
               />
             </section>
           </div>
