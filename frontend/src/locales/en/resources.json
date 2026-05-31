@@ -1,0 +1,40 @@
+{
+  "library": {
+    "eyebrow": "Resource Library",
+    "title": "Resources",
+    "subline": "Manage your academic library and access AI-generated study material in one unified workspace.",
+    "searchPlaceholder": "Search your library..."
+  },
+  "uploads": {
+    "heading": "My Uploads",
+    "shown": "{{shown}} of {{total}} files shown",
+    "shownOne": "{{shown}} of {{total}} file shown",
+    "viewAll": "View all",
+    "showRecent": "Show recent",
+    "loading": "Loading documents...",
+    "errorLoad": "Failed to load documents.",
+    "empty": "No documents uploaded yet.",
+    "emptySearch": "No resources match your search."
+  },
+  "sorting": {
+    "sortBy": "Sort by:",
+    "newest": "Newest",
+    "name": "Name",
+    "type": "Type",
+    "size": "Size",
+    "course": "Course"
+  },
+  "documents": {
+    "updated": "Updated {{date}}",
+    "unknownSize": "Unknown size",
+    "openAria": "Open {{filename}}",
+    "downloadAria": "Download {{filename}}",
+    "deleteAria": "Delete {{filename}}",
+    "openFailed": "Failed to open document.",
+    "downloadFailed": "Failed to download document."
+  },
+  "aiCreations": {
+    "heading": "AI Creations",
+    "empty": "AI-generated resources will be displayed here."
+  }
+}

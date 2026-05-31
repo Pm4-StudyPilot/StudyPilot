@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../components/shared/layout/DashboardLayout';
 import DeleteDocumentModal from '../components/courses/DeleteDocumentModal';
@@ -31,22 +32,16 @@ const defaultSortDirection: Record<ResourceSortField, SortDirection> = {
   course: 'asc',
 };
 
-const sortFieldLabels: Record<ResourceSortField, string> = {
-  createdAt: 'Newest',
-  filename: 'Name',
-  fileType: 'Type',
-  fileSize: 'Size',
-  course: 'Course',
+const sortFieldTranslationKeys: Record<ResourceSortField, string> = {
+  createdAt: 'resources.sorting.newest',
+  filename: 'resources.sorting.name',
+  fileType: 'resources.sorting.type',
+  fileSize: 'resources.sorting.size',
+  course: 'resources.sorting.course',
 };
 
-/**
- * Converts a file size in bytes into a human-readable string.
- *
- * @param bytes File size in bytes
- * @returns Formatted file size string
- */
-function formatFileSize(bytes: number | null | undefined): string {
-  if (!bytes) return 'Unknown size';
+function formatFileSize(bytes: number | null | undefined, unknownLabel: string): string {
+  if (!bytes) return unknownLabel;
 
   const mb = bytes / (1024 * 1024);
 
@@ -57,12 +52,6 @@ function formatFileSize(bytes: number | null | undefined): string {
   return `${mb.toFixed(2)} MB`;
 }
 
-/**
- * Returns an icon and color class based on the document MIME type.
- *
- * @param fileType MIME type of the uploaded document
- * @returns Font Awesome icon class and color class
- */
 function getFileIcon(fileType?: string | null): {
   icon: string;
   colorClass: string;
@@ -117,6 +106,8 @@ function getFileIcon(fileType?: string | null): {
  * AI-generated learning resources.
  */
 export default function ResourcesPage() {
+  const { t } = useTranslation();
+
   const [documents, setDocuments] = useState<ResourceDocumentDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -143,7 +134,7 @@ export default function ResourcesPage() {
       })
       .catch((err: unknown) => {
         if (isCancelled) return;
-        setError(err instanceof Error ? err.message : 'Failed to load resources.');
+        setError(err instanceof Error ? err.message : t('resources.uploads.errorLoad'));
       })
       .finally(() => {
         if (!isCancelled) setLoading(false);
@@ -152,13 +143,8 @@ export default function ResourcesPage() {
     return () => {
       isCancelled = true;
     };
-  }, [showAllUploads]);
+  }, [showAllUploads, t]);
 
-  /**
-   * Opens a document in a new browser tab.
-   *
-   * @param doc Document metadata
-   */
   async function handleOpen(doc: ResourceDocumentDto) {
     setPendingActionDocId(doc.id);
     setActionError('');
@@ -170,17 +156,12 @@ export default function ResourcesPage() {
       window.open(url, '_blank', 'noopener,noreferrer');
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to open document.');
+      setActionError(err instanceof Error ? err.message : t('resources.documents.openFailed'));
     } finally {
       setPendingActionDocId(null);
     }
   }
 
-  /**
-   * Downloads a document to the user's device.
-   *
-   * @param doc Document metadata
-   */
   async function handleDownload(doc: ResourceDocumentDto) {
     setPendingActionDocId(doc.id);
     setActionError('');
@@ -199,27 +180,17 @@ export default function ResourcesPage() {
 
       URL.revokeObjectURL(url);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to download document.');
+      setActionError(err instanceof Error ? err.message : t('resources.documents.downloadFailed'));
     } finally {
       setPendingActionDocId(null);
     }
   }
 
-  /**
-   * Removes a deleted document from the local resource list.
-   *
-   * @param deletedId Deleted document id
-   */
   function handleDocumentDeleted(deletedId: string) {
     setDocuments((prev) => prev.filter((doc) => doc.id !== deletedId));
     setDocumentToDelete(null);
   }
 
-  /**
-   * Updates the active resource sort field and direction.
-   *
-   * @param field Field to sort by
-   */
   function handleSortClick(field: ResourceSortField) {
     if (sortField === field) {
       setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
@@ -230,12 +201,6 @@ export default function ResourcesPage() {
     setSortDirection(defaultSortDirection[field]);
   }
 
-  /**
-   * Renders a small sort direction icon for the active sort field.
-   *
-   * @param field Field represented by the sort button
-   * @returns Sort icon or null
-   */
   function renderSortIcon(field: ResourceSortField) {
     if (sortField !== field) return null;
 
@@ -262,8 +227,9 @@ export default function ResourcesPage() {
 
     if (sortField === 'course') return a.course.name.localeCompare(b.course.name) * direction;
     if (sortField === 'filename') return a.filename.localeCompare(b.filename) * direction;
-    if (sortField === 'fileType')
+    if (sortField === 'fileType') {
       return (a.fileType ?? '').localeCompare(b.fileType ?? '') * direction;
+    }
     if (sortField === 'fileSize') return ((a.fileSize ?? 0) - (b.fileSize ?? 0)) * direction;
 
     return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * direction;
@@ -272,32 +238,34 @@ export default function ResourcesPage() {
   const totalDocs = documents.length;
   const shownDocs = sortedDocuments.length;
 
+  const filesShownLabel =
+    totalDocs === 1
+      ? t('resources.uploads.shownOne', { shown: shownDocs, total: totalDocs })
+      : t('resources.uploads.shown', { shown: shownDocs, total: totalDocs });
+
   return (
     <DashboardLayout
       activeNav="resources"
       showSearch
       searchValue={resourceSearchTerm}
       onSearchChange={setResourceSearchTerm}
-      searchPlaceholder="Search your library..."
+      searchPlaceholder={t('resources.library.searchPlaceholder')}
     >
       <section className="dashboard-page-stack">
         <header className="dashboard-page-header">
           <div>
-            <p className="dashboard-page-header__eyebrow">Resource Library</p>
-            <h1>Resources</h1>
-            <p className="dashboard-page-header__subline">
-              Manage your academic library and access AI-generated study material in one unified
-              workspace.
-            </p>
+            <p className="dashboard-page-header__eyebrow">{t('resources.library.eyebrow')}</p>
+            <h1>{t('resources.library.title')}</h1>
+            <p className="dashboard-page-header__subline">{t('resources.library.subline')}</p>
           </div>
         </header>
 
         <section className="course-detail panel course-detail__documents p-4">
           <div className="course-detail__documents-header">
             <div>
-              <h2 className="text-white h4 mb-2">My Uploads</h2>
+              <h2 className="text-white h4 mb-2">{t('resources.uploads.heading')}</h2>
               <p className="course-detail__documents-count mb-0">
-                {loading ? 'Loading documents...' : `${shownDocs} of ${totalDocs} files shown`}
+                {loading ? t('resources.uploads.loading') : filesShownLabel}
               </p>
             </div>
 
@@ -307,13 +275,13 @@ export default function ResourcesPage() {
               onClick={() => setShowAllUploads((prev) => !prev)}
               disabled={loading}
             >
-              {showAllUploads ? 'Show recent' : 'View all'}
+              {showAllUploads ? t('resources.uploads.showRecent') : t('resources.uploads.viewAll')}
             </button>
           </div>
 
           {showAllUploads && (
             <div className="d-flex align-items-center gap-2 flex-wrap mb-3">
-              <span className="text-secondary small">Sort by:</span>
+              <span className="text-secondary small">{t('resources.sorting.sortBy')}</span>
 
               {(['createdAt', 'filename', 'fileType', 'fileSize', 'course'] as const).map(
                 (field) => (
@@ -325,7 +293,7 @@ export default function ResourcesPage() {
                     }`}
                     onClick={() => handleSortClick(field)}
                   >
-                    {sortFieldLabels[field]}
+                    {t(sortFieldTranslationKeys[field])}
                     {renderSortIcon(field)}
                   </button>
                 )
@@ -333,7 +301,7 @@ export default function ResourcesPage() {
             </div>
           )}
 
-          {loading && <p className="text-secondary mb-0">Loading documents...</p>}
+          {loading && <p className="text-secondary mb-0">{t('resources.uploads.loading')}</p>}
 
           {error && <div className="alert alert-danger mb-0">{error}</div>}
 
@@ -345,13 +313,13 @@ export default function ResourcesPage() {
 
           {!loading && !error && documents.length === 0 && (
             <div className="panel course-detail__placeholder p-4 text-secondary text-center">
-              No uploaded documents yet.
+              {t('resources.uploads.empty')}
             </div>
           )}
 
           {!loading && !error && documents.length > 0 && sortedDocuments.length === 0 && (
             <div className="course-detail__placeholder rounded p-3 text-secondary text-center">
-              No resources match your search.
+              {t('resources.uploads.emptySearch')}
             </div>
           )}
 
@@ -389,9 +357,11 @@ export default function ResourcesPage() {
                     </div>
 
                     <div className="course-document-item__meta">
-                      <span>{formatFileSize(doc.fileSize)}</span>
+                      <span>
+                        {formatFileSize(doc.fileSize, t('resources.documents.unknownSize'))}
+                      </span>
                       <span>•</span>
-                      <span>Updated {formattedDate}</span>
+                      <span>{t('resources.documents.updated', { date: formattedDate })}</span>
                     </div>
 
                     <div className="course-document-item__actions">
@@ -400,7 +370,7 @@ export default function ResourcesPage() {
                         className="course-document-item__icon-button"
                         onClick={() => handleOpen(doc)}
                         disabled={isPending}
-                        aria-label={`Open ${doc.filename}`}
+                        aria-label={t('resources.documents.openAria', { filename: doc.filename })}
                       >
                         <i className="fa-solid fa-up-right-from-square" aria-hidden="true" />
                       </button>
@@ -410,7 +380,9 @@ export default function ResourcesPage() {
                         className="course-document-item__icon-button"
                         onClick={() => handleDownload(doc)}
                         disabled={isPending}
-                        aria-label={`Download ${doc.filename}`}
+                        aria-label={t('resources.documents.downloadAria', {
+                          filename: doc.filename,
+                        })}
                       >
                         <i className="fa-solid fa-download" aria-hidden="true" />
                       </button>
@@ -420,7 +392,7 @@ export default function ResourcesPage() {
                         className="course-document-item__icon-button course-document-item__icon-button--danger"
                         onClick={() => setDocumentToDelete(doc)}
                         disabled={isPending}
-                        aria-label={`Delete ${doc.filename}`}
+                        aria-label={t('resources.documents.deleteAria', { filename: doc.filename })}
                       >
                         <i className="fa-solid fa-trash" aria-hidden="true" />
                       </button>
@@ -465,9 +437,11 @@ export default function ResourcesPage() {
                     </div>
 
                     <div className="course-document-item__meta">
-                      <span>{formatFileSize(doc.fileSize)}</span>
+                      <span>
+                        {formatFileSize(doc.fileSize, t('resources.documents.unknownSize'))}
+                      </span>
                       <span>•</span>
-                      <span>Updated {formattedDate}</span>
+                      <span>{t('resources.documents.updated', { date: formattedDate })}</span>
                     </div>
 
                     <div className="course-document-item__actions">
@@ -476,7 +450,7 @@ export default function ResourcesPage() {
                         className="course-document-item__icon-button"
                         onClick={() => handleOpen(doc)}
                         disabled={isPending}
-                        aria-label={`Open ${doc.filename}`}
+                        aria-label={t('resources.documents.openAria', { filename: doc.filename })}
                       >
                         <i className="fa-solid fa-up-right-from-square" aria-hidden="true" />
                       </button>
@@ -486,7 +460,9 @@ export default function ResourcesPage() {
                         className="course-document-item__icon-button"
                         onClick={() => handleDownload(doc)}
                         disabled={isPending}
-                        aria-label={`Download ${doc.filename}`}
+                        aria-label={t('resources.documents.downloadAria', {
+                          filename: doc.filename,
+                        })}
                       >
                         <i className="fa-solid fa-download" aria-hidden="true" />
                       </button>
@@ -496,7 +472,7 @@ export default function ResourcesPage() {
                         className="course-document-item__icon-button course-document-item__icon-button--danger"
                         onClick={() => setDocumentToDelete(doc)}
                         disabled={isPending}
-                        aria-label={`Delete ${doc.filename}`}
+                        aria-label={t('resources.documents.deleteAria', { filename: doc.filename })}
                       >
                         <i className="fa-solid fa-trash" aria-hidden="true" />
                       </button>
@@ -511,11 +487,11 @@ export default function ResourcesPage() {
         <section>
           <div className="course-detail__section-title mb-3">
             <span className="course-detail__section-accent course-detail__section-accent--secondary" />
-            <h2>AI Creations</h2>
+            <h2>{t('resources.aiCreations.heading')}</h2>
           </div>
 
           <div className="panel course-detail__section-card p-4 text-secondary">
-            AI-generated resources will be displayed here.
+            {t('resources.aiCreations.empty')}
           </div>
         </section>
 

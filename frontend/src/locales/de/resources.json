@@ -1,0 +1,40 @@
+{
+  "library": {
+    "eyebrow": "Ressourcenbibliothek",
+    "title": "Ressourcen",
+    "subline": "Verwalte deine Lernmaterialien und greife auf KI-generierte Inhalte in einem zentralen Arbeitsbereich zu.",
+    "searchPlaceholder": "Bibliothek durchsuchen..."
+  },
+  "uploads": {
+    "heading": "Meine Uploads",
+    "shown": "{{shown}} von {{total}} Dateien angezeigt",
+    "shownOne": "{{shown}} von {{total}} Datei angezeigt",
+    "viewAll": "Alle anzeigen",
+    "showRecent": "Aktuellste anzeigen",
+    "loading": "Dokumente werden geladen...",
+    "errorLoad": "Dokumente konnten nicht geladen werden.",
+    "empty": "Noch keine Dokumente hochgeladen.",
+    "emptySearch": "Keine Dokumente entsprechen deiner Suche."
+  },
+  "sorting": {
+    "sortBy": "Sortieren nach:",
+    "newest": "Neueste",
+    "name": "Name",
+    "type": "Typ",
+    "size": "Grösse",
+    "course": "Kurs"
+  },
+  "documents": {
+    "updated": "Aktualisiert am {{date}}",
+    "unknownSize": "Unbekannte Grösse",
+    "openAria": "{{filename}} öffnen",
+    "downloadAria": "{{filename}} herunterladen",
+    "deleteAria": "{{filename}} löschen",
+    "openFailed": "Dokument konnte nicht geöffnet werden.",
+    "downloadFailed": "Dokument konnte nicht heruntergeladen werden."
+  },
+  "aiCreations": {
+    "heading": "KI-Erstellungen",
+    "empty": "KI-generierte Lernmaterialien werden hier angezeigt."
+  }
+}
