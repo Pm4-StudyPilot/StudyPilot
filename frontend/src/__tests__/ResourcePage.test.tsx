@@ -896,4 +896,76 @@ describe('ResourcesPage', () => {
 
     expect(screen.getByText('Mock course page')).toBeInTheDocument();
   });
+
+  /**
+   * Test case: Search reset
+   *
+   * Scenario:
+   * The user searches for a specific document and then
+   * clears the search input again.
+   *
+   * Expected behavior:
+   * - The filtered result is shown while searching
+   * - All resources become visible again when the search is cleared
+   */
+  it('shows all resources again when the search input is cleared', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce(documentFixtures);
+
+    renderResourcesPage();
+
+    await screen.findByText('07 - Advanced Scrum.pdf');
+
+    const searchInput = screen.getByPlaceholderText('Search your library...');
+
+    fireEvent.change(searchInput, {
+      target: { value: 'devops' },
+    });
+
+    expect(screen.queryByText('07 - Advanced Scrum.pdf')).not.toBeInTheDocument();
+    expect(screen.getByText('04 - DevOps.pdf')).toBeInTheDocument();
+
+    fireEvent.change(searchInput, {
+      target: { value: '' },
+    });
+
+    expect(screen.getByText('07 - Advanced Scrum.pdf')).toBeInTheDocument();
+    expect(screen.getByText('04 - DevOps.pdf')).toBeInTheDocument();
+  });
+
+  /**
+   * Test case: Filename sort direction toggle
+   *
+   * Scenario:
+   * The user opens the complete resource library and clicks
+   * the File Name sorting button twice.
+   *
+   * Expected behavior:
+   * - The first click sorts alphabetically ascending
+   * - The second click reverses the sort direction
+   * - Documents are rendered in reverse alphabetical order
+   */
+  it('toggles filename sort direction when the file name button is clicked twice', async () => {
+    vi.mocked(api.get)
+      .mockResolvedValueOnce(documentFixtures)
+      .mockResolvedValueOnce(extendedDocumentFixtures);
+
+    renderResourcesPage();
+
+    await screen.findByText('07 - Advanced Scrum.pdf');
+
+    fireEvent.click(screen.getByRole('button', { name: /view all/i }));
+    await screen.findByText('Unknown Upload');
+
+    const fileNameButton = screen.getByRole('button', { name: /file name/i });
+
+    fireEvent.click(fileNameButton);
+    fireEvent.click(fileNameButton);
+
+    expect(getRenderedDocumentNames()).toEqual([
+      'Unknown Upload',
+      '07 - Advanced Scrum.pdf',
+      '04 - DevOps.pdf',
+      '01 - Linux Notes.txt',
+    ]);
+  });
 });
