@@ -2,6 +2,26 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnswerDto, QuestionWithAnswersDto } from '../../types/dto';
 import CheckField from '../shared/form/CheckField';
+import {
+  DndContext,
+  closestCenter,
+  DragEndEvent,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+
+import {
+  SortableContext,
+  useSortable,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import { reorderAnswers } from './types.ts';
 
 type BaseProps = {
   question: QuestionWithAnswersDto;
@@ -24,6 +44,7 @@ type EditProps = BaseProps & {
     updatedDraft?: { content: string; isCorrect: boolean }
   ) => void;
   onDeleteAnswer: (questionId: string, answerId: string) => void;
+  onReorderAnswers: (questionId: string, reorderedAnswers: AnswerDto[]) => Promise<void>;
 };
 
 type PlayProps = BaseProps & {
@@ -48,75 +69,131 @@ export default function AnswerList(props: AnswerListProps) {
   }
 }
 
+function SortableAnswerItem({
+  answer,
+  children,
+}: {
+  answer: AnswerDto;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, transform, transition, attributes, listeners, isDragging } = useSortable({
+    id: answer.id,
+  });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {children}
+    </div>
+  );
+}
+
 function EditAnswerList({
   question,
   draftAnswers,
   setDraftAnswers,
   handleSaveAnswer,
   onDeleteAnswer,
+  onReorderAnswers,
 }: EditProps) {
   const { t } = useTranslation();
+  const orderedAnswers = question.answers.slice();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    const reordered = reorderAnswers(question.answers, active.id, over.id);
+
+    onReorderAnswers(question.id, reordered);
+  }
+
   return (
-    <>
-      {question.answers.map((answer) => {
-        const draft = draftAnswers[answer.id] ?? {
-          content: answer.content,
-          isCorrect: answer.isCorrect ?? false,
-        };
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      modifiers={[restrictToVerticalAxis]}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={orderedAnswers.map((a) => a.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        {orderedAnswers.map((answer) => {
+          const draft = draftAnswers[answer.id] ?? {
+            content: answer.content,
+            isCorrect: answer.isCorrect ?? false,
+          };
 
-        return (
-          <div className="answer-editor" key={answer.id}>
-            <label className="answer-editor__content">
-              <input
-                className="form-control"
-                value={draft.content}
-                onChange={(event) =>
-                  setDraftAnswers((current) => ({
-                    ...current,
-                    [answer.id]: {
+          return (
+            <SortableAnswerItem key={answer.id} answer={answer}>
+              <div className="answer-editor">
+                <label className="answer-editor__content">
+                  <input
+                    className="form-control"
+                    value={draft.content}
+                    onChange={(event) =>
+                      setDraftAnswers((current) => ({
+                        ...current,
+                        [answer.id]: {
+                          ...draft,
+                          content: event.target.value,
+                        },
+                      }))
+                    }
+                    onBlur={() => handleSaveAnswer(answer.id)}
+                  />
+                </label>
+
+                <CheckField
+                  className="inline-form-check"
+                  label={t('quizzes.answers.correctCheckbox')}
+                  type="checkbox"
+                  checked={draft.isCorrect ?? false}
+                  onChange={(event) => {
+                    const updatedDraft = {
                       ...draft,
-                      content: event.target.value,
-                    },
-                  }))
-                }
-                onBlur={() => handleSaveAnswer(answer.id)}
-              />
-            </label>
+                      isCorrect: event.target.checked,
+                    };
 
-            <CheckField
-              className="inline-form-check"
-              label={t('quizzes.answers.correctCheckbox')}
-              type="checkbox"
-              checked={draft.isCorrect ?? false}
-              onChange={(event) => {
-                const updatedDraft = {
-                  ...draft,
-                  isCorrect: event.target.checked,
-                };
+                    setDraftAnswers((current) => ({
+                      ...current,
+                      [answer.id]: updatedDraft,
+                    }));
 
-                setDraftAnswers((current) => ({
-                  ...current,
-                  [answer.id]: updatedDraft,
-                }));
+                    void handleSaveAnswer(answer.id, updatedDraft);
+                  }}
+                />
 
-                void handleSaveAnswer(answer.id, updatedDraft);
-              }}
-            />
-
-            <div className="answer-editor__actions">
-              <button
-                type="button"
-                className="btn btn-outline-danger btn-sm"
-                onClick={() => onDeleteAnswer(question.id, answer.id)}
-              >
-                <i className="fa-solid fa-trash  me-1" />
-                {t('quizzes.answers.deleteButton')}
-              </button>
-            </div>
-          </div>
-        );
-      })}
-    </>
+                <div className="answer-editor__actions">
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger btn-sm"
+                    onClick={() => onDeleteAnswer(question.id, answer.id)}
+                  >
+                    <i className="fa-solid fa-trash me-1" />
+                    {t('quizzes.answers.deleteButton')}
+                  </button>
+                </div>
+              </div>
+            </SortableAnswerItem>
+          );
+        })}
+      </SortableContext>
+    </DndContext>
   );
 }
 

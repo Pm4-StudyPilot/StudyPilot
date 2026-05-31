@@ -34,6 +34,7 @@ type EditProps = BaseProps & {
   onReorderQuestion: (questionId: string, direction: 'up' | 'down') => void;
   canMoveUp: boolean;
   canMoveDown: boolean;
+  onReorderAnswers: (questionId: string, reorderedAnswers: AnswerDto[]) => Promise<void>;
 };
 
 type PlayProps = BaseProps & {
@@ -129,6 +130,7 @@ function EditQuestionCard({
   onReorderQuestion,
   canMoveUp,
   canMoveDown,
+  onReorderAnswers,
 }: EditProps) {
   console.log(canMoveUp);
   const { t } = useTranslation();
@@ -308,6 +310,7 @@ function EditQuestionCard({
             handleSaveAnswer={handleSaveAnswer}
             setDraftAnswers={setDraftAnswers}
             onDeleteAnswer={onDeleteAnswer}
+            onReorderAnswers={onReorderAnswers}
           />
         </div>
       )}
