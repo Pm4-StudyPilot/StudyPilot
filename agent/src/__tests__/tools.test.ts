@@ -59,6 +59,28 @@ describe('toGeminiSchema', () => {
     const schema = { type: 'object', properties: { q: { type: 'string' } } };
     expect(toGeminiSchema(schema)).toEqual(schema);
   });
+
+  it('removes numeric exclusivity fields unsupported by Gemini', () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        maxCharacters: {
+          type: 'number',
+          exclusiveMinimum: 0,
+          exclusiveMaximum: 60001,
+        },
+      },
+    };
+
+    expect(toGeminiSchema(schema)).toEqual({
+      type: 'object',
+      properties: {
+        maxCharacters: {
+          type: 'number',
+        },
+      },
+    });
+  });
 });
 
 describe('buildAgentTools', () => {

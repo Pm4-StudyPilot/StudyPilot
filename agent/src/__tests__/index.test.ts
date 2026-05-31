@@ -34,6 +34,10 @@ describe('TARS_SYSTEM_PROMPT', () => {
     expect(TARS_SYSTEM_PROMPT).toMatch(/one tool/i);
     expect(TARS_SYSTEM_PROMPT.length).toBeGreaterThan(0);
   });
+
+  it('instructs the model to read uploaded course documents for material questions', () => {
+    expect(TARS_SYSTEM_PROMPT).toContain('read_course_documents');
+  });
 });
 
 describe('buildSystemPrompt', () => {
