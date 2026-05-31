@@ -9,7 +9,7 @@ import ShareCourseModal from './ShareCourseModal';
 import ProgressRing from '../shared/ProgressRing';
 import { withOpacity } from '../../utils/courseColors';
 import { formatDate } from '../../utils/formatDate';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 
 type CourseCardProps = {
   course: CourseDto;

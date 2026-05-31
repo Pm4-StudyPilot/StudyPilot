@@ -75,7 +75,8 @@
     "documentsHeading": "Course Documents",
     "uploadHeading": "Upload Document",
     "uploadSubtitle": "Add files to this course workspace. The document list above refreshes after a successful upload.",
-    "searchPlaceholder": "Search in this course..."
+    "searchPlaceholder": "Search in this course...",
+    "share": "Share"
   },
   "feed": {
     "empty": "No course materials yet. Add quizzes or other items to get started.",
@@ -119,5 +120,11 @@
     "notAuthenticated": "You are not authenticated.",
     "failed": "Upload failed.",
     "success": "Upload successful: {{filename}}"
+  },
+  "share": {
+    "title": "Share Course",
+    "description": "Share this course with other users by entering their email or username.",
+    "usernameOrEmailLabel": "Username or Email",
+    "submit": "Share"
   }
 }

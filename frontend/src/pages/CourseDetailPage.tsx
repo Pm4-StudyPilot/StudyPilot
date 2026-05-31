@@ -14,7 +14,7 @@ import { api } from '../services/api';
 import { CourseDto, QuizDto, TaskDto } from '../types/dto';
 import { withOpacity } from '../utils/courseColors';
 import { formatDate } from '../utils/formatDate';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
