@@ -20,10 +20,10 @@ describe('getModel', () => {
     expect(() => getModel()).toThrow(/GOOGLE_API_KEY/);
   });
 
-  it('defaults to gemini-3-pro-preview', () => {
+  it('defaults to gemini-3-flash-preview', () => {
     process.env.GOOGLE_API_KEY = 'test-key';
     delete process.env.GEMINI_MODEL;
-    expect(getModel().model).toContain('gemini-3-pro-preview');
+    expect(getModel().model).toContain('gemini-3-flash-preview');
   });
 
   it('honors the GEMINI_MODEL override', () => {
