@@ -132,7 +132,6 @@ function EditQuestionCard({
   canMoveDown,
   onReorderAnswers,
 }: EditProps) {
-  console.log(canMoveUp);
   const { t } = useTranslation();
   const [draftQuestion, setDraftQuestion] = useState<QuestionFormState>({
     title: question.title,
