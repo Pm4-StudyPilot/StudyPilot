@@ -22,6 +22,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { reorderAnswers } from './types.ts';
+import { t } from 'i18next';
 
 type BaseProps = {
   question: QuestionWithAnswersDto;
@@ -87,7 +88,17 @@ function SortableAnswerItem({
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={style} className="answer-card__drag">
+      <span
+        {...attributes}
+        {...listeners}
+        className="answer-card__drag-handle text-secondary"
+        aria-label={t('quizzes.answers.dragHandleAria')}
+        data-testid="task-drag-handle"
+      >
+        <i className="fa-solid fa-grip-vertical" />
+      </span>
+
       {children}
     </div>
   );

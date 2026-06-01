@@ -557,6 +557,20 @@
     font-size: inherit;
   }
 
+  &__drag {
+    display: flex;
+    align-items: center;
+    justify-content: stretch;
+    gap: 0.5rem;
+    & > :last-child {
+      flex-grow: 1;
+    }
+  }
+  &__drag-handle {
+    cursor: grab;
+    font-size: var(--font-size-sm);
+  }
+
   &--play {
     width: 100%;
     cursor: pointer;
