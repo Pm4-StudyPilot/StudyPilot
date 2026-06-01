@@ -1,9 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi } from 'vitest';
-import ShareCourseModal from '../../components/courses/ShareCourseModal';
-import { api } from '../../services/api';
+import { describe, it, expect, vi } from 'vitest';
+import ShareCourseModal from '../components/courses/ShareCourseModal';
+import { api } from '../services/api';
 
-vi.mock('../../services/api');
+vi.mock('../services/api');
 
 const course = {
   id: '1',

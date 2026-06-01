@@ -152,11 +152,11 @@ export class CourseDetailPage {
     return await error.innerText();
   }
 
-  async shareFormInput(): Locator {
+  async shareFormInput(): Promise<Locator> {
     return this.page.getByLabel(/username|email/i);
   }
 
-  async shareSubmitButton(): Locator {
+  async shareSubmitButton(): Promise<Locator> {
     return this.page.getByRole('button', { name: /share|submit/i });
   }
 }

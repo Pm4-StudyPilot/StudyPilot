@@ -16,7 +16,7 @@ test.describe('Shared Courses', () => {
     expect(share.sharedWithUserId).toBeTruthy();
   });
 
-  test('shared user can access the shared course', async ({ factory, _coursesPage, _page }) => {
+  test('shared user can access the shared course', async ({ factory }) => {
     // Setup: owner creates and shares a course
     const ownerCourse = await factory.createCourse({ name: factory.unique('Share Access') });
     const sharedUser = await factory.createUser({
@@ -72,9 +72,7 @@ test.describe('Shared Courses', () => {
     // Navigate and open share modal
     // Note: This would require being logged in and navigating to the course
     // For API-based test:
-    const res = await factory.api.post(`/api/courses/${course.id}/share`, {
-      data: { username: 'e2e_user' }, // The main E2E user
-    });
+    const res = await factory.shareCourseRaw(course.id, 'e2e_user'); // The main E2E user
 
     // Should get an error (self-share not allowed)
     expect(res.ok()).toBeFalsy();
@@ -85,9 +83,7 @@ test.describe('Shared Courses', () => {
     const course = await factory.createCourse({ name: factory.unique('No User Share') });
 
     // Try to share with non-existent user
-    const res = await factory.api.post(`/api/courses/${course.id}/share`, {
-      data: { username: 'this_user_does_not_exist_12345' },
-    });
+    const res = await factory.shareCourseRaw(course.id, 'this_user_does_not_exist_12345');
 
     expect(res.ok()).toBeFalsy();
   });
@@ -103,9 +99,7 @@ test.describe('Shared Courses', () => {
     await factory.shareCourse(course.id, sharedUser.username);
 
     // Try to share again with same user
-    const res = await factory.api.post(`/api/courses/${course.id}/share`, {
-      data: { username: sharedUser.username },
-    });
+    const res = await factory.shareCourseRaw(course.id, sharedUser.username);
 
     expect(res.ok()).toBeFalsy();
   });
@@ -133,12 +127,12 @@ test.describe('Shared Courses', () => {
     // and progress would be calculated independently
   });
 
-  test('non-shared user cannot access the course', async ({ factory, _page }) => {
+  test('non-shared user cannot access the course', async ({ factory }) => {
     // Setup: create a private course
     const course = await factory.createCourse({ name: factory.unique('Private Course') });
 
     // Try to access via API without sharing
-    const res = await factory.api.get(`/api/courses/${course.id}`);
+    const res = await factory.getCourseRaw(course.id);
 
     // Should only succeed for the owner (current auth context)
     expect(res.ok()).toBeTruthy();
@@ -194,9 +188,7 @@ test.describe('Shared Courses', () => {
     // For now, verify via API error responses
 
     // Try empty username
-    const res = await factory.api.post(`/api/courses/${course.id}/share`, {
-      data: { username: '' },
-    });
+    const res = await factory.shareCourseRaw(course.id, '');
     expect(res.ok()).toBeFalsy();
   });
 
@@ -212,9 +204,7 @@ test.describe('Shared Courses', () => {
     expect(res1).toHaveProperty('courseId');
 
     // Try to share again
-    const res2 = await factory.api.post(`/api/courses/${course.id}/share`, {
-      data: { username: sharedUser.username },
-    });
+    const res2 = await factory.shareCourseRaw(course.id, sharedUser.username);
 
     expect(res2.ok()).toBeFalsy();
     const error = await res2.text();

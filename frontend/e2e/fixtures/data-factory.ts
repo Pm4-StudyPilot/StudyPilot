@@ -238,10 +238,20 @@ export class DataFactory {
     courseId: string,
     targetUsername: string
   ): Promise<{ courseId: string; sharedWithUserId: string }> {
-    const res = await this.api.post(`/api/courses/${courseId}/share`, {
-      data: { username: targetUsername },
-    });
+    const res = await this.shareCourseRaw(courseId, targetUsername);
     expect(res.ok(), `shareCourse failed: ${res.status()} ${await res.text()}`).toBeTruthy();
     return (await res.json()) as { courseId: string; sharedWithUserId: string };
+  }
+
+  /** Raw share request for negative-path tests that need to inspect status/body. */
+  async shareCourseRaw(courseId: string, targetUsername: string) {
+    return this.api.post(`/api/courses/${courseId}/share`, {
+      data: { username: targetUsername },
+    });
+  }
+
+  /** Raw course lookup request for negative-path tests that need to inspect status/body. */
+  async getCourseRaw(courseId: string) {
+    return this.api.get(`/api/courses/${courseId}`);
   }
 }
