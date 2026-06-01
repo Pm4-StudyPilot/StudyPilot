@@ -43,6 +43,12 @@ export interface QuestionSpec {
   answers: AnswerSpec[];
 }
 
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+}
+
 let counter = 0;
 
 /**
@@ -206,5 +212,36 @@ export class DataFactory {
         .splice(0)
         .map((id) => this.api.delete(`/api/courses/${id}`).catch(() => {}))
     );
+  }
+
+  /** Create a test user for shared course tests */
+  async createUser(
+    overrides: { username?: string; email?: string; password?: string } = {}
+  ): Promise<User> {
+    const password = overrides.password ?? 'TestPass123!';
+    // Generate unique suffix without spaces for email compatibility
+    counter += 1;
+    const uniqueSuffix = `${Date.now().toString(36)}-${counter}`;
+    const body = {
+      username: overrides.username ?? this.unique('e2e_share_user'),
+      email: overrides.email ?? `e2e${uniqueSuffix}@test.com`,
+      password,
+    };
+    const res = await this.api.post('/api/auth/register', { data: body });
+    expect(res.ok(), `createUser failed: ${res.status()} ${await res.text()}`).toBeTruthy();
+    const user = (await res.json()) as { user: User };
+    return user.user;
+  }
+
+  /** Share a course with a user by username/email */
+  async shareCourse(
+    courseId: string,
+    targetUsername: string
+  ): Promise<{ courseId: string; sharedWithUserId: string }> {
+    const res = await this.api.post(`/api/courses/${courseId}/share`, {
+      data: { username: targetUsername },
+    });
+    expect(res.ok(), `shareCourse failed: ${res.status()} ${await res.text()}`).toBeTruthy();
+    return (await res.json()) as { courseId: string; sharedWithUserId: string };
   }
 }
