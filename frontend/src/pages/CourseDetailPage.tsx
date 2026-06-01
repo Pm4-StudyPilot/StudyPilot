@@ -175,11 +175,6 @@ export default function CourseDetailPage() {
                 </div>
 
                 <div className="course-detail__title-row">
-                  <span
-                    className="course-card__color-dot course-detail__color-dot"
-                    style={{ backgroundColor: course.color }}
-                    aria-hidden="true"
-                  />
                   <h1 className="course-detail__title">{course.name}</h1>
                 </div>
                 {isOwner && (

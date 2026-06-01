@@ -516,6 +516,7 @@ export default function DeadlineCalendar({
                   const dayDotColor = getDayDotColor(dayTasks);
                   const isSelected = day.dateKey === selectedDateKey;
                   const isToday = day.dateKey === todayDateKey;
+                  const isMutedToday = isToday && selectedDateKey !== null && !isSelected;
                   const dayTone = getDayTone(dayTasks, todayDateKey, t);
 
                   const classNames = ['deadline-calendar__day'];
@@ -523,6 +524,7 @@ export default function DeadlineCalendar({
                   if (!day.isCurrentMonth) classNames.push('deadline-calendar__day--outside');
                   if (isSelected) classNames.push('deadline-calendar__day--selected');
                   if (isToday) classNames.push('deadline-calendar__day--today');
+                  if (isMutedToday) classNames.push('deadline-calendar__day--today-muted');
                   if (dayTasks.length > 0) classNames.push('deadline-calendar__day--active');
                   if (dayTasks.length > 0) {
                     classNames.push(`deadline-calendar__day--${dayTone}`);
