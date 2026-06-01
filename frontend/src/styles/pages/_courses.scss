@@ -19,6 +19,43 @@
 
 // CourseCard
 .course-card {
+  position: relative;
+  border-color: var(--course-accent-border-color);
+  box-shadow: inset 3px 0 0 var(--course-accent-color);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+
+  &:hover,
+  &:focus-within {
+    border-color: var(--course-accent-color);
+    box-shadow:
+      var(--shadow-soft),
+      inset 3px 0 0 var(--course-accent-color);
+    transform: translateY(-1px);
+  }
+
+  &__link-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 3px solid var(--course-accent-color);
+      outline-offset: 2px;
+    }
+  }
+
+  &__foreground,
+  &__action {
+    position: relative;
+    z-index: 2;
+  }
+
   &__toggle {
     background-color: transparent;
     color: inherit;
