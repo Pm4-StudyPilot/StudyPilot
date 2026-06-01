@@ -4,7 +4,8 @@ import AnswerList from '../components/quizzes/AnswerList';
 import { AnswerDto, QuestionWithAnswersDto } from '../types/dto';
 import React, { InputHTMLAttributes } from 'react';
 import userEvent from '@testing-library/user-event';
-import { reorderAnswers } from '../components/quizzes/types.ts';
+import { reorderAnswers, handleDragEnd } from '../components/quizzes/answerOrder.ts';
+import { DragEndEvent } from '@dnd-kit/core';
 
 vi.mock('../components/shared/form/CheckField', () => ({
   default: ({
@@ -40,7 +41,7 @@ describe('AnswerList', () => {
       },
     ] as AnswerDto[],
   };
-  const choiceQuestion = {
+  const choiceQuestion: QuestionWithAnswersDto = {
     id: 'q1',
     type: 'MULTIPLE_CHOICE',
     answers: [
@@ -61,6 +62,11 @@ describe('AnswerList', () => {
         updatedAt: '',
       },
     ] as AnswerDto[],
+    quizId: 'quiz-1',
+    createdAt: 'sometime',
+    updatedAt: 'someday',
+    title: 'My Title',
+    description: 'My description',
   };
 
   let setDraftAnswers: React.Dispatch<
@@ -288,5 +294,51 @@ describe('AnswerList', () => {
     const result = reorderAnswers(answers as AnswerDto[], 'a1', 'a2');
 
     expect(result.map((a) => a.id)).toEqual(['a2', 'a1']);
+  });
+  it('does nothing when over is null', () => {
+    const onReorderAnswers = vi.fn();
+
+    handleDragEnd(
+      {
+        active: { id: '1' },
+        over: null,
+      } as DragEndEvent,
+      choiceQuestion,
+      onReorderAnswers
+    );
+
+    expect(onReorderAnswers).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when dropped on itself', () => {
+    const onReorderAnswers = vi.fn();
+
+    handleDragEnd(
+      {
+        active: { id: '1' },
+        over: { id: '1' },
+      } as DragEndEvent,
+      choiceQuestion,
+      onReorderAnswers
+    );
+
+    expect(onReorderAnswers).not.toHaveBeenCalled();
+  });
+
+  it('reorders answers', () => {
+    const reordered = choiceQuestion.answers.reverse();
+
+    const onReorderAnswers = vi.fn();
+
+    handleDragEnd(
+      {
+        active: { id: '1' },
+        over: { id: '2' },
+      } as DragEndEvent,
+      choiceQuestion,
+      onReorderAnswers
+    );
+
+    expect(onReorderAnswers).toHaveBeenCalledWith(choiceQuestion.id, reordered);
   });
 });

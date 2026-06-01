@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnswerDto, QuestionWithAnswersDto } from '../../types/dto';
 import CheckField from '../shared/form/CheckField';
@@ -21,8 +21,8 @@ import {
 
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { reorderAnswers } from './types.ts';
 import { t } from 'i18next';
+import { handleDragEnd } from './answerOrder.ts';
 
 type BaseProps = {
   question: QuestionWithAnswersDto;
@@ -122,22 +122,17 @@ function EditAnswerList({
     })
   );
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-
-    if (!over || active.id === over.id) return;
-
-    const reordered = reorderAnswers(question.answers, active.id, over.id);
-
-    onReorderAnswers(question.id, reordered);
-  }
-
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
       modifiers={[restrictToVerticalAxis]}
-      onDragEnd={handleDragEnd}
+      onDragEnd={useCallback(
+        (event: DragEndEvent) => {
+          handleDragEnd(event, question, onReorderAnswers);
+        },
+        [question, onReorderAnswers]
+      )}
     >
       <SortableContext
         items={orderedAnswers.map((a) => a.id)}
