@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CourseDto, TaskDto } from '../../types/dto';
@@ -58,13 +58,22 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
   }
 
   const courseAccentStyle = {
-    borderColor: withOpacity(course.color, 0.2),
-    boxShadow: `inset 3px 0 0 ${course.color}`,
+    '--course-accent-color': course.color,
+    '--course-accent-border-color': withOpacity(course.color, 0.2),
   };
 
   return (
     <>
-      <div className="course-card panel mb-2" style={courseAccentStyle} data-testid="course-card">
+      <div
+        className="course-card panel mb-2"
+        style={courseAccentStyle as CSSProperties}
+        data-testid="course-card"
+      >
+        <Link
+          to={`/courses/${course.id}`}
+          className="course-card__link-overlay"
+          aria-label={t('courses.card.openAria')}
+        />
         <div className="d-flex align-items-center justify-content-between p-3">
           <div className="d-flex align-items-center gap-3">
             <ProgressRing
@@ -87,6 +96,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
                   style={{ backgroundColor: course.color }}
                   aria-hidden="true"
                 />
+
                 <Link
                   to={`/courses/${course.id}`}
                   className="course-card__name fw-semibold text-decoration-none"
@@ -182,7 +192,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
                 </ul>
                 <Link
                   to={`/courses/${course.id}`}
-                  className="course-card__tasks-link text-decoration-none"
+                  className="course-card__tasks-link text-decoration-none course-card__foreground"
                 >
                   {t('courses.card.viewAllTasks')}
                 </Link>
