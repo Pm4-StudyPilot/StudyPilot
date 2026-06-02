@@ -1,7 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import ShareCourseModal from '../components/courses/ShareCourseModal';
 import { api } from '../services/api';
+import courses from '../locales/en/courses.json';
 
 vi.mock('../services/api');
 
@@ -14,61 +15,81 @@ const course = {
   updatedAt: new Date().toISOString(),
 };
 
+const shareText = courses.share;
+
 describe('ShareCourseModal', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('renders the modal with title and description', () => {
     render(<ShareCourseModal course={course} onClose={() => {}} />);
-    expect(screen.getByText('courses.share.title')).toBeInTheDocument();
-    expect(screen.getByText('courses.share.description', { exact: false })).toBeInTheDocument();
+
+    expect(screen.getByText(shareText.title)).toBeInTheDocument();
+    expect(screen.getByText(shareText.description, { exact: false })).toBeInTheDocument();
   });
 
   it('calls onClose when the cancel button is clicked', () => {
     const handleClose = vi.fn();
+
     render(<ShareCourseModal course={course} onClose={handleClose} />);
-    fireEvent.click(screen.getByText('common.actions.cancel'));
+
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
   it('shows a success message when sharing is successful', async () => {
     vi.mocked(api.post).mockResolvedValue({});
+
     render(<ShareCourseModal course={course} onClose={() => {}} />);
 
-    fireEvent.change(screen.getByLabelText('courses.share.usernameOrEmailLabel'), {
+    fireEvent.change(screen.getByLabelText(shareText.usernameOrEmailLabel), {
       target: { value: 'testuser' },
     });
-    fireEvent.click(screen.getByText('courses.share.submit'));
+
+    fireEvent.click(screen.getByRole('button', { name: shareText.submit }));
 
     await waitFor(() => {
-      expect(screen.getByText('courses.share.success')).toBeInTheDocument();
+      expect(screen.getByText(shareText.success)).toBeInTheDocument();
     });
   });
 
   it('shows an error message when sharing fails', async () => {
-    vi.mocked(api.post).mockRejectedValue(new Error('User not found'));
+    vi.mocked(api.post).mockRejectedValue(new Error(shareText.error.userNotFound));
+
     render(<ShareCourseModal course={course} onClose={() => {}} />);
 
-    fireEvent.change(screen.getByLabelText('courses.share.usernameOrEmailLabel'), {
+    fireEvent.change(screen.getByLabelText(shareText.usernameOrEmailLabel), {
       target: { value: 'testuser' },
     });
-    fireEvent.click(screen.getByText('courses.share.submit'));
+
+    fireEvent.click(screen.getByRole('button', { name: shareText.submit }));
 
     await waitFor(() => {
-      expect(screen.getByText('User not found')).toBeInTheDocument();
+      expect(screen.getByText(shareText.error.userNotFound)).toBeInTheDocument();
     });
   });
 
   it('disables form elements while loading', async () => {
     vi.mocked(api.post).mockReturnValue(new Promise(() => {})); // Never resolves
+
     render(<ShareCourseModal course={course} onClose={() => {}} />);
 
-    fireEvent.change(screen.getByLabelText('courses.share.usernameOrEmailLabel'), {
+    const usernameInput = screen.getByLabelText(shareText.usernameOrEmailLabel);
+    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+    const submitButton = screen.getByRole('button', { name: shareText.submit });
+
+    fireEvent.change(usernameInput, {
       target: { value: 'testuser' },
     });
-    fireEvent.click(screen.getByText('courses.share.submit'));
+
+    fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByLabelText('courses.share.usernameOrEmailLabel')).toBeDisabled();
-      expect(screen.getByText('common.actions.cancel')).toBeDisabled();
-      expect(screen.getByText('courses.share.submit')).toBeDisabled();
+      expect(usernameInput).toBeDisabled();
+      expect(cancelButton).toBeDisabled();
+      expect(submitButton).toBeDisabled();
     });
   });
 });

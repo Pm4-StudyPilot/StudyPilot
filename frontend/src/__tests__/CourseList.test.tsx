@@ -20,6 +20,21 @@ vi.mock('../services/api', () => ({
   },
 }));
 
+vi.mock('../context/useAuth', () => ({
+  useAuth: () => ({
+    user: {
+      id: 'u1',
+      email: 'owner@example.com',
+      username: 'owner',
+      role: 'USER',
+    },
+    token: 'token',
+    login: vi.fn(),
+    logout: vi.fn(),
+    updateUser: vi.fn(),
+  }),
+}));
+
 const courseFixtures = [
   {
     id: 'c1',
