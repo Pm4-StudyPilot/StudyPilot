@@ -86,7 +86,7 @@ function ViewQuestionCard({ question, revealed = false, score, selectedAnswers =
           )}
         </div>
         {typeof score === 'number' && (
-          <div className="question-card__score">
+          <div className="question-card__score flex-shrink-0">
             {t(
               score === 1
                 ? 'quizzes.questions.card.scorePoints'

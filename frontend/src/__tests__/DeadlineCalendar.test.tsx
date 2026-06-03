@@ -132,6 +132,28 @@ describe('DeadlineCalendar', () => {
     expect(api.get).not.toHaveBeenCalled();
   });
 
+  it('keeps today subtle when another date is selected', async () => {
+    render(
+      <MemoryRouter>
+        <DeadlineCalendar courses={courses} tasksByCourseId={tasksByCourseId} />
+      </MemoryRouter>
+    );
+
+    const todayButton = await screen.findByRole('button', {
+      name: /10\.05\.2026, today, 1 deadline/i,
+    });
+
+    expect(todayButton).toHaveClass('deadline-calendar__day--today');
+    expect(todayButton).not.toHaveClass('deadline-calendar__day--today-muted');
+
+    const selectedButton = screen.getByRole('button', { name: /03\.05\.2026, 1 deadline/i });
+    fireEvent.click(selectedButton);
+
+    expect(selectedButton).toHaveClass('deadline-calendar__day--selected');
+    expect(todayButton).toHaveClass('deadline-calendar__day--today-muted');
+    expect(todayButton).not.toHaveClass('deadline-calendar__day--selected');
+  });
+
   it('fetches tasks when preloaded task data is not provided', async () => {
     vi.mocked(api.get).mockImplementation((endpoint: string) => {
       if (endpoint in tasksByEndpoint) {

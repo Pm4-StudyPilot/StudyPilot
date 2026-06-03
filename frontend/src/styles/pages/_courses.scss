@@ -19,6 +19,43 @@
 
 // CourseCard
 .course-card {
+  position: relative;
+  border-color: var(--course-accent-border-color);
+  box-shadow: inset 3px 0 0 var(--course-accent-color);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+
+  &:hover,
+  &:focus-within {
+    border-color: var(--course-accent-color);
+    box-shadow:
+      var(--shadow-soft),
+      inset 3px 0 0 var(--course-accent-color);
+    transform: translateY(-1px);
+  }
+
+  &__link-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 3px solid var(--course-accent-color);
+      outline-offset: 2px;
+    }
+  }
+
+  &__foreground,
+  &__action {
+    position: relative;
+    z-index: 2;
+  }
+
   &__toggle {
     background-color: transparent;
     color: inherit;
@@ -51,15 +88,6 @@
     &:hover {
       color: var(--color-text-primary);
     }
-  }
-
-  &__color-dot {
-    display: inline-block;
-    flex-shrink: 0;
-    width: 0.7rem;
-    height: 0.7rem;
-    border-radius: var(--radius-pill);
-    box-shadow: 0 0 0 3px var(--color-glow-soft);
   }
 
   &__date {
@@ -171,12 +199,6 @@
     display: flex;
     align-items: flex-start;
     gap: 1rem;
-  }
-
-  &__color-dot {
-    width: 1rem;
-    height: 1rem;
-    margin-top: 0.9rem;
   }
 
   &__support-note {
