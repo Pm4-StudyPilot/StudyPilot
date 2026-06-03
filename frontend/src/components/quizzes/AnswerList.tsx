@@ -173,7 +173,7 @@ function PlayAnswerList({ question, revealed = false, onPlayed, selectedAnswers 
             <p className="answer-card__content">{answer.content}</p>
 
             {revealed && (
-              <span className="answer-card__badge">
+              <span className="answer-card__badge flex-shrink-0">
                 {answer.isCorrect ? t('quizzes.answers.correct') : t('quizzes.answers.incorrect')}
               </span>
             )}
@@ -199,7 +199,7 @@ function ViewAnswerList({ question, selectedAnswers = [] }: ViewProps) {
 
           <p className="answer-card__content">{answer.content}</p>
 
-          <span className="answer-card__badge">
+          <span className="answer-card__badge flex-shrink-0">
             {answer.isCorrect ? t('quizzes.answers.correct') : t('quizzes.answers.incorrect')}
           </span>
         </div>

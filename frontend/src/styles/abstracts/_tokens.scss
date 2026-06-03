@@ -8,6 +8,13 @@
   --space-md: 1rem;
   --space-lg: 1.5rem;
 
+  /* Fixed assistant input */
+  --ai-input-bottom-offset: calc(var(--space-lg) + env(safe-area-inset-bottom, 0px));
+  --ai-input-form-height: calc(2.25rem + var(--space-sm) + var(--space-sm) + 2px);
+  --ai-input-content-offset: calc(
+    var(--ai-input-bottom-offset) + var(--ai-input-form-height) + var(--space-lg)
+  );
+
   /* Type scale */
   --font-size-xs: 0.7rem;
   --font-size-sm: 0.85rem;
