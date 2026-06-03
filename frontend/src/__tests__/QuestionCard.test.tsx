@@ -12,6 +12,7 @@ const mockCreateAnswer = vi.fn();
 const mockUpdateAnswer = vi.fn();
 const mockDeleteAnswer = vi.fn();
 const mockOnPlay = vi.fn();
+const mockReorderQuestion = vi.fn();
 
 const questionFixture: QuestionWithAnswersDto = {
   id: 'question-1',
@@ -111,6 +112,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={mockCreateAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -132,6 +136,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={mockCreateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -152,6 +159,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={mockCreateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -174,6 +184,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={mockCreateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -197,6 +210,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={mockCreateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -219,6 +235,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={mockCreateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -238,6 +257,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={failingCreate}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -266,6 +288,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={mockCreateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -286,6 +311,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={mockCreateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -307,6 +335,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={mockCreateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -324,6 +355,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={mockCreateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -353,6 +387,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={createMock}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -380,6 +417,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={mockCreateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -402,6 +442,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={mockCreateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
     const questionDescription = screen.getByDisplayValue('Choose the correct capital city.');
@@ -441,6 +484,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={mockCreateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -488,6 +534,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={mockCreateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={failingUpdate}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -567,6 +616,9 @@ describe('QuestionCard', () => {
         onCreateAnswer={mockCreateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
       />
     );
 
@@ -582,5 +634,68 @@ describe('QuestionCard', () => {
       description: '',
       type: questionFixture.type,
     });
+  });
+  it('calls reorder handler with up direction', async () => {
+    render(
+      <QuestionCard
+        question={questionFixture}
+        mode="edit"
+        onUpdateQuestion={mockUpdateQuestion}
+        onDeleteQuestion={mockDeleteQuestion}
+        onCreateAnswer={mockCreateAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
+      />
+    );
+
+    await act(async () => {
+      await userEvent.click(screen.getByRole('button', { name: /Move question up/i }));
+    });
+
+    expect(mockReorderQuestion).toHaveBeenCalledWith(questionFixture.id, 'up');
+  });
+  it('calls reorder handler with down direction', async () => {
+    render(
+      <QuestionCard
+        question={questionFixture}
+        mode="edit"
+        onUpdateQuestion={mockUpdateQuestion}
+        onDeleteQuestion={mockDeleteQuestion}
+        onCreateAnswer={mockCreateAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={true}
+        canMoveDown={true}
+      />
+    );
+
+    await act(async () => {
+      await userEvent.click(screen.getByRole('button', { name: /Move question down/i }));
+    });
+
+    expect(mockReorderQuestion).toHaveBeenCalledWith(questionFixture.id, 'down');
+  });
+  it('disables a move button if it is specified to not be moveable in that direction', async () => {
+    render(
+      <QuestionCard
+        question={questionFixture}
+        mode="edit"
+        onUpdateQuestion={mockUpdateQuestion}
+        onDeleteQuestion={mockDeleteQuestion}
+        onCreateAnswer={mockCreateAnswer}
+        onUpdateAnswer={mockUpdateAnswer}
+        onDeleteAnswer={mockDeleteAnswer}
+        onReorderQuestion={mockReorderQuestion}
+        canMoveUp={false}
+        canMoveDown={false}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: /Move question down/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Move question up/i })).toBeDisabled();
   });
 });
