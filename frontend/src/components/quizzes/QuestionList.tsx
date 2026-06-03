@@ -29,6 +29,7 @@ interface QuestionListProps {
     data: { content: string; isCorrect: boolean }
   ) => Promise<void> | void;
   onDeleteAnswer?: (questionId: string, answerId: string) => Promise<void> | void;
+  onReorderQuestion?: (questionId: string, direction: 'up' | 'down') => void;
 }
 
 export default function QuestionList({
@@ -40,6 +41,7 @@ export default function QuestionList({
   onCreateAnswer,
   onUpdateAnswer,
   onDeleteAnswer,
+  onReorderQuestion,
 }: QuestionListProps) {
   const { t } = useTranslation();
   const [newQuestion, setNewQuestion] = useState<NewQuestionFormState>({
@@ -106,7 +108,7 @@ export default function QuestionList({
         </div>
       )}
 
-      {questions.map((question) => {
+      {questions.map((question, index) => {
         if (editable) {
           return (
             <QuestionCard
@@ -118,6 +120,9 @@ export default function QuestionList({
               onUpdateAnswer={onUpdateAnswer!}
               onDeleteAnswer={onDeleteAnswer!}
               key={question.id}
+              onReorderQuestion={onReorderQuestion!}
+              canMoveUp={index > 0}
+              canMoveDown={index < questions.length - 1}
             />
           );
         }
