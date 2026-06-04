@@ -261,6 +261,53 @@ class DocumentController {
       res.status(500).json({ message: 'Failed to delete document.' });
     }
   }
+
+  /**
+   * Returns uploaded documents owned by the authenticated user.
+   *
+   * Supports optional query parameters for:
+   * - sorting
+   * - filtering by MIME type
+   * - searching by filename
+   * - limiting the number of returned results
+   *
+   * Intended use:
+   * - Resources page
+   * - Recent uploads preview
+   * - Global document search
+   *
+   * @param req Express request containing optional sort, fileType,
+   * search, and limit query parameters
+   * @param res Express response
+   */
+  async listByOwner(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req.user as { id: string } | undefined)?.id;
+
+      if (!userId) {
+        res.status(401).json({ message: 'Unauthorized.' });
+        return;
+      }
+
+      const sort = getSingleQueryParam(req.query.sort);
+      const fileType = getSingleQueryParam(req.query.fileType);
+      const search = getSingleQueryParam(req.query.search);
+      const limit = Number(getSingleQueryParam(req.query.limit) ?? 50);
+
+      const documents = await this.documentService.listByOwner(userId, {
+        sort,
+        fileType,
+        search,
+        limit,
+      });
+
+      res.status(200).json(documents);
+    } catch (error) {
+      logger.error({ err: error }, 'Failed to fetch documents');
+
+      res.status(500).json({ message: 'Failed to fetch documents.' });
+    }
+  }
 }
 
 export { DocumentController };

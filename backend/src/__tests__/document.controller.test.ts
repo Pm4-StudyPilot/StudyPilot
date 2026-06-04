@@ -1,4 +1,4 @@
-import { describe, it, expect, mock } from 'bun:test';
+import { describe, it, expect, mock, beforeEach } from 'bun:test';
 import { Readable, PassThrough } from 'node:stream';
 import type { Request, Response } from 'express';
 
@@ -72,6 +72,20 @@ function createPipeableResponse() {
   };
 
   return { res, chunks };
+}
+
+/**
+ * Creates a mocked DocumentService for controller tests.
+ */
+function createMockDocumentService(overrides: Partial<DocumentService> = {}) {
+  return {
+    upload: mock(),
+    listByCourse: mock(),
+    listByOwner: mock(),
+    getDownloadable: mock(),
+    deleteForOwner: mock(),
+    ...overrides,
+  } as unknown as DocumentService;
 }
 
 /**
@@ -536,6 +550,155 @@ describe('DocumentController.listByCourse', () => {
     });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(documents);
+  });
+});
+
+/**
+ * Test cases for listByOwner()
+ */
+describe('listByOwner', () => {
+  let listByOwnerMock: ReturnType<typeof mock>;
+  let mockDocumentService: DocumentService;
+  let controller: DocumentController;
+
+  beforeEach(() => {
+    listByOwnerMock = mock(async () => []);
+
+    mockDocumentService = createMockDocumentService({
+      listByOwner: listByOwnerMock,
+    });
+
+    controller = createController(mockDocumentService);
+  });
+
+  /**
+   * Test case: Successful listByOwner request
+   *
+   * Scenario:
+   * - authenticated user requests their uploaded documents
+   * - sort and limit query params are provided
+   *
+   * Expected behavior:
+   * - controller forwards user id, sort, and limit to the service
+   * - response status is 200
+   * - documents are returned as JSON
+   */
+  it('should return 200 and documents on successful listByOwner request', async () => {
+    const documents = [
+      {
+        id: 'doc-1',
+        filename: 'Agile.pdf',
+        fileSize: 1234,
+        fileType: 'application/pdf',
+        createdAt: new Date('2026-04-20T10:00:00.000Z'),
+        courseId: 'course-1',
+        course: {
+          id: 'course-1',
+          name: 'PM4',
+          color: '#ff6600',
+        },
+      },
+    ];
+
+    listByOwnerMock.mockResolvedValueOnce(documents);
+
+    const req = {
+      user: { id: 'user-1' },
+      query: {
+        sort: 'createdAt:desc',
+        limit: '3',
+      },
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.listByOwner(req, res);
+
+    expect(listByOwnerMock).toHaveBeenCalledWith('user-1', {
+      sort: 'createdAt:desc',
+      limit: 3,
+    });
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(documents);
+  });
+
+  /**
+   * Test case: Default limit
+   *
+   * Scenario:
+   * - no limit query parameter is provided
+   *
+   * Expected behavior:
+   * - controller uses default limit 50
+   */
+  it('should default limit to 50 when no limit query param is provided', async () => {
+    listByOwnerMock.mockResolvedValueOnce([]);
+
+    const req = {
+      user: { id: 'user-1' },
+      query: {},
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.listByOwner(req, res);
+
+    expect(listByOwnerMock).toHaveBeenCalledWith('user-1', {
+      sort: undefined,
+      fileType: undefined,
+      search: undefined,
+      limit: 50,
+    });
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith([]);
+  });
+
+  /**
+   * Test case: Missing authentication
+   *
+   * Expected behavior:
+   * - returns 401
+   * - service is not called
+   */
+  it('should return 401 if user is not authenticated in listByOwner', async () => {
+    const req = {
+      user: undefined,
+      query: {},
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.listByOwner(req, res);
+
+    expect(mockDocumentService.listByOwner).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Unauthorized.' });
+  });
+
+  /**
+   * Test case: Unexpected service error
+   *
+   * Expected behavior:
+   * - returns 500
+   */
+  it('should return 500 for unexpected listByOwner errors', async () => {
+    listByOwnerMock.mockRejectedValueOnce(new Error('Database unavailable'));
+
+    const req = {
+      user: { id: 'user-1' },
+      query: {},
+    } as unknown as Request;
+
+    const res = createMockResponse();
+
+    await controller.listByOwner(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Failed to fetch documents.',
+    });
   });
 });
 

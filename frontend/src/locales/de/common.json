@@ -25,6 +25,7 @@
   "nav": {
     "dashboard": "Übersicht",
     "courses": "Kurse",
+    "resources": "Resourcen",
     "settings": "Einstellungen",
     "logout": "Abmelden",
     "accountSettings": "Kontoeinstellungen",
