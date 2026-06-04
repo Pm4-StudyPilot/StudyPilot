@@ -13,6 +13,7 @@ const mockUpdateAnswer = vi.fn();
 const mockDeleteAnswer = vi.fn();
 const mockOnPlay = vi.fn();
 const mockReorderQuestion = vi.fn();
+const mockReorderAnswers = vi.fn();
 
 const questionFixture: QuestionWithAnswersDto = {
   id: 'question-1',
@@ -113,6 +114,7 @@ describe('QuestionCard', () => {
         onUpdateAnswer={mockUpdateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -137,6 +139,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -160,6 +163,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -185,6 +189,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -211,6 +216,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -236,6 +242,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -258,6 +265,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -289,6 +297,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -312,6 +321,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -336,6 +346,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -356,6 +367,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -388,6 +400,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -418,6 +431,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -443,6 +457,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -485,6 +500,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -535,6 +551,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={failingUpdate}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -617,6 +634,7 @@ describe('QuestionCard', () => {
         onDeleteAnswer={mockDeleteAnswer}
         onUpdateAnswer={mockUpdateAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -646,6 +664,7 @@ describe('QuestionCard', () => {
         onUpdateAnswer={mockUpdateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -657,7 +676,7 @@ describe('QuestionCard', () => {
 
     expect(mockReorderQuestion).toHaveBeenCalledWith(questionFixture.id, 'up');
   });
-  it('calls reorder handler with down direction', async () => {
+  it('calls reorder questions handler with down direction', async () => {
     render(
       <QuestionCard
         question={questionFixture}
@@ -668,6 +687,7 @@ describe('QuestionCard', () => {
         onUpdateAnswer={mockUpdateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={true}
         canMoveDown={true}
       />
@@ -690,6 +710,7 @@ describe('QuestionCard', () => {
         onUpdateAnswer={mockUpdateAnswer}
         onDeleteAnswer={mockDeleteAnswer}
         onReorderQuestion={mockReorderQuestion}
+        onReorderAnswers={mockReorderAnswers}
         canMoveUp={false}
         canMoveDown={false}
       />

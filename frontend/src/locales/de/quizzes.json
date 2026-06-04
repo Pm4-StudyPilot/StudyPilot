@@ -74,7 +74,10 @@
       "delete": "Löschen",
       "revealAnswer": "Antwort anzeigen",
       "scorePoints": "{{count}} Punkt",
-      "scorePoints_other": "{{count}} Punkte"
+      "scorePoints_other": "{{count}} Punkte",
+      "deleteButton": "Frage Löschen",
+      "moveDown": "Frage nach unten schieben",
+      "moveUp": "Frage nach oben schieben"
     }
   },
   "play": {
@@ -107,6 +110,7 @@
     "correctCheckbox": "Richtig",
     "addButton": "Antwort hinzufügen",
     "addingButton": "Wird hinzugefügt...",
-    "deleteButton": "Löschen"
+    "deleteButton": "Löschen",
+    "dragHandleAria": "Verschiebegriff"
   }
 }
