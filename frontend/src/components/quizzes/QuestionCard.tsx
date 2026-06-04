@@ -34,6 +34,7 @@ type EditProps = BaseProps & {
   onReorderQuestion: (questionId: string, direction: 'up' | 'down') => void;
   canMoveUp: boolean;
   canMoveDown: boolean;
+  onReorderAnswers: (questionId: string, reorderedAnswers: AnswerDto[]) => Promise<void>;
 };
 
 type PlayProps = BaseProps & {
@@ -129,6 +130,7 @@ function EditQuestionCard({
   onReorderQuestion,
   canMoveUp,
   canMoveDown,
+  onReorderAnswers,
 }: EditProps) {
   const { t } = useTranslation();
   const [draftQuestion, setDraftQuestion] = useState<QuestionFormState>({
@@ -307,6 +309,7 @@ function EditQuestionCard({
             handleSaveAnswer={handleSaveAnswer}
             setDraftAnswers={setDraftAnswers}
             onDeleteAnswer={onDeleteAnswer}
+            onReorderAnswers={onReorderAnswers}
           />
         </div>
       )}
@@ -355,7 +358,7 @@ function EditQuestionCard({
           type="button"
           className="btn btn-outline-danger btn-sm"
           onClick={() => onDeleteQuestion?.(question.id)}
-          aria-label="Delete question"
+          aria-label={t('quiz.questions.card.delete')}
         >
           <i className="fa-solid fa-trash me-1" />
           {t('quizzes.questions.card.delete')}
@@ -367,7 +370,7 @@ function EditQuestionCard({
           className="btn btn-outline-primary btn-sm ms-auto"
           disabled={!canMoveDown}
           onClick={() => onReorderQuestion?.(question.id, 'down')}
-          aria-label="Move question down"
+          aria-label={t('quizzes.questions.card.moveDown')}
         >
           <i className="fa-solid fa-chevron-down" />
         </button>
@@ -376,7 +379,7 @@ function EditQuestionCard({
           className="btn btn-outline-primary btn-sm"
           disabled={!canMoveUp}
           onClick={() => onReorderQuestion?.(question.id, 'up')}
-          aria-label="Move question up"
+          aria-label={t('quizzes.questions.card.moveUp')}
         >
           <i className="fa-solid fa-chevron-up" />
         </button>
