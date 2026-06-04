@@ -9,6 +9,7 @@ import SettingsPage from './pages/SettingsPage';
 import RequestPasswordResetPage from './pages/RequestPasswordResetPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import CourseDetailPage from './pages/CourseDetailPage';
+import ResourcesPage from './pages/ResourcesPage';
 import QuizDetailPage from './pages/QuizDetailPage';
 import PlayQuizPage from './pages/PlayQuizPage';
 import AiInput from './components/ai/AiInput';
@@ -43,6 +44,15 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/resources"
+          element={
+            <ProtectedRoute>
+              <ResourcesPage />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/settings"
           element={

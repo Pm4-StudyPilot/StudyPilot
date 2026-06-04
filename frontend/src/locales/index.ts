@@ -3,6 +3,7 @@ import enAuth from './en/auth.json';
 import enValidation from './en/validation.json';
 import enHome from './en/home.json';
 import enCourses from './en/courses.json';
+import enResources from './en/resources.json';
 import enTasks from './en/tasks.json';
 import enQuizzes from './en/quizzes.json';
 import enSettings from './en/settings.json';
@@ -14,6 +15,7 @@ import deAuth from './de/auth.json';
 import deValidation from './de/validation.json';
 import deHome from './de/home.json';
 import deCourses from './de/courses.json';
+import deResources from './de/resources.json';
 import deTasks from './de/tasks.json';
 import deQuizzes from './de/quizzes.json';
 import deSettings from './de/settings.json';
@@ -29,6 +31,7 @@ const enTranslation = {
   validation: enValidation,
   home: enHome,
   courses: enCourses,
+  resources: enResources,
   tasks: enTasks,
   quizzes: enQuizzes,
   settings: enSettings,
@@ -42,6 +45,7 @@ const deTranslation = {
   validation: deValidation,
   home: deHome,
   courses: deCourses,
+  resources: deResources,
   tasks: deTasks,
   quizzes: deQuizzes,
   settings: deSettings,

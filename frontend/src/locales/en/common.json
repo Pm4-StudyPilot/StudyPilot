@@ -25,6 +25,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "courses": "Courses",
+    "resources": "Resources",
     "settings": "Settings",
     "logout": "Logout",
     "accountSettings": "Account Settings",

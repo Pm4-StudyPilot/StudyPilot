@@ -838,6 +838,204 @@ describe('DocumentService', () => {
   });
 
   /**
+   * Test cases for listByOwner()
+   */
+  describe('listByOwner', () => {
+    /**
+     * Test case: Default document listing
+     *
+     * Scenario:
+     * - authenticated owner requests resources
+     * - no custom sorting or limit provided
+     *
+     * Expected behavior:
+     * - documents are returned
+     * - default sorting is createdAt desc
+     * - course metadata is included
+     */
+    it('should return documents sorted by newest first by default', async () => {
+      const documents = [
+        {
+          id: 'doc-1',
+          filename: 'Agile.pdf',
+          fileSize: 1234,
+          fileType: 'application/pdf',
+          createdAt: new Date('2026-04-20T10:00:00.000Z'),
+          courseId: 'course-1',
+          course: {
+            id: 'course-1',
+            name: 'PM4',
+            color: '#ff6600',
+          },
+        },
+      ];
+
+      mockDocumentFindMany.mockResolvedValueOnce(documents);
+
+      const service = new DocumentService();
+
+      const result = await service.listByOwner('user-1');
+
+      expect(mockDocumentFindMany).toHaveBeenCalled();
+
+      expect(result).toEqual(documents);
+    });
+
+    /**
+     * Test case: Explicit limit
+     *
+     * Scenario:
+     * - frontend requests a specific amount of documents
+     *
+     * Expected behavior:
+     * - Prisma query receives the provided limit
+     */
+    it('should apply provided limit', async () => {
+      mockDocumentFindMany.mockResolvedValueOnce([]);
+
+      const service = new DocumentService();
+
+      await service.listByOwner('user-1', {
+        limit: 10,
+      });
+
+      expect(mockDocumentFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          take: 10,
+        })
+      );
+    });
+
+    /**
+     * Test case: Maximum limit protection
+     *
+     * Scenario:
+     * - frontend requests more than the allowed maximum
+     *
+     * Expected behavior:
+     * - limit is capped at 50
+     */
+    it('should clamp limit to 50', async () => {
+      mockDocumentFindMany.mockResolvedValueOnce([]);
+
+      const service = new DocumentService();
+
+      await service.listByOwner('user-1', {
+        limit: 999,
+      });
+
+      expect(mockDocumentFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          take: 50,
+        })
+      );
+    });
+
+    /**
+     * Test case: Filename sorting
+     *
+     * Expected behavior:
+     * - filename sort option is translated into Prisma orderBy
+     */
+    it('should sort by filename ascending', async () => {
+      mockDocumentFindMany.mockResolvedValueOnce([]);
+
+      const service = new DocumentService();
+
+      await service.listByOwner('user-1', {
+        sort: 'filename:asc',
+      });
+
+      expect(mockDocumentFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: {
+            filename: 'asc',
+          },
+        })
+      );
+    });
+
+    /**
+     * Test case: File size sorting
+     *
+     * Expected behavior:
+     * - fileSize sort option is translated into Prisma orderBy
+     */
+    it('should sort by fileSize descending', async () => {
+      mockDocumentFindMany.mockResolvedValueOnce([]);
+
+      const service = new DocumentService();
+
+      await service.listByOwner('user-1', {
+        sort: 'fileSize:desc',
+      });
+
+      expect(mockDocumentFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: {
+            fileSize: 'desc',
+          },
+        })
+      );
+    });
+
+    /**
+     * Test case: Invalid sort option
+     *
+     * Scenario:
+     * - unsupported sort value is provided
+     *
+     * Expected behavior:
+     * - service falls back to default sorting
+     */
+    it('should fall back to createdAt desc for invalid sort values', async () => {
+      mockDocumentFindMany.mockResolvedValueOnce([]);
+
+      const service = new DocumentService();
+
+      await service.listByOwner('user-1', {
+        sort: 'totallyInvalidSort',
+      });
+
+      expect(mockDocumentFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: {
+            createdAt: 'desc',
+          },
+        })
+      );
+    });
+
+    /**
+     * Test case: Returned documents contain course metadata
+     *
+     * Expected behavior:
+     * - course relation is included in the select clause
+     */
+    it('should include course metadata for each document', async () => {
+      mockDocumentFindMany.mockResolvedValueOnce([]);
+
+      const service = new DocumentService();
+
+      await service.listByOwner('user-1');
+
+      expect(mockDocumentFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          select: expect.objectContaining({
+            course: {
+              select: {
+                id: true,
+                name: true,
+                color: true,
+              },
+            },
+          }),
+        })
+      );
+    });
+  });
+
+  /**
    * Test cases for getDownloadable()
    *
    * The download flow uses CourseShareService.checkAccess to allow either

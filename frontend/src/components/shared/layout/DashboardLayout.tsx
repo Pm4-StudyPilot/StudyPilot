@@ -23,7 +23,7 @@ import { useTheme } from '../../../context/useTheme';
  * allowing each page to define its own search behavior.
  */
 type DashboardLayoutProps = {
-  activeNav?: 'dashboard' | 'courses' | 'settings' | false;
+  activeNav?: 'dashboard' | 'courses' | 'resources' | 'settings' | false;
   children: ReactNode;
   showSearch?: boolean;
   searchValue?: string;
@@ -92,6 +92,7 @@ export default function DashboardLayout({
               <i className="fa-solid fa-table-cells-large" />
               <span>{t('common.nav.dashboard')}</span>
             </NavLink>
+
             <NavLink
               to="/courses"
               className={({ isActive }) => navItemClass(isActive || activeNav === 'courses')}
@@ -99,6 +100,15 @@ export default function DashboardLayout({
               <i className="fa-solid fa-book-open" />
               <span>{t('common.nav.courses')}</span>
             </NavLink>
+
+            <NavLink
+              to="/resources"
+              className={({ isActive }) => navItemClass(isActive || activeNav === 'resources')}
+            >
+              <i className="fa-solid fa-folder-open" />
+              <span>{t('common.nav.resources')}</span>
+            </NavLink>
+
             <NavLink
               to="/settings"
               className={({ isActive }) =>
