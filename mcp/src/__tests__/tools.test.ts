@@ -8,6 +8,31 @@ const courseFind = mock(async () => ({ id: 'c1', name: 'Biology' }));
 const courseCreate = mock(async () => ({ id: 'c1', name: 'Biology' }));
 const courseUpdate = mock(async () => ({ id: 'c1', name: 'Bio 2' }));
 const courseDelete = mock(async () => true);
+const courseShare = mock(async () => ({
+  id: 's1',
+  courseId: 'c1',
+  sharedWithUserId: 'u2',
+  sharedByUserId: 'u1',
+  createdAt: new Date('2026-01-01T00:00:00.000Z'),
+}));
+const courseUnshare = mock(async () => true);
+const courseSharedUsers = mock(async () => [
+  {
+    id: 'u2',
+    username: 'shared',
+    email: 'shared@example.com',
+    sharedAt: new Date('2026-01-01T00:00:00.000Z'),
+  },
+]);
+const courseSharedCourses = mock(async () => [
+  {
+    id: 'c2',
+    name: 'Physics',
+    ownerId: 'u2',
+    ownerUsername: 'owner',
+    sharedAt: new Date('2026-01-01T00:00:00.000Z'),
+  },
+]);
 
 const taskDelete = mock(async () => true);
 
@@ -35,6 +60,23 @@ class CourseService {
   updateForOwner = courseUpdate;
   deleteForOwner = courseDelete;
 }
+class ShareError extends Error {
+  public type: 'CourseNotFound' | 'UserNotFound' | 'SelfShare' | 'AlreadyShared';
+
+  constructor(
+    type: 'CourseNotFound' | 'UserNotFound' | 'SelfShare' | 'AlreadyShared',
+    message: string
+  ) {
+    super(message);
+    this.type = type;
+  }
+}
+class CourseShareService {
+  shareWith = courseShare;
+  unshareWith = courseUnshare;
+  getUsersWithAccess = courseSharedUsers;
+  getSharedCourses = courseSharedCourses;
+}
 class TaskService {
   listByCourse = mock(async () => []);
   findByIdForUser = mock(async () => null);
@@ -57,6 +99,8 @@ class DocumentService {
 
 mock.module('backend/services', () => ({
   CourseService,
+  CourseShareService,
+  ShareError,
   TaskService,
   QuizService,
   DocumentService,
@@ -99,6 +143,10 @@ const EXPECTED_TOOLS = [
   'create_course',
   'update_course',
   'delete_course',
+  'share_course',
+  'unshare_course',
+  'list_course_shares',
+  'list_shared_courses',
   'list_tasks',
   'get_task',
   'list_overdue_tasks',
@@ -121,6 +169,10 @@ beforeEach(() => {
     courseCreate,
     courseUpdate,
     courseDelete,
+    courseShare,
+    courseUnshare,
+    courseSharedUsers,
+    courseSharedCourses,
     taskDelete,
     quizCreate,
     quizUpdate,
@@ -166,6 +218,55 @@ describe('course tools', () => {
     const result = await handlerFor('delete_course')({ userId: 'u1', courseId: 'c1' });
     expect(courseDelete).toHaveBeenCalledWith('c1', 'u1');
     expect(textOf(result)).toBe('{"deleted":true}');
+  });
+
+  it('share_course calls shareWith(courseId, userId, usernameOrEmail)', async () => {
+    const result = await handlerFor('share_course')({
+      userId: 'u1',
+      courseId: 'c1',
+      usernameOrEmail: ' shared@example.com ',
+    });
+
+    expect(courseShare).toHaveBeenCalledWith('c1', 'u1', 'shared@example.com');
+    expect(textOf(result)).toContain('"sharedWithUserId": "u2"');
+  });
+
+  it('share_course returns share validation errors as tool errors', async () => {
+    courseShare.mockRejectedValueOnce(new ShareError('AlreadyShared', 'Already shared') as never);
+
+    const result = await handlerFor('share_course')({
+      userId: 'u1',
+      courseId: 'c1',
+      usernameOrEmail: 'shared',
+    });
+
+    expect(result.isError).toBe(true);
+    expect(textOf(result)).toBe('Already shared');
+  });
+
+  it('unshare_course calls unshareWith(courseId, userId, sharedWithUserId)', async () => {
+    const result = await handlerFor('unshare_course')({
+      userId: 'u1',
+      courseId: 'c1',
+      sharedWithUserId: 'u2',
+    });
+
+    expect(courseUnshare).toHaveBeenCalledWith('c1', 'u1', 'u2');
+    expect(textOf(result)).toBe('{"unshared":true}');
+  });
+
+  it('list_course_shares calls getUsersWithAccess(courseId, userId)', async () => {
+    const result = await handlerFor('list_course_shares')({ userId: 'u1', courseId: 'c1' });
+
+    expect(courseSharedUsers).toHaveBeenCalledWith('c1', 'u1');
+    expect(textOf(result)).toContain('"username": "shared"');
+  });
+
+  it('list_shared_courses calls getSharedCourses(userId)', async () => {
+    const result = await handlerFor('list_shared_courses')({ userId: 'u1' });
+
+    expect(courseSharedCourses).toHaveBeenCalledWith('u1');
+    expect(textOf(result)).toContain('"name": "Physics"');
   });
 });
 

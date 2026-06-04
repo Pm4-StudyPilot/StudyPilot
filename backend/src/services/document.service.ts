@@ -398,15 +398,9 @@ class DocumentService {
    * @throws Error if the MinIO upload fails
    */
   async upload({ file, courseId, ownerId }: UploadDocumentInput) {
-    // Verify that the selected course exists and belongs to the authenticated user
-    const course = await prisma.course.findFirst({
-      where: {
-        id: courseId,
-        ownerId,
-      },
-    });
-
-    if (!course) {
+    // Check if user has access to the course (owner OR shared with them)
+    const hasAccess = await this.courseShareService.checkAccess(courseId, ownerId);
+    if (!hasAccess) {
       throw new Error('Course not found.');
     }
 
@@ -446,13 +440,14 @@ class DocumentService {
   }
 
   /**
-   * Returns all documents for a course the authenticated user can access.
+
+   * Returns all documents for a course accessible by the authenticated user.
    *
    * Workflow:
-   * 1. Verify that the course exists and is accessible to the authenticated user
+   * 1. Check if user has access to the course (owner OR shared with them)
    * 2. Build a dynamic filter object based on provided options
    * 3. Apply sorting using a validated generic sort key
-   * 4. Query document metadata from the database
+   * 4. Query document metadata from the database (all documents in the course, not just owned by user)
    *
    * Filtering capabilities:
    * - fileType: restrict results to a specific MIME type
@@ -469,19 +464,20 @@ class DocumentService {
    *
    * Notes:
    * - Only metadata is returned, not the binary file content
-   * - Results are always scoped to a course the authenticated user can access
+   * - Results include all documents in the course (shared documents are visible to all users with access)
    * - Default sorting is by newest documents first
    *
    * @param courseId ID of the course
-   * @param ownerId ID of the authenticated user
+   * @param userId ID of the authenticated user
    * @param options Optional filter and sort configuration
    *
    * @returns List of document metadata entries
    *
-   * @throws Error if the course does not exist or is not accessible to the user
+   * @throws Error if the user does not have access to the course
    */
-  async listByCourse(courseId: string, ownerId: string, options: ListDocumentsOptions = {}) {
-    const hasAccess = await this.courseShareService.checkAccess(courseId, ownerId);
+  async listByCourse(courseId: string, userId: string, options: ListDocumentsOptions = {}) {
+    // Check if user has access to the course (owner OR shared with them)
+    const hasAccess = await this.courseShareService.checkAccess(courseId, userId);
 
     if (!hasAccess) {
       throw new Error('Course not found.');
@@ -871,9 +867,7 @@ class DocumentService {
       select: {
         bucket: true,
         objectKey: true,
-        course: {
-          select: { ownerId: true },
-        },
+        courseId: true,
       },
     });
 
@@ -881,7 +875,9 @@ class DocumentService {
       throw new Error('DOCUMENT_NOT_FOUND');
     }
 
-    if (document.course.ownerId !== userId) {
+    // Check if user has access to the course (owner OR shared with them)
+    const hasAccess = await this.courseShareService.checkAccess(document.courseId, userId);
+    if (!hasAccess) {
       throw new Error('DOCUMENT_FORBIDDEN');
     }
 

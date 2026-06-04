@@ -4,6 +4,10 @@ import { registerGetCourse } from './get-course';
 import { registerCreateCourse } from './create-course';
 import { registerUpdateCourse } from './update-course';
 import { registerDeleteCourse } from './delete-course';
+import { registerShareCourse } from './share-course';
+import { registerUnshareCourse } from './unshare-course';
+import { registerListCourseShares } from './list-course-shares';
+import { registerListSharedCourses } from './list-shared-courses';
 import { registerListTasks } from './list-tasks';
 import { registerGetTask } from './get-task';
 import { registerListOverdueTasks } from './list-overdue-tasks';
@@ -25,6 +29,10 @@ export function registerTools(server: McpServer): void {
   registerCreateCourse(server);
   registerUpdateCourse(server);
   registerDeleteCourse(server);
+  registerShareCourse(server);
+  registerUnshareCourse(server);
+  registerListCourseShares(server);
+  registerListSharedCourses(server);
   // Tasks
   registerListTasks(server);
   registerGetTask(server);

@@ -13,6 +13,9 @@
     "back": "Zurück",
     "close": "Schließen"
   },
+  "actions": {
+    "cancel": "Abbrechen"
+  },
   "language": {
     "label": "Sprache",
     "english": "English",

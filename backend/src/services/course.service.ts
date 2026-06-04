@@ -95,7 +95,18 @@ export class CourseService {
     const ownedCourses = await this.db.course.findMany({
       where: { ownerId: userId },
       orderBy: { createdAt: 'desc' },
-      select: COURSE_OVERVIEW_SELECT,
+      select: {
+        id: true,
+        name: true,
+        color: true,
+        ownerId: true,
+        createdAt: true,
+        updatedAt: true,
+        tasks: {
+          select: { status: true },
+          where: { userId },
+        },
+      },
     });
 
     // Get courses shared with user
@@ -108,7 +119,18 @@ export class CourseService {
         },
       },
       orderBy: { createdAt: 'desc' },
-      select: COURSE_OVERVIEW_SELECT,
+      select: {
+        id: true,
+        name: true,
+        color: true,
+        ownerId: true,
+        createdAt: true,
+        updatedAt: true,
+        tasks: {
+          select: { status: true },
+          where: { userId },
+        },
+      },
     });
 
     // Combine and sort by createdAt
@@ -126,7 +148,18 @@ export class CourseService {
 
     const course = await this.db.course.findUnique({
       where: { id },
-      select: COURSE_OVERVIEW_SELECT,
+      select: {
+        id: true,
+        name: true,
+        color: true,
+        ownerId: true,
+        createdAt: true,
+        updatedAt: true,
+        tasks: {
+          select: { status: true },
+          where: { userId },
+        },
+      },
     });
 
     return course ? this.toCourseDto(course) : null;

@@ -13,6 +13,9 @@
     "back": "Back",
     "close": "Close"
   },
+  "actions": {
+    "cancel": "Cancel"
+  },
   "language": {
     "label": "Language",
     "english": "English",

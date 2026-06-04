@@ -30,7 +30,7 @@ type MockDocumentDownloadRecord = {
 type MockDocumentDeleteRecord = {
   bucket: string;
   objectKey: string;
-  course: { ownerId: string };
+  courseId: string;
 };
 
 /**
@@ -183,16 +183,13 @@ describe('DocumentService', () => {
      * - document metadata is stored in Prisma
      *
      * Expected behavior:
-     * - course ownership is checked
+     * - course access is checked
      * - bucket is ensured
      * - upload is called with generated object key
      * - metadata is persisted
      */
     it('should upload file to storage and persist metadata', async () => {
-      mockCourseFindFirst.mockResolvedValueOnce({
-        id: 'course-1',
-        ownerId: 'user-1',
-      });
+      const { service, checkAccess } = buildServiceWithAccess(true);
 
       mockDocumentCreate.mockResolvedValueOnce({
         id: 'doc-1',
@@ -205,8 +202,6 @@ describe('DocumentService', () => {
         ownerId: 'user-1',
         createdAt: new Date(),
       });
-
-      const service = new DocumentService();
 
       const file = {
         originalname: 'My Slides.pdf',
@@ -221,12 +216,7 @@ describe('DocumentService', () => {
         ownerId: 'user-1',
       });
 
-      expect(mockCourseFindFirst).toHaveBeenCalledWith({
-        where: {
-          id: 'course-1',
-          ownerId: 'user-1',
-        },
-      });
+      expect(checkAccess).toHaveBeenCalledWith('course-1', 'user-1');
 
       expect(mockEnsureBucket).toHaveBeenCalledWith('documents');
 
@@ -275,10 +265,7 @@ describe('DocumentService', () => {
      * - upload path starts with courses/{courseId}/
      */
     it('should sanitize filename when generating object key', async () => {
-      mockCourseFindFirst.mockResolvedValueOnce({
-        id: 'course-1',
-        ownerId: 'user-1',
-      });
+      const { service } = buildServiceWithAccess(true);
 
       mockDocumentCreate.mockResolvedValueOnce({
         id: 'doc-1',
@@ -291,8 +278,6 @@ describe('DocumentService', () => {
         ownerId: 'user-1',
         createdAt: new Date(),
       });
-
-      const service = new DocumentService();
 
       const file = {
         originalname: 'My * Weird Slides !!!.pdf',
@@ -332,9 +317,7 @@ describe('DocumentService', () => {
      * - no DB insert
      */
     it('should throw if course is not found during upload', async () => {
-      mockCourseFindFirst.mockResolvedValueOnce(null);
-
-      const service = new DocumentService();
+      const { service, checkAccess } = buildServiceWithAccess(false);
 
       const file = {
         originalname: 'Slides.pdf',
@@ -351,6 +334,7 @@ describe('DocumentService', () => {
         })
       ).rejects.toThrow('Course not found.');
 
+      expect(checkAccess).toHaveBeenCalledWith('course-1', 'user-1');
       expect(mockEnsureBucket).not.toHaveBeenCalled();
       expect(mockStorageUpload).not.toHaveBeenCalled();
       expect(mockDocumentCreate).not.toHaveBeenCalled();
@@ -1164,18 +1148,18 @@ describe('DocumentService', () => {
   /**
    * Test cases for deleteForOwner()
    *
-   * Access model: only the parent course's owner can delete a document.
+   * Access model: any user with course access can delete a document.
    * Workflow: DB delete first, then storage delete (best-effort).
    */
   describe('deleteForOwner', () => {
-    it('should delete the DB record and storage object when the user owns the course', async () => {
+    it('should delete the DB record and storage object when the user has course access', async () => {
       mockDocumentFindUnique.mockResolvedValueOnce({
         bucket: 'documents',
         objectKey: 'courses/course-1/Slides-123.pdf',
-        course: { ownerId: 'user-1' },
+        courseId: 'course-1',
       });
 
-      const service = new DocumentService();
+      const { service, checkAccess } = buildServiceWithAccess(true);
 
       await service.deleteForOwner('doc-1', 'user-1');
 
@@ -1184,11 +1168,10 @@ describe('DocumentService', () => {
         select: {
           bucket: true,
           objectKey: true,
-          course: {
-            select: { ownerId: true },
-          },
+          courseId: true,
         },
       });
+      expect(checkAccess).toHaveBeenCalledWith('course-1', 'user-1');
 
       expect(mockDocumentDelete).toHaveBeenCalledWith({
         where: { id: 'doc-1' },
@@ -1212,17 +1195,18 @@ describe('DocumentService', () => {
       expect(mockStorageDelete).not.toHaveBeenCalled();
     });
 
-    it('should throw DOCUMENT_FORBIDDEN when the user is not the course owner', async () => {
+    it('should throw DOCUMENT_FORBIDDEN when the user has no course access', async () => {
       mockDocumentFindUnique.mockResolvedValueOnce({
         bucket: 'documents',
         objectKey: 'courses/course-1/Slides.pdf',
-        course: { ownerId: 'someone-else' },
+        courseId: 'course-1',
       });
 
-      const service = new DocumentService();
+      const { service, checkAccess } = buildServiceWithAccess(false);
 
       await expect(service.deleteForOwner('doc-1', 'user-1')).rejects.toThrow('DOCUMENT_FORBIDDEN');
 
+      expect(checkAccess).toHaveBeenCalledWith('course-1', 'user-1');
       expect(mockDocumentDelete).not.toHaveBeenCalled();
       expect(mockStorageDelete).not.toHaveBeenCalled();
     });
@@ -1231,11 +1215,11 @@ describe('DocumentService', () => {
       mockDocumentFindUnique.mockResolvedValueOnce({
         bucket: 'documents',
         objectKey: 'courses/course-1/Slides.pdf',
-        course: { ownerId: 'user-1' },
+        courseId: 'course-1',
       });
       mockStorageDelete.mockRejectedValueOnce(new Error('S3 outage'));
 
-      const service = new DocumentService();
+      const { service } = buildServiceWithAccess(true);
 
       // Should resolve without throwing — the user-visible state is already correct
       await service.deleteForOwner('doc-1', 'user-1');
