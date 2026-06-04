@@ -18,6 +18,7 @@
     "openAria": "Kurs öffnen",
     "editAria": "Kurs bearbeiten",
     "deleteAria": "Kurs löschen",
+    "shareAria": "Kurs teilen",
     "toggleAria": "Kurs umschalten",
     "openLabel": "Öffnen",
     "loadingTasks": "Aufgaben werden geladen...",
@@ -75,7 +76,8 @@
     "documentsHeading": "Kursdokumente",
     "uploadHeading": "Dokument hochladen",
     "uploadSubtitle": "Füge Dateien zu diesem Kurs-Arbeitsbereich hinzu. Die Dokumentenliste oben wird nach erfolgreichem Upload aktualisiert.",
-    "searchPlaceholder": "In diesem Kurs suchen..."
+    "searchPlaceholder": "In diesem Kurs suchen...",
+    "share": "Teilen"
   },
   "feed": {
     "empty": "Noch keine Kursmaterialien. Füge Quizze oder andere Inhalte hinzu, um zu beginnen.",
@@ -119,5 +121,18 @@
     "notAuthenticated": "Du bist nicht authentifiziert.",
     "failed": "Upload fehlgeschlagen.",
     "success": "Upload erfolgreich: {{filename}}"
+  },
+  "share": {
+    "title": "Kurs teilen",
+    "description": "Teile diesen Kurs mit anderen Benutzern, indem du ihre E-Mail oder ihren Benutzernamen eingibst.",
+    "usernameOrEmailLabel": "Benutzername oder E-Mail",
+    "submit": "Teilen",
+    "success": "Kurs erfolgreich geteilt",
+    "error": {
+      "unknown": "Fehler beim Teilen des Kurses",
+      "selfShare": "Du kannst einen Kurs nicht mit dir selbst teilen",
+      "userNotFound": "Benutzer nicht gefunden",
+      "alreadyShared": "Kurs ist bereits mit diesem Benutzer geteilt"
+    }
   }
 }

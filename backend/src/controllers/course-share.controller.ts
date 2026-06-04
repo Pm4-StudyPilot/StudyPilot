@@ -1,42 +1,44 @@
 import { Request, Response } from 'express';
-import { CourseShareService } from '../services/course-share.service';
+import { CourseShareService, ShareError } from '../services/course-share.service';
 import { AuthenticatedUser } from '../types';
 import { logger } from '../lib/logger';
 
 const courseShareService = new CourseShareService();
 
 export class CourseShareController {
-  async share(req: Request, res: Response): Promise<void> {
+  async share(req: Request, res: Response): Promise<Response> {
     try {
       const authUser = req.user as AuthenticatedUser;
       const rawCourseId = req.params.courseId;
       const courseId = Array.isArray(rawCourseId) ? rawCourseId[0] : rawCourseId;
 
       if (!courseId) {
-        res.status(400).json({ message: 'Course id is required' });
-        return;
+        return res.status(400).json({ message: 'Course id is required' });
       }
 
       const { username } = req.body as { username?: string };
 
       if (!username || !username.trim()) {
-        res.status(400).json({ message: 'Username or email is required' });
-        return;
+        return res.status(400).json({ message: 'Username or email is required' });
       }
 
       const share = await courseShareService.shareWith(courseId, authUser.id, username.trim());
-
-      if (!share) {
-        res.status(400).json({
-          message: 'Course not found, user not found, or already shared with this user',
-        });
-        return;
-      }
-
-      res.status(201).json(share);
+      return res.status(201).json(share);
     } catch (error: unknown) {
       logger.error({ error }, '[CourseShareController#share]');
-      res.status(500).json({ message: 'Failed to share course' });
+
+      if (error instanceof ShareError) {
+        if (error.type === 'UserNotFound') {
+          return res.status(404).json({ message: 'User not found' });
+        }
+        if (error.type === 'SelfShare') {
+          return res.status(400).json({ message: 'You cannot share a course with yourself' });
+        }
+        if (error.type === 'AlreadyShared') {
+          return res.status(409).json({ message: 'Course already shared with this user' });
+        }
+      }
+      return res.status(500).json({ message: 'Internal server error' });
     }
   }
 
