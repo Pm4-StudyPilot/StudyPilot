@@ -491,6 +491,9 @@
     align-items: center;
     gap: 0.45rem;
     margin-top: 1rem;
+    > button:disabled {
+      opacity: 0.25;
+    }
   }
 
   &__fields {
@@ -554,6 +557,20 @@
     font-size: inherit;
   }
 
+  &__drag {
+    display: flex;
+    align-items: center;
+    justify-content: stretch;
+    gap: 0.5rem;
+    & > :last-child {
+      flex-grow: 1;
+    }
+  }
+  &__drag-handle {
+    cursor: grab;
+    font-size: var(--font-size-sm);
+  }
+
   &--play {
     width: 100%;
     cursor: pointer;
@@ -585,7 +602,7 @@
   }
 
   &--correct {
-    border-color: var(--border-success);
+    border-color: var(--color-success);
     background-color: var(--background-success);
 
     .answer-card__icon,
@@ -595,7 +612,7 @@
   }
 
   &--incorrect {
-    border-color: var(--border-danger);
+    border-color: var(--color-danger);
     background-color: var(--background-danger);
 
     .answer-card__icon,

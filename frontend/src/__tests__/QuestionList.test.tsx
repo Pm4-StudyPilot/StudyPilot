@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import QuestionList from '../components/quizzes/QuestionList';
-import { QuestionWithAnswersDto } from '../types/dto';
+import { AnswerDto, QuestionWithAnswersDto } from '../types/dto';
 import { Option } from '../components/shared/form/types';
 import { AnswerFormState, QuestionFormState } from '../components/quizzes/types.ts';
 import { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
@@ -10,6 +10,9 @@ import { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } fro
 vi.mock('../components/quizzes/QuestionCard.tsx', () => ({
   default: ({
     question,
+    onDeleteQuestion,
+    onReorderQuestion,
+    onReorderAnswers,
   }: {
     question: QuestionWithAnswersDto;
     mode?: 'view' | 'edit' | 'play';
@@ -22,7 +25,23 @@ vi.mock('../components/quizzes/QuestionCard.tsx', () => ({
       data: AnswerFormState
     ) => Promise<void> | void;
     onDeleteAnswer?: (questionId: string, answerId: string) => Promise<void> | void;
-  }) => <div data-testid="question-card">{question.id}</div>,
+    onReorderQuestion?: (id: string, dir: 'up' | 'down') => void;
+    onReorderAnswers: (questionId: string, reorderedAnswers: AnswerDto[]) => Promise<void>;
+  }) => (
+    <div data-testid="question-card">
+      <div>{question.id}</div>
+
+      <button onClick={() => onDeleteQuestion?.(question.id)}>delete</button>
+
+      <button onClick={() => onReorderQuestion?.(question.id, 'up')}>up</button>
+
+      <button onClick={() => onReorderQuestion?.(question.id, 'down')}>down</button>
+
+      <button onClick={() => onReorderAnswers?.(question.id, question.answers.reverse())}>
+        reorder answers
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock('../components/shared/form/InputField', () => ({
@@ -329,5 +348,65 @@ describe('QuestionList', () => {
     });
 
     expect(descriptionInput).toHaveValue('');
+  });
+  it('calls onDeleteQuestion when delete is triggered from QuestionCard', () => {
+    const onDeleteQuestion = vi.fn();
+
+    renderComponent({
+      questions: questionFixtures,
+      editable: true,
+      onDeleteQuestion,
+    });
+
+    const deleteButtons = screen.getAllByText('delete');
+
+    fireEvent.click(deleteButtons[0]);
+
+    expect(onDeleteQuestion).toHaveBeenCalledWith('question-1');
+  });
+  it('calls onReorderQuestion with "up" direction', () => {
+    const onReorderQuestion = vi.fn();
+
+    renderComponent({
+      questions: questionFixtures,
+      editable: true,
+      onReorderQuestion,
+    });
+
+    const upButtons = screen.getAllByText('up');
+
+    fireEvent.click(upButtons[0]);
+
+    expect(onReorderQuestion).toHaveBeenCalledWith('question-1', 'up');
+  });
+  it('calls onReorderQuestion with "down" direction', () => {
+    const onReorderQuestion = vi.fn();
+
+    renderComponent({
+      questions: questionFixtures,
+      editable: true,
+      onReorderQuestion,
+    });
+
+    const downButtons = screen.getAllByText('down');
+
+    fireEvent.click(downButtons[0]);
+
+    expect(onReorderQuestion).toHaveBeenCalledWith('question-1', 'down');
+  });
+  it('calls onReorderAnswers', () => {
+    const onReorderAnswers = vi.fn();
+
+    renderComponent({
+      questions: questionFixtures,
+      editable: true,
+      onReorderAnswers,
+    });
+
+    const upButtons = screen.getAllByText('reorder answers');
+
+    fireEvent.click(upButtons[0]);
+
+    expect(onReorderAnswers).toHaveBeenCalled();
   });
 });

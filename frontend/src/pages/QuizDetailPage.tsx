@@ -2,7 +2,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../services/api.ts';
-import { QuestionWithAnswersDto, QuizDto } from '../types/dto.ts';
+import { AnswerDto, QuestionWithAnswersDto, QuizDto } from '../types/dto.ts';
 import QuestionList from '../components/quizzes/QuestionList.tsx';
 import DashboardLayout from '../components/shared/layout/DashboardLayout.tsx';
 import InputField from '../components/shared/form/InputField.tsx';
@@ -148,6 +148,50 @@ export default function QuizDetailPage() {
             }
           : question
       )
+    );
+  }
+  async function handleReorderQuestion(questionId: string, direction: 'up' | 'down') {
+    const currentIndex = questions.findIndex((q) => q.id === questionId);
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+    if (targetIndex < 0 || targetIndex >= questions.length) {
+      return;
+    }
+
+    const reordered = [...questions];
+
+    [reordered[currentIndex], reordered[targetIndex]] = [
+      reordered[targetIndex],
+      reordered[currentIndex],
+    ];
+
+    setQuestions(reordered);
+
+    await api.patch(`/courses/${courseId}/quizzes/${quizId}/questions/order`, {
+      questionIds: reordered.map((q) => q.id),
+    });
+  }
+
+  async function handleReorderAnswer(questionId: string, reorderedAnswers: AnswerDto[]) {
+    if (!courseId || !quizId) return;
+
+    setQuestions((prev) =>
+      prev.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              answers: reorderedAnswers,
+            }
+          : q
+      )
+    );
+
+    await api.patch(
+      `/courses/${courseId}/quizzes/${quizId}/questions/${questionId}/answers/order`,
+      {
+        answerIds: reorderedAnswers.map((a) => a.id),
+      }
     );
   }
 
@@ -483,6 +527,8 @@ export default function QuizDetailPage() {
                 onCreateAnswer={handleCreateAnswer}
                 onUpdateAnswer={handleUpdateAnswer}
                 onDeleteAnswer={handleDeleteAnswer}
+                onReorderQuestion={handleReorderQuestion}
+                onReorderAnswers={handleReorderAnswer}
               />
             </section>
           </div>

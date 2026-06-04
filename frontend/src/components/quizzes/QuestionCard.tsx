@@ -31,6 +31,10 @@ type EditProps = BaseProps & {
     data: AnswerFormState
   ) => Promise<void> | void;
   onDeleteAnswer: (questionId: string, answerId: string) => void;
+  onReorderQuestion: (questionId: string, direction: 'up' | 'down') => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onReorderAnswers: (questionId: string, reorderedAnswers: AnswerDto[]) => Promise<void>;
 };
 
 type PlayProps = BaseProps & {
@@ -82,7 +86,7 @@ function ViewQuestionCard({ question, revealed = false, score, selectedAnswers =
           )}
         </div>
         {typeof score === 'number' && (
-          <div className="question-card__score">
+          <div className="question-card__score flex-shrink-0">
             {t(
               score === 1
                 ? 'quizzes.questions.card.scorePoints'
@@ -123,6 +127,10 @@ function EditQuestionCard({
   onCreateAnswer,
   onUpdateAnswer,
   onDeleteAnswer,
+  onReorderQuestion,
+  canMoveUp,
+  canMoveDown,
+  onReorderAnswers,
 }: EditProps) {
   const { t } = useTranslation();
   const [draftQuestion, setDraftQuestion] = useState<QuestionFormState>({
@@ -301,6 +309,7 @@ function EditQuestionCard({
             handleSaveAnswer={handleSaveAnswer}
             setDraftAnswers={setDraftAnswers}
             onDeleteAnswer={onDeleteAnswer}
+            onReorderAnswers={onReorderAnswers}
           />
         </div>
       )}
@@ -344,17 +353,36 @@ function EditQuestionCard({
           {addingAnswer ? t('quizzes.answers.addingButton') : t('quizzes.answers.addButton')}
         </button>
       </div>
-      <div className="question-editor__actions">
+      <div className="question-editor__actions w-100">
         <button
           type="button"
           className="btn btn-outline-danger btn-sm"
           onClick={() => onDeleteQuestion?.(question.id)}
+          aria-label={t('quiz.questions.card.delete')}
         >
           <i className="fa-solid fa-trash me-1" />
           {t('quizzes.questions.card.delete')}
         </button>
         {(savingAnswerId || savingQuestion) && <>{t('common.saving')}</>}
         {questionError && <div className="text-danger">{questionError}</div>}
+        <button
+          type="button"
+          className="btn btn-outline-primary btn-sm ms-auto"
+          disabled={!canMoveDown}
+          onClick={() => onReorderQuestion?.(question.id, 'down')}
+          aria-label={t('quizzes.questions.card.moveDown')}
+        >
+          <i className="fa-solid fa-chevron-down" />
+        </button>
+        <button
+          type="button"
+          className="btn btn-outline-primary btn-sm"
+          disabled={!canMoveUp}
+          onClick={() => onReorderQuestion?.(question.id, 'up')}
+          aria-label={t('quizzes.questions.card.moveUp')}
+        >
+          <i className="fa-solid fa-chevron-up" />
+        </button>
       </div>
     </article>
   );
