@@ -120,7 +120,13 @@ export default function DashboardLayout({
             <i className="fa-solid fa-arrow-right-from-bracket" />
             <span>{t('common.nav.logout')}</span>
           </button>
-          <div className="dashboard-sidebar__username">@{username}</div>
+
+          <div className="dashboard-sidebar__user">
+            <div className="dashboard-avatar" aria-label={t('common.nav.profileAriaLabel')}>
+              {username.slice(0, 1).toUpperCase()}
+            </div>
+            <div className="dashboard-sidebar__username">@{username}</div>
+          </div>
         </div>
       </aside>
 
@@ -167,10 +173,6 @@ export default function DashboardLayout({
             >
               <i className="fa-solid fa-gear" />
             </button>
-            <div className="dashboard-topbar__divider" />
-            <div className="dashboard-avatar" aria-label={t('common.nav.profileAriaLabel')}>
-              {username.slice(0, 1).toUpperCase()}
-            </div>
           </div>
         </header>
 
