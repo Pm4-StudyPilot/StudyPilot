@@ -1,5 +1,6 @@
 import { describe, it, expect, mock } from 'bun:test';
 import { QuestionService } from '../services/question.service';
+import { CourseShareService } from '../services/course-share.service';
 
 const now = new Date('2026-04-15T12:00:00.000Z');
 
@@ -57,21 +58,34 @@ function createMockQuestion(overrides: Partial<MockQuestion> = {}): MockQuestion
 
 describe('QuestionService', () => {
   it('should return null when creating a question for a quiz the user does not own', async () => {
-    const findFirst = mock(async () => null);
+    const quizFindFirst = mock(async () => ({
+      id: 'qz1',
+      title: 'Quiz 1',
+      description: null,
+      isOrderRandom: false,
+      courseId: 'c1',
+      course: { id: 'c1', name: 'Biology', ownerId: 'u1' },
+    }));
 
     const db: MockDb = {
-      course: { findFirst },
-      quiz: { findFirst },
+      course: {},
+      quiz: { findFirst: quizFindFirst },
       question: {},
     };
 
+    const mockCourseShareService = {
+      checkAccess: mock(async () => false),
+    };
+
     const service = new QuestionService(
-      db as unknown as ConstructorParameters<typeof QuestionService>[0]
+      db as unknown as ConstructorParameters<typeof QuestionService>[0],
+      mockCourseShareService as unknown as CourseShareService
     );
     const result = await service.create({ title: 'Test', type: 'MULTIPLE_CHOICE' }, 'qz1', 'u2');
 
     expect(result).toBeNull();
-    expect(findFirst).toHaveBeenCalledWith({ where: { id: 'qz1', course: { ownerId: 'u2' } } });
+    expect(quizFindFirst).toHaveBeenCalledWith({ where: { id: 'qz1' }, include: { course: true } });
+    expect(mockCourseShareService.checkAccess).toHaveBeenCalledWith('c1', 'u2');
   });
 
   it('should create a question with position 0 when quiz has no questions yet', async () => {
@@ -84,19 +98,23 @@ describe('QuestionService', () => {
       courseId: 'c1',
     };
     const created = createMockQuestion();
-    const courseFindFirst = mock(async () => course);
-    const quizFindFirst = mock(async () => quiz);
+    const quizFindFirst = mock(async () => ({ ...quiz, course }));
     const aggregate = mock(async () => ({ _max: { position: null } }));
     const create = mock(async () => created);
 
     const db: MockDb = {
-      course: { findFirst: courseFindFirst },
+      course: {},
       quiz: { findFirst: quizFindFirst },
       question: { aggregate, create },
     };
 
+    const mockCourseShareService = {
+      checkAccess: mock(async () => true),
+    };
+
     const service = new QuestionService(
-      db as unknown as ConstructorParameters<typeof QuestionService>[0]
+      db as unknown as ConstructorParameters<typeof QuestionService>[0],
+      mockCourseShareService as unknown as CourseShareService
     );
     const result = await service.create(
       { title: 'Write report', type: 'MULTIPLE_CHOICE' },
@@ -120,19 +138,23 @@ describe('QuestionService', () => {
       courseId: 'c1',
     };
     const created = createMockQuestion({ position: 3 });
-    const courseFindFirst = mock(async () => course);
-    const quizFindFirst = mock(async () => quiz);
+    const quizFindFirst = mock(async () => ({ ...quiz, course }));
     const aggregate = mock(async () => ({ _max: { position: 2 } }));
     const create = mock(async () => created);
 
     const db: MockDb = {
-      course: { findFirst: courseFindFirst },
+      course: {},
       quiz: { findFirst: quizFindFirst },
       question: { aggregate, create },
     };
 
+    const mockCourseShareService = {
+      checkAccess: mock(async () => true),
+    };
+
     const service = new QuestionService(
-      db as unknown as ConstructorParameters<typeof QuestionService>[0]
+      db as unknown as ConstructorParameters<typeof QuestionService>[0],
+      mockCourseShareService as unknown as CourseShareService
     );
     await service.create({ title: 'Write report', type: 'MULTIPLE_CHOICE' }, 'qz1', 'u1');
 
@@ -179,21 +201,35 @@ describe('QuestionService', () => {
       },
     ];
     const findMany = mock(async () => questions);
+    const quizFindFirst = mock(async () => ({
+      id: 'qz1',
+      title: 'Quiz 1',
+      description: null,
+      isOrderRandom: false,
+      courseId: 'c1',
+    }));
 
     const db: MockDb = {
       course: {},
-      quiz: {},
+      quiz: { findFirst: quizFindFirst },
       question: { findMany },
     };
 
+    const mockCourseShareService = {
+      checkAccess: mock(async () => true),
+    };
+
     const service = new QuestionService(
-      db as unknown as ConstructorParameters<typeof QuestionService>[0]
+      db as unknown as ConstructorParameters<typeof QuestionService>[0],
+      mockCourseShareService as unknown as CourseShareService
     );
     const result = await service.listByQuiz('qz1', 'u1');
 
     expect(result).toEqual(questions);
+    expect(quizFindFirst).toHaveBeenCalledWith({ where: { id: 'qz1' } });
+    expect(mockCourseShareService.checkAccess).toHaveBeenCalledWith('c1', 'u1');
     expect(findMany).toHaveBeenCalledWith({
-      where: { quizId: 'qz1', quiz: { course: { ownerId: 'u1' } } },
+      where: { quizId: 'qz1' },
       include: {
         answers: {
           orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
@@ -204,7 +240,18 @@ describe('QuestionService', () => {
   });
 
   it('should return null when question does not belong to the user', async () => {
-    const findFirst = mock(async () => null);
+    const question = createMockQuestion();
+    const findFirst = mock(async () => ({
+      ...question,
+      quiz: {
+        id: 'qz1',
+        title: 'Quiz 1',
+        description: null,
+        isOrderRandom: false,
+        courseId: 'c1',
+        course: { id: 'c1', name: 'Biology', ownerId: 'u1' },
+      },
+    }));
 
     const db: MockDb = {
       course: {},
@@ -212,16 +259,33 @@ describe('QuestionService', () => {
       question: { findFirst },
     };
 
+    const mockCourseShareService = {
+      checkAccess: mock(async () => false),
+    };
+
     const service = new QuestionService(
-      db as unknown as ConstructorParameters<typeof QuestionService>[0]
+      db as unknown as ConstructorParameters<typeof QuestionService>[0],
+      mockCourseShareService as unknown as CourseShareService
     );
     const result = await service.findByIdForOwner('q1', 'u2');
 
     expect(result).toBeNull();
+    expect(mockCourseShareService.checkAccess).toHaveBeenCalledWith('c1', 'u2');
   });
 
   it('should not update a question that does not belong to the user', async () => {
-    const findFirst = mock(async () => null);
+    const question = createMockQuestion();
+    const findFirst = mock(async () => ({
+      ...question,
+      quiz: {
+        id: 'qz1',
+        title: 'Quiz 1',
+        description: null,
+        isOrderRandom: false,
+        courseId: 'c1',
+        course: { id: 'c1', name: 'Biology', ownerId: 'u1' },
+      },
+    }));
 
     const db: MockDb = {
       course: {},
@@ -229,18 +293,34 @@ describe('QuestionService', () => {
       question: { findFirst },
     };
 
+    const mockCourseShareService = {
+      checkAccess: mock(async () => false),
+    };
+
     const service = new QuestionService(
-      db as unknown as ConstructorParameters<typeof QuestionService>[0]
+      db as unknown as ConstructorParameters<typeof QuestionService>[0],
+      mockCourseShareService as unknown as CourseShareService
     );
     const result = await service.updateForOwner('q1', 'u2', { title: 'Updated' });
 
     expect(result).toBeNull();
+    expect(mockCourseShareService.checkAccess).toHaveBeenCalledWith('c1', 'u2');
   });
 
   it('should update a question owned by the user', async () => {
     const existing = createMockQuestion();
     const updated = createMockQuestion({ title: 'Updated title' });
-    const findFirst = mock(async () => existing);
+    const findFirst = mock(async () => ({
+      ...existing,
+      quiz: {
+        id: 'qz1',
+        title: 'Quiz 1',
+        description: null,
+        isOrderRandom: false,
+        courseId: 'c1',
+        course: { id: 'c1', name: 'Biology', ownerId: 'u1' },
+      },
+    }));
     const update = mock(async () => updated);
 
     const db: MockDb = {
@@ -249,8 +329,13 @@ describe('QuestionService', () => {
       question: { findFirst, update },
     };
 
+    const mockCourseShareService = {
+      checkAccess: mock(async () => true),
+    };
+
     const service = new QuestionService(
-      db as unknown as ConstructorParameters<typeof QuestionService>[0]
+      db as unknown as ConstructorParameters<typeof QuestionService>[0],
+      mockCourseShareService as unknown as CourseShareService
     );
     const result = await service.updateForOwner('q1', 'u1', { title: 'Updated title' });
 
@@ -262,58 +347,108 @@ describe('QuestionService', () => {
   });
 
   it('should return true when deleting an owned question', async () => {
+    const question = createMockQuestion();
+    const findFirst = mock(async () => ({
+      ...question,
+      quiz: {
+        id: 'qz1',
+        title: 'Quiz 1',
+        description: null,
+        isOrderRandom: false,
+        courseId: 'c1',
+        course: { id: 'c1', name: 'Biology', ownerId: 'u1' },
+      },
+    }));
     const deleteMany = mock(async () => ({ count: 1 }));
 
     const db: MockDb = {
       course: {},
       quiz: {},
-      question: { deleteMany },
+      question: { findFirst, deleteMany },
+    };
+
+    const mockCourseShareService = {
+      checkAccess: mock(async () => true),
     };
 
     const service = new QuestionService(
-      db as unknown as ConstructorParameters<typeof QuestionService>[0]
+      db as unknown as ConstructorParameters<typeof QuestionService>[0],
+      mockCourseShareService as unknown as CourseShareService
     );
     const result = await service.deleteForOwner('q1', 'u1');
 
     expect(result).toBe(true);
     expect(deleteMany).toHaveBeenCalledWith({
-      where: { id: 'q1', quiz: { course: { ownerId: 'u1' } } },
+      where: { id: 'q1' },
     });
   });
 
   it('should return false when deleting a question that does not belong to the user', async () => {
-    const deleteMany = mock(async () => ({ count: 0 }));
+    const question = createMockQuestion();
+    const findFirst = mock(async () => ({
+      ...question,
+      quiz: {
+        id: 'qz1',
+        title: 'Quiz 1',
+        description: null,
+        isOrderRandom: false,
+        courseId: 'c1',
+        course: { id: 'c1', name: 'Biology', ownerId: 'u1' },
+      },
+    }));
 
     const db: MockDb = {
       course: {},
       quiz: {},
-      question: { deleteMany },
+      question: { findFirst },
+    };
+
+    const mockCourseShareService = {
+      checkAccess: mock(async () => false),
     };
 
     const service = new QuestionService(
-      db as unknown as ConstructorParameters<typeof QuestionService>[0]
+      db as unknown as ConstructorParameters<typeof QuestionService>[0],
+      mockCourseShareService as unknown as CourseShareService
     );
     const result = await service.deleteForOwner('q1', 'u2');
 
     expect(result).toBe(false);
+    expect(mockCourseShareService.checkAccess).toHaveBeenCalledWith('c1', 'u2');
   });
 
   it('should return false when reordering questions for a course the user does not own', async () => {
-    const findFirst = mock(async () => null);
+    const quiz: MockQuiz = {
+      id: 'qz1',
+      title: 'Quiz 1',
+      description: null,
+      isOrderRandom: false,
+      courseId: 'c1',
+    };
+    const quizFindFirst = mock(async () => ({
+      ...quiz,
+      course: { id: 'c1', name: 'Biology', ownerId: 'u1' },
+    }));
 
     const db: MockDb = {
-      course: { findFirst },
-      quiz: { findFirst },
+      course: {},
+      quiz: { findFirst: quizFindFirst },
       question: {},
     };
 
+    const mockCourseShareService = {
+      checkAccess: mock(async () => false),
+    };
+
     const service = new QuestionService(
-      db as unknown as ConstructorParameters<typeof QuestionService>[0]
+      db as unknown as ConstructorParameters<typeof QuestionService>[0],
+      mockCourseShareService as unknown as CourseShareService
     );
     const result = await service.reorderQuestions('qz1', 'u2', ['q1', 'q2']);
 
     expect(result).toBe(false);
-    expect(findFirst).toHaveBeenCalledWith({ where: { id: 'qz1', course: { ownerId: 'u2' } } });
+    expect(quizFindFirst).toHaveBeenCalledWith({ where: { id: 'qz1' }, include: { course: true } });
+    expect(mockCourseShareService.checkAccess).toHaveBeenCalledWith('c1', 'u2');
   });
 
   it('should return false when provided question ids do not match the course questions', async () => {
@@ -325,21 +460,25 @@ describe('QuestionService', () => {
       description: null,
       isOrderRandom: false,
     };
-    const courseFindFirst = mock(async () => course);
-    const quizFindFirst = mock(async () => quiz);
+    const quizFindFirst = mock(async () => ({ ...quiz, course }));
     const findMany = mock(async () => [
       createMockQuestion({ id: 'q1' }),
       createMockQuestion({ id: 'q2' }),
     ]);
 
     const db: MockDb = {
-      course: { findFirst: courseFindFirst },
+      course: {},
       quiz: { findFirst: quizFindFirst },
       question: { findMany },
     };
 
+    const mockCourseShareService = {
+      checkAccess: mock(async () => true),
+    };
+
     const service = new QuestionService(
-      db as unknown as ConstructorParameters<typeof QuestionService>[0]
+      db as unknown as ConstructorParameters<typeof QuestionService>[0],
+      mockCourseShareService as unknown as CourseShareService
     );
     const result = await service.reorderQuestions('qz1', 'u1', ['q1', 'q3']);
 
@@ -355,8 +494,7 @@ describe('QuestionService', () => {
       description: null,
       isOrderRandom: false,
     };
-    const courseFindFirst = mock(async () => course);
-    const quizFindFirst = mock(async () => quiz);
+    const quizFindFirst = mock(async () => ({ ...quiz, course }));
     const findMany = mock(async () => [
       createMockQuestion({ id: 'q1' }),
       createMockQuestion({ id: 'q2' }),
@@ -365,14 +503,19 @@ describe('QuestionService', () => {
     const $transaction = mock(async () => []);
 
     const db: MockDb = {
-      course: { findFirst: courseFindFirst },
+      course: {},
       quiz: { findFirst: quizFindFirst },
       question: { findMany, update },
       $transaction,
     };
 
+    const mockCourseShareService = {
+      checkAccess: mock(async () => true),
+    };
+
     const service = new QuestionService(
-      db as unknown as ConstructorParameters<typeof QuestionService>[0]
+      db as unknown as ConstructorParameters<typeof QuestionService>[0],
+      mockCourseShareService as unknown as CourseShareService
     );
     const result = await service.reorderQuestions('qz1', 'u1', ['q2', 'q1']);
 

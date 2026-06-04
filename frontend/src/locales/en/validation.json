@@ -18,5 +18,6 @@
   "answerContentRequired": "Answer content is required",
   "failedToCreateQuestion": "Failed to create question",
   "failedToSaveQuestion": "Failed to save question",
-  "failedToSaveAnswer": "Failed to save answer"
+  "failedToSaveAnswer": "Failed to save answer",
+  "shareUsernameRequired": "Username or email is required"
 }

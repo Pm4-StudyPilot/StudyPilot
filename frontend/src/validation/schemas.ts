@@ -113,3 +113,9 @@ export function createCreateQuizSchema(t: T) {
     isOrderRandom: z.boolean(),
   });
 }
+
+export function createShareCourseSchema(t: T) {
+  return z.object({
+    username: z.string().min(1, t('validation.shareUsernameRequired')),
+  });
+}

@@ -122,4 +122,41 @@ export class CourseDetailPage {
     await this.documentItem(filename).getByTestId('document-delete-button').click();
     await this.page.getByRole('button', { name: 'Delete', exact: true }).click();
   }
+
+  // ---- Sharing ----
+  async openShareModal() {
+    // Look for Share button in the course header
+    await this.page
+      .getByRole('button', { name: /share|Share/i })
+      .first()
+      .click();
+    await expect(this.page.getByTestId('share-course-modal')).toBeVisible();
+  }
+
+  async shareWithUser(username: string) {
+    await this.page.getByLabel(/username|email/i).fill(username);
+    await this.page.getByRole('button', { name: /share|Submit/i }).click();
+  }
+
+  async getShareSuccessMessage(): Promise<string> {
+    const message = this.page
+      .getByRole('alert')
+      .or(this.page.getByText(/shared successfully|success/i));
+    await expect(message).toBeVisible();
+    return await message.innerText();
+  }
+
+  async getShareErrorMessage(): Promise<string> {
+    const error = this.page.getByRole('alert').or(this.page.locator('[role="status"]'));
+    await expect(error).toBeVisible();
+    return await error.innerText();
+  }
+
+  async shareFormInput(): Promise<Locator> {
+    return this.page.getByLabel(/username|email/i);
+  }
+
+  async shareSubmitButton(): Promise<Locator> {
+    return this.page.getByRole('button', { name: /share|submit/i });
+  }
 }
