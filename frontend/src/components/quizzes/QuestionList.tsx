@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { QuestionWithAnswersDto } from '../../types/dto';
+import { AnswerDto, QuestionWithAnswersDto } from '../../types/dto';
 import QuestionCard from './QuestionCard.tsx';
 import InputField from '../shared/form/InputField';
 import TextAreaField from '../shared/form/TextareaField';
@@ -29,6 +29,8 @@ interface QuestionListProps {
     data: { content: string; isCorrect: boolean }
   ) => Promise<void> | void;
   onDeleteAnswer?: (questionId: string, answerId: string) => Promise<void> | void;
+  onReorderQuestion?: (questionId: string, direction: 'up' | 'down') => void;
+  onReorderAnswers?: (questionId: string, reorderedAnswers: AnswerDto[]) => Promise<void>;
 }
 
 export default function QuestionList({
@@ -40,6 +42,8 @@ export default function QuestionList({
   onCreateAnswer,
   onUpdateAnswer,
   onDeleteAnswer,
+  onReorderQuestion,
+  onReorderAnswers,
 }: QuestionListProps) {
   const { t } = useTranslation();
   const [newQuestion, setNewQuestion] = useState<NewQuestionFormState>({
@@ -106,7 +110,7 @@ export default function QuestionList({
         </div>
       )}
 
-      {questions.map((question) => {
+      {questions.map((question, index) => {
         if (editable) {
           return (
             <QuestionCard
@@ -118,6 +122,10 @@ export default function QuestionList({
               onUpdateAnswer={onUpdateAnswer!}
               onDeleteAnswer={onDeleteAnswer!}
               key={question.id}
+              onReorderQuestion={onReorderQuestion!}
+              canMoveUp={index > 0}
+              canMoveDown={index < questions.length - 1}
+              onReorderAnswers={onReorderAnswers!}
             />
           );
         }

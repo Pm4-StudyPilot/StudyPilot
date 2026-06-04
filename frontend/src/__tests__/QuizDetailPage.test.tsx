@@ -82,6 +82,8 @@ vi.mock('../components/quizzes/QuestionList.tsx', () => ({
     onCreateAnswer,
     onUpdateAnswer,
     onDeleteAnswer,
+    onReorderQuestion,
+    onReorderAnswers,
   }: {
     questions: QuestionWithAnswersDto[];
     editable?: boolean;
@@ -109,6 +111,8 @@ vi.mock('../components/quizzes/QuestionList.tsx', () => ({
       data: { content: string; isCorrect: boolean }
     ) => Promise<void> | void;
     onDeleteAnswer?: (questionId: string, answerId: string) => Promise<void> | void;
+    onReorderQuestion?: (questionId: string, direction: 'up' | 'down') => void;
+    onReorderAnswers?: (questionId: string, answers: AnswerDto[]) => Promise<void> | void;
   }) => {
     return (
       <div>
@@ -143,6 +147,14 @@ vi.mock('../components/quizzes/QuestionList.tsx', () => ({
             </button>
 
             <button onClick={() => onDeleteQuestion?.(q.id)}>Delete Question</button>
+
+            <button onClick={() => onReorderQuestion?.(q.id, 'up')}>Move Up</button>
+
+            <button onClick={() => onReorderQuestion?.(q.id, 'down')}>Move Down</button>
+
+            <button onClick={() => onReorderAnswers?.(q.id, [q.answers[1], q.answers[0]])}>
+              Reorder Answers
+            </button>
 
             {editable && (
               <div>
@@ -735,6 +747,93 @@ describe('QuizDetailPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('course-page')).toBeInTheDocument();
       });
+    });
+  });
+  it('reorders questions when moving a question down', async () => {
+    mockQuizDetailApi();
+
+    vi.mocked(api.patch).mockResolvedValue({});
+
+    renderWithRoute();
+
+    const editBtn = await screen.findByRole('button', { name: /edit/i });
+    fireEvent.click(editBtn);
+
+    const moveDownButtons = await screen.findAllByText(/move down/i);
+
+    fireEvent.click(moveDownButtons[0]);
+
+    await waitFor(() => {
+      expect(api.patch).toHaveBeenCalledWith(
+        '/courses/course-1/quizzes/quiz-1/questions/order',
+        expect.objectContaining({
+          questionIds: expect.arrayContaining(['question-2', 'question-1']),
+        })
+      );
+    });
+  });
+  it('reorders questions when moving a question up', async () => {
+    mockQuizDetailApi();
+
+    vi.mocked(api.patch).mockResolvedValue({});
+
+    renderWithRoute();
+
+    const editBtn = await screen.findByRole('button', { name: /edit/i });
+    fireEvent.click(editBtn);
+
+    const moveUpButtons = await screen.findAllByText(/move up/i);
+
+    fireEvent.click(moveUpButtons[1]); // second item moves up
+
+    await waitFor(() => {
+      expect(api.patch).toHaveBeenCalledWith(
+        '/courses/course-1/quizzes/quiz-1/questions/order',
+        expect.objectContaining({
+          questionIds: ['question-2', 'question-1'],
+        })
+      );
+    });
+  });
+  it('does not reorder questions with an invalid index', async () => {
+    mockQuizDetailApi();
+
+    vi.mocked(api.patch).mockResolvedValue({});
+
+    renderWithRoute();
+
+    const editBtn = await screen.findByRole('button', { name: /edit/i });
+    fireEvent.click(editBtn);
+
+    const moveUpButtons = await screen.findAllByText(/move up/i);
+
+    fireEvent.click(moveUpButtons[0]);
+
+    await waitFor(() => {
+      expect(api.patch).not.toHaveBeenCalled();
+    });
+  });
+  it('reorders answers', async () => {
+    mockQuizDetailApi();
+
+    vi.mocked(api.patch).mockResolvedValue({});
+
+    renderWithRoute();
+
+    const editBtn = await screen.findByRole('button', { name: /edit/i });
+    fireEvent.click(editBtn);
+
+    const reorderButtons = await screen.findAllByText('Reorder Answers');
+
+    fireEvent.click(reorderButtons[0]);
+
+    await waitFor(() => {
+      expect(api.patch).toHaveBeenCalledWith(
+        '/courses/course-1/quizzes/quiz-1/questions/question-1/answers/order',
+        {
+          answerIds: ['answer-2', 'answer-1'],
+        }
+      );
     });
   });
 });
