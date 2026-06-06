@@ -4,6 +4,7 @@ import '@testing-library/jest-dom/vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import DashboardLayout from '../components/shared/layout/DashboardLayout';
+import { api } from '../services/api';
 
 const logoutMock = vi.fn();
 
@@ -23,6 +24,13 @@ vi.mock('../context/useTheme', () => ({
     toggleTheme: vi.fn(),
     setTheme: vi.fn(),
   }),
+}));
+
+vi.mock('../services/api', () => ({
+  api: {
+    get: vi.fn(),
+    patch: vi.fn(),
+  },
 }));
 
 function renderLayout({
@@ -77,6 +85,7 @@ function getShell() {
 describe('DashboardLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(api.get).mockResolvedValue([]);
   });
 
   afterEach(() => {
