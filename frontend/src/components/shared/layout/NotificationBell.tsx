@@ -20,7 +20,7 @@ export default function NotificationBell() {
       .get<NotificationDto[]>('/notifications')
       .then((loaded) => {
         if (isCancelled) return;
-        setNotifications(loaded);
+        setNotifications(Array.isArray(loaded) ? loaded : []);
         setError('');
       })
       .catch((err: unknown) => {
