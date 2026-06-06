@@ -120,8 +120,8 @@ export class CourseController {
         return;
       }
 
-      const deleted = await courseService.deleteForOwner(id, authUser.id);
-      if (!deleted) {
+      const result = await courseService.removeForUser(id, authUser.id);
+      if (!result) {
         res.status(404).json({ message: 'Course not found' });
         return;
       }

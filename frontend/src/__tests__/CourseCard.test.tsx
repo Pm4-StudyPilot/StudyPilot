@@ -126,6 +126,16 @@ describe('CourseCard', () => {
     expect(screen.queryByRole('button', { name: /share course/i })).not.toBeInTheDocument();
   });
 
+  it('hides course edit and shows leave action for shared courses', () => {
+    authState.user.id = 'u2';
+
+    renderCourseCard();
+
+    expect(screen.queryByRole('button', { name: /edit course/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete course/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /leave course/i })).toBeInTheDocument();
+  });
+
   /**
    * Test case: Collapsed by default
    *

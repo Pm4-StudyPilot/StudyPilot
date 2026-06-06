@@ -18,6 +18,7 @@
     "openAria": "Open course",
     "editAria": "Edit course",
     "deleteAria": "Delete course",
+    "leaveAria": "Leave course",
     "shareAria": "Share course",
     "toggleAria": "Toggle course",
     "openLabel": "Open",
@@ -43,7 +44,11 @@
   },
   "delete": {
     "title": "Delete Course",
-    "confirm": "Are you sure you want to delete <strong>{{name}}</strong>? This action cannot be undone."
+    "confirm": "Are you sure you want to delete <strong>{{name}}</strong>? This permanently deletes the course and shared content for everyone."
+  },
+  "leave": {
+    "title": "Leave Course",
+    "confirm": "Are you sure you want to leave <strong>{{name}}</strong>? Your access and personal tasks for this course will be removed."
   },
   "colorField": {
     "label": "Course Color",
@@ -77,7 +82,9 @@
     "uploadHeading": "Upload Document",
     "uploadSubtitle": "Add files to this course workspace. The document list above refreshes after a successful upload.",
     "searchPlaceholder": "Search in this course...",
-    "share": "Share"
+    "share": "Share",
+    "delete": "Delete",
+    "leave": "Leave"
   },
   "feed": {
     "empty": "No course materials yet. Add quizzes or other items to get started.",

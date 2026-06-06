@@ -131,21 +131,23 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
             >
               {t('courses.card.openLabel')}
             </Link>
-            <button
-              className="btn btn-sm btn-link text-secondary p-0 course-card__action"
-              onClick={() => setEditOpen(true)}
-              aria-label={t('courses.card.editAria')}
-              data-testid="course-edit-button"
-            >
-              <i className="fa-solid fa-pen-to-square" />
-            </button>
+            {isOwner && (
+              <button
+                className="btn btn-sm btn-link text-secondary p-0 course-card__action"
+                onClick={() => setEditOpen(true)}
+                aria-label={t('courses.card.editAria')}
+                data-testid="course-edit-button"
+              >
+                <i className="fa-solid fa-pen-to-square" />
+              </button>
+            )}
             <button
               className="btn btn-sm btn-link text-danger p-0 course-card__action"
               onClick={() => setDeleteOpen(true)}
-              aria-label={t('courses.card.deleteAria')}
+              aria-label={t(isOwner ? 'courses.card.deleteAria' : 'courses.card.leaveAria')}
               data-testid="course-delete-button"
             >
-              <i className="fa-solid fa-trash" />
+              <i className={`fa-solid ${isOwner ? 'fa-trash' : 'fa-right-from-bracket'}`} />
             </button>
             {isOwner && (
               <button
@@ -228,6 +230,7 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
       {deleteOpen && (
         <DeleteCourseModal
           course={course}
+          isOwner={isOwner}
           onClose={() => setDeleteOpen(false)}
           onDeleted={onDeleted}
         />
