@@ -1,0 +1,42 @@
+{
+  "appName": "StudyPilot",
+  "loading": "Loading...",
+  "saving": "Saving...",
+  "somethingWentWrong": "Something went wrong",
+  "logoutSuccess": "Successfully logged out",
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "leave": "Leave",
+    "edit": "Edit",
+    "create": "Create",
+    "back": "Back",
+    "close": "Close"
+  },
+  "actions": {
+    "cancel": "Cancel"
+  },
+  "language": {
+    "label": "Language",
+    "english": "English",
+    "german": "Deutsch",
+    "switcherLabel": "Change language"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "courses": "Courses",
+    "resources": "Resources",
+    "settings": "Settings",
+    "logout": "Logout",
+    "accountSettings": "Account Settings",
+    "profileAriaLabel": "Profile",
+    "settingsAriaLabel": "Settings"
+  },
+  "search": {
+    "default": "Search for courses, notes, or deadlines...",
+    "dashboard": "Search dashboard...",
+    "courses": "Search courses...",
+    "inCourse": "Search in this course..."
+  }
+}

@@ -17,7 +17,7 @@ const mockNavigate = vi.fn();
  * Mock AuthContext.
  *
  * Replaces the real useAuth hook with a simplified mock version
- * so that RegisterPage can be tested without real authentication state.
+ * so RegisterPage can be tested without real authentication state.
  */
 vi.mock('../context/useAuth', () => ({
   useAuth: () => ({
@@ -33,6 +33,7 @@ vi.mock('../context/useAuth', () => ({
  */
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+
   return {
     ...actual,
     useNavigate: () => mockNavigate,
@@ -55,66 +56,124 @@ vi.mock('../services/api', () => ({
  * RegisterPage component tests.
  *
  * Covered scenarios:
- * - rendering of all required registration fields
- * - live password requirement feedback
+ * - rendering of the redesigned registration page
+ * - password requirement feedback
+ * - password match feedback
+ * - username availability feedback
+ * - email availability feedback
  * - successful registration flow
- * - server-side error display on failed registration
+ * - server-side error display
  */
 describe('RegisterPage', () => {
-  /**
-   * Reset all mocks before each test to avoid leaking state
-   * between test cases.
-   */
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   /**
-   * Test case: Render registration form
-   *
-   * Scenario:
-   * The registration page is opened.
-   *
-   * Expected behavior:
-   * - Email field is displayed
-   * - Username field is displayed
-   * - Password fields are displayed
-   * - Register button is displayed
+   * Renders the page inside a MemoryRouter.
    */
-  it('renders all registration fields', () => {
-    render(
+  function renderPage() {
+    return render(
       <MemoryRouter>
         <RegisterPage />
       </MemoryRouter>
     );
+  }
 
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+  /**
+   * Provides a reusable API mock that responds to both
+   * availability checks and registration requests.
+   */
+  function mockSuccessfulApiResponses() {
+    vi.mocked(api.post).mockImplementation(async (url, body) => {
+      if (
+        url === '/auth/check-availability' &&
+        body &&
+        typeof body === 'object' &&
+        'email' in body
+      ) {
+        return {
+          emailExists: false,
+        };
+      }
+
+      if (
+        url === '/auth/check-availability' &&
+        body &&
+        typeof body === 'object' &&
+        'username' in body
+      ) {
+        return {
+          usernameExists: false,
+        };
+      }
+
+      if (url === '/auth/register') {
+        return {
+          token: 'fake-token',
+          user: {
+            id: '1',
+            email: 'test@students.zhaw.ch',
+            username: 'testuser',
+            role: 'student',
+          },
+        };
+      }
+
+      return {};
+    });
+  }
+
+  /**
+   * Test case: Render registration form.
+   *
+   * Expected behavior:
+   * - page heading is displayed
+   * - all form fields are displayed
+   * - register button is displayed
+   * - login link is displayed
+   */
+  it('renders all registration fields', () => {
+    renderPage();
+
+    expect(
+      screen.getByRole('heading', {
+        name: /create account/i,
+      })
+    ).toBeInTheDocument();
+
     expect(screen.getByLabelText(/username/i)).toBeInTheDocument();
-    expect(screen.getAllByLabelText(/password/i).length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: /register/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('button', {
+        name: /register/i,
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('link', {
+        name: /already have an account/i,
+      })
+    ).toHaveAttribute('href', '/login');
   });
 
   /**
-   * Test case: Live password requirement feedback
-   *
-   * Scenario:
-   * The user enters a valid strong password.
+   * Test case: Password requirement feedback.
    *
    * Expected behavior:
-   * - Password requirement hints are visible
-   * - The password rules section is rendered correctly
+   * - password rules are visible while typing
+   * - the rules reflect the keys returned by getPasswordChecks
    */
-  it('shows password requirement feedback while typing', async () => {
-    render(
-      <MemoryRouter>
-        <RegisterPage />
-      </MemoryRouter>
-    );
+  it('shows password requirement feedback while typing', () => {
+    renderPage();
 
-    const passwordInput = screen.getByLabelText(/^password$/i);
-
-    fireEvent.change(passwordInput, {
-      target: { value: 'Password123!@' },
+    fireEvent.change(screen.getByLabelText(/^password$/i), {
+      target: {
+        value: 'Password123!@',
+      },
     });
 
     expect(screen.getByText(/at least 12 characters/i)).toBeInTheDocument();
@@ -125,58 +184,201 @@ describe('RegisterPage', () => {
   });
 
   /**
-   * Test case: Successful registration
-   *
-   * Scenario:
-   * - Email availability check returns available
-   * - Username availability check returns available
-   * - Registration request succeeds
+   * Test case: Password confirmation feedback.
    *
    * Expected behavior:
-   * - login() is called with returned auth data
-   * - navigation to "/" is triggered
+   * - matching passwords show a positive feedback message
+   * - non-matching passwords show a negative feedback message
    */
-  it('submits registration successfully', async () => {
-    vi.mocked(api.post)
-      .mockResolvedValueOnce({ emailExists: false })
-      .mockResolvedValueOnce({ usernameExists: false })
-      .mockResolvedValueOnce({
-        token: 'fake-token',
-        user: {
-          id: '1',
-          email: 'test@students.zhaw.ch',
-          username: 'testuser',
-          role: 'student',
-        },
-      });
+  it('shows password match feedback', () => {
+    renderPage();
 
-    render(
-      <MemoryRouter>
-        <RegisterPage />
-      </MemoryRouter>
-    );
-
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: 'test@students.zhaw.ch' },
+    fireEvent.change(screen.getByLabelText(/^password$/i), {
+      target: {
+        value: 'Password123!@',
+      },
     });
+
+    fireEvent.change(screen.getByLabelText(/confirm password/i), {
+      target: {
+        value: 'Password123!@',
+      },
+    });
+
+    expect(screen.getByText(/passwords match/i)).toBeInTheDocument();
+  });
+
+  /**
+   * Test case: Username availability feedback.
+   *
+   * Expected behavior:
+   * - availability endpoint is called after typing
+   * - available username feedback is displayed
+   */
+  it('shows username availability feedback', async () => {
+    vi.mocked(api.post).mockResolvedValue({
+      usernameExists: false,
+    });
+
+    renderPage();
 
     fireEvent.change(screen.getByLabelText(/username/i), {
-      target: { value: 'testuser' },
+      target: {
+        value: 'testuser',
+      },
     });
 
-    const passwordFields = screen.getAllByLabelText(/password/i);
-    fireEvent.change(passwordFields[0], {
-      target: { value: 'Password123!@' },
-    });
-    fireEvent.change(passwordFields[1], {
-      target: { value: 'Password123!@' },
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /register/i }));
+    expect(await screen.findByText(/username available/i)).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalled();
-      expect(mockNavigate).toHaveBeenCalledWith('/');
+      expect(api.post).toHaveBeenCalledWith('/auth/check-availability', {
+        username: 'testuser',
+      });
     });
+  });
+
+  /**
+   * Test case: Email availability feedback.
+   *
+   * Expected behavior:
+   * - availability endpoint is called after typing
+   * - available email feedback is displayed
+   */
+  it('shows email availability feedback', async () => {
+    vi.mocked(api.post).mockResolvedValue({
+      emailExists: false,
+    });
+
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: {
+        value: 'test@students.zhaw.ch',
+      },
+    });
+
+    expect(await screen.findByText(/e-mail available/i)).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/auth/check-availability', {
+        email: 'test@students.zhaw.ch',
+      });
+    });
+  });
+
+  /**
+   * Test case: Successful registration.
+   *
+   * Expected behavior:
+   * - register endpoint is called with form data
+   * - login() is called with returned auth data
+   * - navigation to dashboard is triggered
+   */
+  it('submits registration successfully', async () => {
+    mockSuccessfulApiResponses();
+
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText(/username/i), {
+      target: {
+        value: 'testuser',
+      },
+    });
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: {
+        value: 'test@students.zhaw.ch',
+      },
+    });
+
+    fireEvent.change(screen.getByLabelText(/^password$/i), {
+      target: {
+        value: 'Password123!@',
+      },
+    });
+
+    fireEvent.change(screen.getByLabelText(/confirm password/i), {
+      target: {
+        value: 'Password123!@',
+      },
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /register/i,
+      })
+    );
+
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/auth/register', {
+        username: 'testuser',
+        email: 'test@students.zhaw.ch',
+        password: 'Password123!@',
+      });
+    });
+
+    expect(mockLogin).toHaveBeenCalledWith('fake-token', {
+      id: '1',
+      email: 'test@students.zhaw.ch',
+      username: 'testuser',
+      role: 'student',
+    });
+
+    expect(mockNavigate).toHaveBeenCalledWith('/');
+  });
+
+  /**
+   * Test case: Failed registration.
+   *
+   * Expected behavior:
+   * - backend error message is displayed
+   * - login is not called
+   * - navigation is not triggered
+   */
+  it('shows server error when registration fails', async () => {
+    vi.mocked(api.post).mockImplementation(async (url) => {
+      if (url === '/auth/register') {
+        throw new Error('Registration failed');
+      }
+
+      return {};
+    });
+
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText(/username/i), {
+      target: {
+        value: 'testuser',
+      },
+    });
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: {
+        value: 'test@students.zhaw.ch',
+      },
+    });
+
+    fireEvent.change(screen.getByLabelText(/^password$/i), {
+      target: {
+        value: 'Password123!@',
+      },
+    });
+
+    fireEvent.change(screen.getByLabelText(/confirm password/i), {
+      target: {
+        value: 'Password123!@',
+      },
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /register/i,
+      })
+    );
+
+    expect(await screen.findByText(/registration failed/i)).toBeInTheDocument();
+
+    expect(mockLogin).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

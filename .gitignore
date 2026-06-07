@@ -1,3 +1,11 @@
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+/frontend/playwright/.cache/
+/frontend/playwright/.auth/
+/frontend/lighthouse-report/
+
 # Logs
 logs
 *.log
@@ -150,3 +158,6 @@ dist/
 
 # Claude Code
 .claude
+
+# Dozzle auth (prod) — generate from dozzle/users.yml.example
+dozzle/users.yml

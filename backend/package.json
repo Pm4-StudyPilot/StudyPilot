@@ -2,6 +2,12 @@
   "name": "backend",
   "version": "1.0.0",
   "private": true,
+  "exports": {
+    "./services": "./src/services/index.ts",
+    "./db": "./src/config/database.ts",
+    "./prisma-client": "./src/generated/prisma/client.ts",
+    "./types": "./src/types/index.ts"
+  },
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target node --external @mapbox/node-pre-gyp",
@@ -16,9 +22,9 @@
     "db:seed": "bun run prisma/seed.ts"
   },
   "dependencies": {
-    "@casl/ability": "^6.7.2",
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
+    "agent": "*",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^17.4.0",
@@ -27,6 +33,8 @@
     "jsonwebtoken": "^9.0.2",
     "minio": "^8.0.5",
     "morgan": "^1.10.1",
+    "multer": "^2.1.1",
+    "officeparser": "^7.1.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.20.0",
@@ -48,6 +56,7 @@
     "@types/express-rate-limit": "^6.0.2",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/morgan": "^1.9.10",
+    "@types/multer": "^2.1.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",

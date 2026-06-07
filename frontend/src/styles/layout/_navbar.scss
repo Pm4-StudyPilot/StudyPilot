@@ -1,0 +1,80 @@
+.navbar {
+  &--app {
+    background-color: var(--color-panel-bg);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  &__trigger {
+    line-height: 1;
+    color: var(--color-text-primary);
+    background-color: transparent;
+    border: 1px solid transparent;
+
+    &:hover,
+    &:focus {
+      background-color: var(--color-item);
+      color: var(--color-text-primary);
+    }
+  }
+
+  &__theme-toggle {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: var(--radius-pill);
+    color: var(--color-text-primary);
+    background-color: transparent;
+    border: 1px solid transparent;
+    line-height: 1;
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--color-item);
+      color: var(--color-primary);
+    }
+
+    i {
+      font-size: 0.95rem;
+    }
+  }
+
+  &__avatar {
+    width: var(--avatar-size);
+    height: var(--avatar-size);
+    font-size: var(--avatar-font-size);
+    background-color: var(--color-primary-bold) !important;
+    color: #fff !important;
+  }
+
+  &__username,
+  &__item-label {
+    font-size: var(--font-size-base);
+  }
+
+  &__chevron {
+    font-size: 0.65rem;
+    color: var(--color-text-secondary);
+  }
+
+  &__menu {
+    min-width: 220px;
+  }
+
+  &__meta {
+    min-width: 0;
+  }
+
+  &__meta-name {
+    font-size: var(--font-size-base);
+    line-height: 1.3;
+  }
+
+  &__meta-email {
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
+
+  &__item-icon {
+    font-size: var(--font-size-sm);
+  }
+}

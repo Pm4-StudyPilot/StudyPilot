@@ -1,0 +1,156 @@
+name: Lighthouse Performance
+
+# Audits real performance against the PRODUCTION build — it builds the same
+# monolithic Docker image prod ships (nginx serving the minified + gzipped Vite
+# bundle, proxying /api to the in-container backend) and runs the Lighthouse
+# specs against it.
+#
+# Runs ONLY on pushes to main (post-merge), never on PRs, so it is fully distinct
+# from — and never interferes with — the blocking PR checks. The fast a11y +
+# best-practices gate lives in e2e.yml and stays blocking. The perf audit step
+# also uses continue-on-error, so a regression surfaces in the job summary +
+# uploaded report without marking the main pipeline red.
+
+on:
+  push:
+    branches: [main]
+
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/studypilot_test
+  JWT_SECRET: test-jwt-secret
+  PORT: 3000
+  MINIO_ENDPOINT: localhost
+  MINIO_PORT: 9000
+  MINIO_ACCESS_KEY: minioadmin
+  MINIO_SECRET_KEY: minioadmin
+  MINIO_BUCKET: test-bucket
+  MINIO_USE_SSL: false
+  RESEND_API_KEY: test-resend-key
+  E2E_USER: e2e@studypilot.test
+  E2E_USERNAME: e2e_user
+  E2E_PASS: ${{ secrets.E2E_PASS || 'E2ePassw0rd!23' }}
+
+jobs:
+  lighthouse:
+    name: Lighthouse Performance (prod build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: studypilot_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      minio:
+        image: fclairamb/minio-github-actions
+        ports:
+          - 9000:9000
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: backend
+        run: bunx prisma generate --config prisma/prisma.config.ts
+
+      - name: Run database migrations
+        working-directory: backend
+        run: bunx prisma migrate deploy --config prisma/prisma.config.ts
+
+      - name: Seed baseline data
+        working-directory: backend
+        run: bun run prisma/seed.ts
+
+      - name: Build production image
+        run: docker build -t studypilot:lhci .
+
+      - name: Start production stack
+        # Host networking: nginx binds :80 and reaches the postgres + minio
+        # service containers on localhost, matching the env above.
+        run: |
+          docker run -d --name studypilot-app --network host \
+            -e DATABASE_URL="$DATABASE_URL" \
+            -e JWT_SECRET="$JWT_SECRET" \
+            -e PORT="$PORT" \
+            -e FRONTEND_URL="http://localhost" \
+            -e MINIO_ENDPOINT="$MINIO_ENDPOINT" \
+            -e MINIO_PORT="$MINIO_PORT" \
+            -e MINIO_ACCESS_KEY="$MINIO_ACCESS_KEY" \
+            -e MINIO_SECRET_KEY="$MINIO_SECRET_KEY" \
+            -e MINIO_BUCKET="$MINIO_BUCKET" \
+            -e MINIO_USE_SSL="$MINIO_USE_SSL" \
+            studypilot:lhci
+
+      - name: Wait for app health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost/api/health >/dev/null; then echo "app healthy"; exit 0; fi
+            sleep 2
+          done
+          echo "app did not become healthy"; docker logs studypilot-app; exit 1
+
+      - name: Install Playwright browser
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Lighthouse performance audit
+        id: audit
+        continue-on-error: true
+        working-directory: frontend
+        env:
+          PW_EXTERNAL_SERVER: '1'
+          LH_PERF: '1'
+          BASE_URL: http://localhost
+          BACKEND_URL: http://localhost
+        run: npx playwright test --project=lighthouse
+
+      - name: Summarise scores
+        if: ${{ !cancelled() }}
+        working-directory: frontend
+        run: |
+          echo "### Lighthouse (prod build, desktop)" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Page | Performance | Accessibility | Best practices |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|------|-------------|---------------|----------------|" >> "$GITHUB_STEP_SUMMARY"
+          for f in lighthouse-report/*.json; do
+            node -e "const r=require('./$f');const c=r.categories;const p=k=>c[k]?Math.round(c[k].score*100):'-';const n='$f'.split('/').pop().replace('.json','');console.log(\`| \${n} | \${p('performance')} | \${p('accessibility')} | \${p('best-practices')} |\`);" >> "$GITHUB_STEP_SUMMARY" || true
+          done
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "_Gate: performance >= 90 (non-blocking). Result: ${{ steps.audit.outcome }}._" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Lighthouse reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-perf-report
+          path: frontend/lighthouse-report
+          retention-days: 14
+
+      - name: Stop production stack
+        if: ${{ always() }}
+        run: docker rm -f studypilot-app || true

@@ -1,0 +1,145 @@
+{
+  "library": {
+    "eyebrow": "Course library",
+    "title": "Courses",
+    "subline": "Browse all available courses and open one to view its detailed page."
+  },
+  "list": {
+    "heading": "My Courses",
+    "addAria": "Add course",
+    "coursesShown": "{{shown}} of {{total}} courses shown",
+    "courseShown": "{{shown}} of {{total}} course shown",
+    "errorLoad": "Failed to load courses",
+    "empty": "No courses yet.",
+    "emptySearch": "No courses match your search."
+  },
+  "card": {
+    "addedDate": "Added {{date}}",
+    "openAria": "Open course",
+    "editAria": "Edit course",
+    "deleteAria": "Delete course",
+    "leaveAria": "Leave course",
+    "shareAria": "Share course",
+    "toggleAria": "Toggle course",
+    "openLabel": "Open",
+    "loadingTasks": "Loading tasks...",
+    "noTasks": "No tasks yet.",
+    "viewAllTasks": "View all tasks →",
+    "progressText": "{{open}} open · {{inProgress}} in progress · {{completed}} completed",
+    "progressLabel": "{{open}} open, {{inProgress}} in progress, {{completed}} completed",
+    "status": {
+      "OPEN": "Open",
+      "IN_PROGRESS": "In Progress",
+      "DONE": "Done"
+    }
+  },
+  "create": {
+    "title": "New Course",
+    "nameLabel": "Course Name",
+    "submit": "Create Course"
+  },
+  "edit": {
+    "title": "Edit Course",
+    "submit": "Save Changes"
+  },
+  "delete": {
+    "title": "Delete Course",
+    "confirm": "Are you sure you want to delete <strong>{{name}}</strong>? This permanently deletes the course and shared content for everyone."
+  },
+  "leave": {
+    "title": "Leave Course",
+    "confirm": "Are you sure you want to leave <strong>{{name}}</strong>? Your access and personal tasks for this course will be removed."
+  },
+  "colorField": {
+    "label": "Course Color",
+    "paletteAria": "Preset palette",
+    "selectAria": "Select {{color}}",
+    "hint": "Used in the course list and deadline calendar."
+  },
+  "detail": {
+    "backToCourses": "Back to Courses",
+    "loadFailed": "Failed to load course",
+    "courseNotFound": "Course not found",
+    "courseNotFoundHint": "The backend did not return a course for this route.",
+    "workspacePill": "Course workspace",
+    "metaTasks": "{{count}} task",
+    "metaTasks_other": "{{count}} tasks",
+    "metaCompleted": "{{count}} completed",
+    "metaCreated": "Created {{date}}",
+    "progressHeading": "Course Progress",
+    "progressSummary": "{{completed}} completed, {{inProgress}} in progress, {{open}} open",
+    "percentComplete": "{{percent}}% complete",
+    "percentLabel": "complete",
+    "tasksHeading": "Tasks",
+    "addTaskAria": "Add task",
+    "loadingTasks": "Loading tasks...",
+    "loadTasksFailed": "Failed to load tasks",
+    "materialsHeading": "Course Materials",
+    "addQuizAria": "Add quiz",
+    "loadingMaterials": "Loading course materials...",
+    "loadMaterialsFailed": "Failed to load course feed",
+    "documentsHeading": "Course Documents",
+    "uploadHeading": "Upload Document",
+    "uploadSubtitle": "Add files to this course workspace. The document list above refreshes after a successful upload.",
+    "searchPlaceholder": "Search in this course...",
+    "share": "Share",
+    "delete": "Delete",
+    "leave": "Leave"
+  },
+  "feed": {
+    "empty": "No course materials yet. Add quizzes or other items to get started.",
+    "sortBy": "Sort by: {{label}}",
+    "sortLabels": {
+      "title": "Title",
+      "dateAdded": "Date Added"
+    }
+  },
+  "documents": {
+    "heading": "Uploaded documents",
+    "loading": "Loading documents...",
+    "loadFailed": "Failed to load documents.",
+    "shown": "{{shown}} of {{total}} files shown",
+    "shownOne": "{{shown}} of {{total}} file shown",
+    "sortBy": "Sort by:",
+    "sortNewest": "Newest",
+    "sortName": "Name",
+    "sortType": "Type",
+    "sortSize": "Size",
+    "empty": "No documents uploaded yet.",
+    "emptySearch": "No documents match your search.",
+    "updated": "Updated {{date}}",
+    "unknownSize": "Unknown size",
+    "openAria": "Open {{filename}}",
+    "downloadAria": "Download {{filename}}",
+    "deleteAria": "Delete {{filename}}",
+    "openFailed": "Failed to open document.",
+    "downloadFailed": "Failed to download document.",
+    "delete": {
+      "title": "Delete Document",
+      "confirm": "Are you sure you want to delete <strong>{{filename}}</strong>? This action cannot be undone."
+    }
+  },
+  "upload": {
+    "title": "Upload Document",
+    "hint": "Drag & drop a file here, or click to browse.",
+    "maxSize": "Max file size: 50MB.",
+    "selectedFile": "Selected file: {{name}}",
+    "uploading": "Uploading...",
+    "notAuthenticated": "You are not authenticated.",
+    "failed": "Upload failed.",
+    "success": "Upload successful: {{filename}}"
+  },
+  "share": {
+    "title": "Share Course",
+    "description": "Share this course with other users by entering their email or username.",
+    "usernameOrEmailLabel": "Username or Email",
+    "submit": "Share",
+    "success": "Course shared successfully",
+    "error": {
+      "unknown": "Failed to share course",
+      "selfShare": "You cannot share a course with yourself",
+      "userNotFound": "User not found",
+      "alreadyShared": "Course is already shared with this user"
+    }
+  }
+}

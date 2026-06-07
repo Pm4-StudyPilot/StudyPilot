@@ -28,18 +28,29 @@ function symlinkBeEnv() {
   const beEnvSrc = path.join(root, '.env');
   const beEnvDest = path.join(root, 'backend', '.env');
 
-  if (fs.existsSync(beEnvDest) || fs.statSync(beEnvDest).isSymbolicLink()) {
-    const existing = fs.readlinkSync(beEnvDest);
-    if (existing === beEnvSrc) {
-      console.log('\nbackend/.env already symlinked to root .env, skipping');
+  if (fs.existsSync(beEnvDest)) {
+    const existingStat = fs.lstatSync(beEnvDest);
+
+    if (existingStat.isSymbolicLink()) {
+      const existing = fs.readlinkSync(beEnvDest);
+      if (existing === beEnvSrc) {
+        console.log('\nbackend/.env already symlinked to root .env, skipping');
+      } else {
+        console.log('\nbackend/.env exists and points elsewhere, skipping');
+      }
     } else {
-      console.log('\nbackend/.env exists and points elsewhere, skipping');
+      console.log('\nbackend/.env already exists, skipping symlink');
     }
   } else if (fs.existsSync(beEnvSrc)) {
-    fs.symlinkSync(beEnvSrc, beEnvDest);
-    console.log('\nSymlinked backend/.env -> root .env');
+    try {
+      fs.symlinkSync(beEnvSrc, beEnvDest);
+      console.log('\nSymlinked backend/.env -> root .env');
+    } catch {
+      fs.copyFileSync(beEnvSrc, beEnvDest);
+      console.log('\nSymlink unavailable, copied root .env to backend/.env');
+    }
   } else {
-    console.log('\nroot .env not found, skipping backend symlink');
+    console.log('\nroot .env not found, skipping backend env setup');
   }
 }
 

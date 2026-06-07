@@ -1,0 +1,11 @@
+{
+  "placeholder": "Wie kann TARS dir helfen?",
+  "ariaLabel": "TARS fragen",
+  "sendAria": "Senden",
+  "closeAria": "Chat schließen",
+  "chatAria": "Mit TARS chatten",
+  "typingAria": "TARS schreibt",
+  "errorReply": "Entschuldigung, beim Erreichen von TARS ist etwas schiefgelaufen. Bitte erneut versuchen.",
+  "toolsUsed": "{{count}} Werkzeug verwendet",
+  "toolsUsed_other": "{{count}} Werkzeuge verwendet"
+}

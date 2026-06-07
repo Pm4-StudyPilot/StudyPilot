@@ -1,0 +1,441 @@
+.deadline-calendar {
+  display: grid;
+  gap: 2.65rem;
+
+  &__month,
+  &__detail {
+    min-width: 0;
+  }
+
+  &__month {
+    margin-bottom: 0 !important;
+  }
+
+  &__month > .d-flex {
+    align-items: center !important;
+    margin-bottom: 1.85rem !important;
+  }
+
+  &__month h2 {
+    margin: 0;
+    color: var(--color-text-secondary) !important;
+    font-size: 0.94rem !important;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  &__toolbar {
+    flex-wrap: nowrap !important;
+    justify-content: flex-end;
+    gap: 0.45rem !important;
+  }
+
+  &__filter {
+    position: relative;
+  }
+
+  &__filter-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    max-width: 10rem;
+    min-height: 2.2rem;
+    padding: 0.3rem 0.55rem;
+    border: 0;
+    border-radius: 0.45rem;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 0.86rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--color-card-bg);
+      color: var(--color-text-primary);
+    }
+  }
+
+  &__filter-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    & > :last-child {
+      display: inline-block;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+  }
+
+  &__filter-dot {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 0.44rem;
+    height: 0.44rem;
+    border-radius: var(--radius-pill);
+  }
+
+  &__filter-menu {
+    position: absolute;
+    top: calc(100% + 0.45rem);
+    right: 0;
+    z-index: 5;
+    min-width: 14rem;
+    padding: 0.55rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.7rem;
+    background-color: var(--color-panel-bg);
+    box-shadow: var(--shadow-soft);
+  }
+
+  &__filter-search {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.45rem;
+    padding: 0.42rem 0.55rem;
+    border: 1px solid var(--color-divider);
+    border-radius: 0.55rem;
+    background-color: var(--color-input-bg);
+    color: var(--color-text-muted);
+
+    input {
+      width: 100%;
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      color: var(--color-text-primary);
+      font-size: 0.82rem;
+      outline: 0;
+
+      &::placeholder {
+        color: var(--color-text-muted);
+      }
+    }
+  }
+
+  &__filter-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    max-height: 14rem;
+    overflow-y: auto;
+    padding-right: 0.15rem;
+  }
+
+  &__filter-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.45rem 0.5rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 0.84rem;
+    text-align: left;
+
+    &:hover,
+    &:focus-visible,
+    &--active {
+      background-color: var(--color-primary-accent);
+      color: var(--color-text-primary);
+    }
+  }
+
+  &__filter-empty {
+    padding: 0.7rem 0.5rem;
+    color: var(--color-text-muted);
+    font-size: 0.84rem;
+    text-align: center;
+  }
+
+  &__month-controls {
+    gap: 0.65rem;
+  }
+
+  &__nav-button {
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0.35rem;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 0.78rem;
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--color-card-bg);
+      color: var(--color-text-primary);
+    }
+  }
+
+  &__weekdays,
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    column-gap: 0.7rem;
+  }
+
+  &__weekdays {
+    margin-bottom: 1.05rem !important;
+  }
+
+  &__grid {
+    row-gap: 1.1rem;
+  }
+
+  &__month-frame {
+    overflow-x: visible;
+    padding-bottom: 0;
+  }
+
+  &__weekday {
+    color: var(--color-text-muted) !important;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  &__day {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 2.55rem;
+    height: 2.55rem;
+    min-height: 0;
+    margin: 0 auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0.55rem;
+    background: transparent;
+    color: var(--color-text-primary);
+    font-size: 0.98rem;
+    font-weight: 800;
+    line-height: 1;
+    text-align: center;
+    transition:
+      color 0.18s ease,
+      background-color 0.18s ease,
+      transform 0.18s ease;
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--color-card-bg);
+    }
+  }
+
+  &__day--outside {
+    // Solid muted tone (no transparency) so out-of-month days still clear the
+    // WCAG AA 4.5:1 text-contrast threshold while staying de-emphasised.
+    color: var(--color-text-muted);
+  }
+
+  &__day--selected {
+    background-color: var(--color-primary-bold);
+    // Dark text on the bright brand orange for AA contrast (matches buttons).
+    color: var(--color-on-primary);
+  }
+
+  &__day--today {
+    background-color: var(--color-primary-bold);
+    color: var(--color-on-primary);
+  }
+
+  &__day--today-muted {
+    background-color: transparent;
+    color: var(--color-primary);
+  }
+
+  // Days with deadlines are flagged by their dot; keep the default readable text
+  // colour rather than white-on-transparent (which fails contrast in light mode).
+  &__day--active:not(.deadline-calendar__day--selected):not(.deadline-calendar__day--today) {
+    color: var(--color-text-primary);
+  }
+
+  &__day-number {
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: 1;
+  }
+
+  &__day-dot {
+    position: absolute;
+    right: calc(50% - 0.18rem);
+    bottom: 0.2rem;
+    display: inline-block;
+    width: 0.36rem;
+    height: 0.36rem;
+    border-radius: var(--radius-pill);
+  }
+
+  &__detail h3 {
+    margin: 0;
+    color: var(--color-text-secondary) !important;
+    font-size: 0.84rem !important;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  &__reset {
+    color: var(--color-primary);
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  &__task-list {
+    display: grid;
+    align-content: start;
+    gap: 1rem;
+    height: 11.3rem;
+  }
+
+  &__task-list--preview {
+    overflow: hidden;
+  }
+
+  &__task-list--scrollable {
+    overflow-y: auto;
+    margin-block: -0.15rem;
+    padding: 0.15rem 0.35rem 0.15rem 0;
+    overscroll-behavior: contain;
+
+    &::-webkit-scrollbar {
+      width: 0.35rem;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border-radius: var(--radius-pill);
+      background-color: var(--color-divider);
+    }
+  }
+
+  &__more-button {
+    margin: 0.95rem 0 0 3.95rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-align: left;
+    text-transform: uppercase;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--color-text-primary);
+    }
+  }
+
+  &__task-card {
+    display: grid;
+    grid-template-columns: 2.95rem minmax(0, 1fr);
+    gap: 1rem;
+    align-items: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  &__date-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 2.85rem;
+    height: 3.1rem;
+    border-radius: 0.55rem;
+    color: var(--color-white);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-white) 12%, transparent);
+    text-transform: uppercase;
+
+    span {
+      font-size: 0.58rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+
+    strong {
+      margin-top: 0.15rem;
+      font-size: 1.16rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+  }
+
+  &__task-content {
+    min-width: 0;
+  }
+
+  &__task-title {
+    display: block;
+    overflow: hidden;
+    color: var(--color-text-primary);
+    font-size: 0.92rem;
+    font-weight: 900;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover {
+      color: var(--color-white);
+    }
+  }
+
+  &__task-meta {
+    margin: 0.16rem 0 0;
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__empty-state {
+    display: grid;
+    place-items: center;
+    height: 11.3rem;
+    border: 1px dashed var(--color-border);
+    background-color: transparent;
+    font-size: var(--font-size-base);
+  }
+}
+
+@media (max-width: 767.98px) {
+  .deadline-calendar {
+    &__toolbar,
+    &__filter,
+    &__filter-toggle {
+      width: 100%;
+      max-width: none;
+    }
+
+    &__filter-menu {
+      right: auto;
+      left: 0;
+      min-width: 100%;
+    }
+
+    &__weekdays,
+    &__grid {
+      min-width: 20rem;
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "list": {
+    "empty": "Noch keine Aufgaben. Füge eine hinzu, um zu beginnen.",
+    "sortBy": "Sortieren nach:",
+    "sortedBy": "Sortiert nach <strong>{{label}}</strong>",
+    "switchToManual": "Zur manuellen Sortierung wechseln",
+    "reorderError": "Reihenfolge konnte nicht gespeichert werden. Bitte erneut versuchen.",
+    "sortLabels": {
+      "manual": "Manuell",
+      "title": "Titel",
+      "dueDate": "Fälligkeitsdatum",
+      "priority": "Priorität",
+      "status": "Status"
+    }
+  },
+  "card": {
+    "dragHandleAria": "Verschiebegriff",
+    "editAria": "Aufgabe bearbeiten",
+    "deleteAria": "Aufgabe löschen",
+    "noDescription": "Keine Beschreibung."
+  },
+  "priority": {
+    "LOW": "Niedrig",
+    "MEDIUM": "Mittel",
+    "HIGH": "Hoch"
+  },
+  "status": {
+    "OPEN": "Offen",
+    "IN_PROGRESS": "In Bearbeitung",
+    "DONE": "Erledigt"
+  },
+  "fields": {
+    "title": "Titel",
+    "description": "Beschreibung",
+    "dueDate": "Fälligkeitsdatum",
+    "priority": "Priorität",
+    "status": "Status"
+  },
+  "create": {
+    "title": "Neue Aufgabe",
+    "submit": "Aufgabe erstellen"
+  },
+  "edit": {
+    "title": "Aufgabe bearbeiten",
+    "submit": "Änderungen speichern"
+  },
+  "delete": {
+    "title": "Aufgabe löschen",
+    "confirm": "Bist du sicher, dass du <strong>{{title}}</strong> löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden."
+  }
+}

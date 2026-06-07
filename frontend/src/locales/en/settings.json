@@ -1,0 +1,29 @@
+{
+  "eyebrow": "Account workspace",
+  "title": "Account Settings",
+  "subline": "Manage your profile and security settings.",
+  "profile": {
+    "title": "Profile Information",
+    "subtitle": "Update your visible account information.",
+    "usernameLabel": "Username",
+    "emailLabel": "Email",
+    "save": "Save Profile",
+    "successUpdated": "Profile updated successfully"
+  },
+  "security": {
+    "title": "Security",
+    "subtitle": "Update your password to keep your account secure.",
+    "change": "Change Password"
+  },
+  "changePassword": {
+    "back": "Back to Settings",
+    "eyebrow": "Security",
+    "title": "Change Password",
+    "subline": "Update your password to keep your account secure.",
+    "currentLabel": "Current Password",
+    "newLabel": "New Password",
+    "confirmLabel": "Confirm New Password",
+    "submit": "Change Password",
+    "cancel": "Cancel"
+  }
+}

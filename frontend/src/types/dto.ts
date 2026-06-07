@@ -10,6 +10,11 @@ export interface AuthResponse {
   token: string;
 }
 
+export interface AvailabilityResponse {
+  emailExists?: boolean;
+  usernameExists?: boolean;
+}
+
 export interface UpdateProfileDto {
   username: string;
   email: string;
@@ -18,9 +23,19 @@ export interface UpdateProfileDto {
 export interface CourseDto {
   id: string;
   name: string;
+  color: string;
   ownerId: string;
   createdAt: string;
   updatedAt: string;
+  taskProgress?: CourseTaskProgressDto;
+}
+
+export interface CourseTaskProgressDto {
+  totalTasks: number;
+  openTasks: number;
+  inProgressTasks: number;
+  completedTasks: number;
+  completionPercentage: number;
 }
 
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
@@ -38,4 +53,39 @@ export interface TaskDto {
   courseId: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface QuizDto {
+  id: string;
+  title: string;
+  description: string | null;
+  isOrderRandom: boolean;
+  courseId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type QuestionType = 'MULTIPLE_CHOICE' | 'SINGLE_CHOICE' | 'CARD';
+
+export interface QuestionDto {
+  id: string;
+  title: string;
+  description: string | null;
+  type: QuestionType;
+  quizId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AnswerDto {
+  id: string;
+  content: string;
+  isCorrect: boolean;
+  questionId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuestionWithAnswersDto extends QuestionDto {
+  answers: AnswerDto[];
 }

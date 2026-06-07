@@ -1,6 +1,7 @@
-import { FormEvent, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import Navbar from '../components/shared/layout/Navbar';
+import { FormEvent, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import DashboardLayout from '../components/shared/layout/DashboardLayout';
 import Form from '../components/shared/form/Form';
 import InputField from '../components/shared/form/InputField';
 import Button from '../components/shared/Button';
@@ -8,25 +9,26 @@ import { api } from '../services/api';
 import { useAuth } from '../context/useAuth';
 import { useForm } from '../hooks/useForm';
 import { UpdateProfileDto, UserDto } from '../types/dto';
-import { updateProfileSchema } from '../validation/schemas';
+import { createUpdateProfileSchema } from '../validation/schemas';
 
 export default function SettingsPage() {
-  const { user, updateUser, logout } = useAuth();
+  const { user, updateUser } = useAuth();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
-  const { values, errors, handleChange, validate } = useForm<UpdateProfileDto>(
-    updateProfileSchema,
-    {
-      username: user?.username ?? '',
-      email: user?.email ?? '',
-    }
-  );
+  const schema = useMemo(() => createUpdateProfileSchema(t), [t]);
+  const { values, errors, handleChange, validate } = useForm<UpdateProfileDto>(schema, {
+    username: user?.username ?? '',
+    email: user?.email ?? '',
+  });
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+
     setError('');
     setSuccess('');
 
@@ -44,87 +46,92 @@ export default function SettingsPage() {
         username: updatedUser.username,
         email: updatedUser.email,
       });
-      setSuccess('Profile updated successfully');
+
+      setSuccess(t('settings.profile.successUpdated'));
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof Error ? err.message : t('common.somethingWentWrong'));
     } finally {
       setLoading(false);
     }
   }
 
-  async function deleteAccount() {
-    try {
-      await api.delete<void>('/users/me');
-      logout();
-      navigate('/login');
-      setSuccess('Account has successfully been deleted');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
-    }
-  }
-
   return (
-    <>
-      <Navbar />
-      <div className="container mt-5">
-        <div className="row g-4">
-          <div className="col-lg-7">
-            <div className="card shadow-sm">
-              <div className="card-body p-4">
-                <h1 className="h3 mb-1">Account Settings</h1>
-                <p className="text-muted mb-4">Manage your profile and security settings.</p>
+    <DashboardLayout activeNav="settings" showSearch={false}>
+      <section className="dashboard-page-stack">
+        <header className="dashboard-page-header">
+          <div>
+            <p className="dashboard-page-header__eyebrow">{t('settings.eyebrow')}</p>
 
-                {success && (
-                  <div className="alert alert-success" role="alert">
-                    {success}
-                  </div>
-                )}
+            <h1>{t('settings.title')}</h1>
 
-                <Form onSubmit={handleSubmit} error={error}>
-                  <InputField
-                    label="Username"
-                    value={values.username}
-                    onChange={(e) => handleChange('username', e.target.value)}
-                    error={errors.username}
-                    autoComplete="username"
-                  />
+            <p className="dashboard-page-header__subline">{t('settings.subline')}</p>
+          </div>
+        </header>
 
-                  <InputField
-                    label="Email"
-                    type="email"
-                    value={values.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
-                    error={errors.email}
-                    autoComplete="email"
-                  />
+        <div className="settings-card-stack">
+          <section className="settings-card">
+            <div className="settings-card__content">
+              <div className="settings-card__header">
+                <h2 className="settings-card__title">{t('settings.profile.title')}</h2>
 
-                  <div className="d-flex gap-2 mt-3">
-                    <Button type="submit" loading={loading}>
-                      Save Profile
-                    </Button>
-                  </div>
-                </Form>
+                <p className="settings-card__subtitle">{t('settings.profile.subtitle')}</p>
+              </div>
+
+              {success && (
+                <div className="alert alert-success" role="alert">
+                  {success}
+                </div>
+              )}
+
+              <Form onSubmit={handleSubmit} error={error}>
+                <InputField
+                  label={t('settings.profile.usernameLabel')}
+                  value={values.username}
+                  onChange={(e) => handleChange('username', e.target.value)}
+                  error={errors.username}
+                  autoComplete="username"
+                />
+
+                <InputField
+                  label={t('settings.profile.emailLabel')}
+                  type="email"
+                  value={values.email}
+                  onChange={(e) => handleChange('email', e.target.value)}
+                  error={errors.email}
+                  autoComplete="email"
+                />
 
                 <div className="d-flex gap-2 mt-3">
-                  <Button onClick={deleteAccount}>Delete Account</Button>
+                  <Button
+                    type="submit"
+                    loading={loading}
+                    className="btn btn-primary bold settings-page__button"
+                  >
+                    {t('settings.profile.save')}
+                  </Button>
                 </div>
-              </div>
+              </Form>
             </div>
-          </div>
+          </section>
 
-          <div className="col-lg-5">
-            <div className="card shadow-sm">
-              <div className="card-body p-4">
-                <h2 className="h5 mb-2">Security</h2>
-                <p className="text-muted">Update your password to keep your account secure.</p>
-                <Link to="/settings/password" className="btn btn-outline-primary">
-                  Change Password
-                </Link>
+          <section className="settings-card">
+            <div className="settings-card__content">
+              <div className="settings-card__header">
+                <h2 className="settings-card__title">{t('settings.security.title')}</h2>
+
+                <p className="settings-card__subtitle">{t('settings.security.subtitle')}</p>
               </div>
+
+              <Button
+                onClick={() => navigate('/settings/password')}
+                className="btn btn-primary bold settings-page__button"
+              >
+                {t('settings.security.change')}
+              </Button>
             </div>
-          </div>
+          </section>
         </div>
-      </div>
-    </>
+      </section>
+    </DashboardLayout>
   );
 }

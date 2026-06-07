@@ -1,45 +1,30 @@
-import { FormEvent, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { FormEvent, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import Button from '../components/shared/Button';
 import Form from '../components/shared/form/Form';
 import PasswordField from '../components/shared/form/PasswordField';
 import ProgressBar from '../components/shared/feedback/ProgressBar';
-import Navbar from '../components/shared/layout/Navbar';
+import DashboardLayout from '../components/shared/layout/DashboardLayout';
 import { useForm } from '../hooks/useForm';
-import { changePasswordSchema } from '../validation/schemas';
-import { getPasswordChecks, getPasswordStrength } from '../utils/passwordStrength';
+import { createChangePasswordSchema } from '../validation/schemas';
+import { getPasswordStrength } from '../utils/passwordStrength';
 
-/**
- * ChangePasswordPage
- *
- * Allows authenticated users to change their password from account settings.
- *
- * Responsibilities:
- * - Render change password form (current password, new password, confirm new password)
- * - Validate input using Zod schema
- * - Send PATCH request to backend API
- * - Display success or error feedback
- *
- * Workflow:
- * 1. User enters current password and new password (twice)
- * 2. Form is validated using changePasswordSchema
- * 3. API PATCH request is sent to /users/me/password
- * 4. Success message is shown on completion
- */
 export default function ChangePasswordPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
-  const { values, errors, handleChange, validate } = useForm(changePasswordSchema, {
+  const schema = useMemo(() => createChangePasswordSchema(t), [t]);
+  const { values, errors, handleChange, validate } = useForm(schema, {
     currentPassword: '',
     newPassword: '',
     confirmNewPassword: '',
   });
 
-  const passwordChecks = getPasswordChecks(values.newPassword);
   const passwordsMatch =
     values.confirmNewPassword.length > 0 && values.newPassword === values.confirmNewPassword;
 
@@ -57,90 +42,107 @@ export default function ChangePasswordPage() {
       });
       setSuccess(data.message);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof Error ? err.message : t('common.somethingWentWrong'));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <>
-      <Navbar />
-      <div className="container d-flex justify-content-center mt-5">
-        <div className="card shadow" style={{ maxWidth: '480px', width: '100%' }}>
-          <div className="card-body p-4">
-            <h4 className="mb-1">Change Password</h4>
-            <p className="text-muted mb-4">Update your password to keep your account secure.</p>
+    <DashboardLayout activeNav="settings" showSearch={false}>
+      <section className="dashboard-page-stack">
+        <Link
+          to="/settings"
+          className="course-detail__back-link text-secondary text-decoration-none d-inline-flex align-items-center gap-2"
+        >
+          <i className="fa-solid fa-chevron-left" />
+          {t('settings.changePassword.back')}
+        </Link>
+        <header className="dashboard-page-header">
+          <div>
+            <p className="dashboard-page-header__eyebrow">{t('settings.changePassword.eyebrow')}</p>
 
-            {success && (
-              <div className="alert alert-success" role="alert">
-                {success}
-              </div>
-            )}
+            <h1>{t('settings.changePassword.title')}</h1>
 
-            <Form onSubmit={handleSubmit} error={error}>
-              <PasswordField
-                label="Current Password"
-                value={values.currentPassword}
-                onChange={(e) => handleChange('currentPassword', e.target.value)}
-                error={errors.currentPassword}
-                autoComplete="current-password"
-              />
+            <p className="dashboard-page-header__subline">{t('settings.changePassword.subline')}</p>
+          </div>
+        </header>
 
-              <PasswordField
-                label="New Password"
-                value={values.newPassword}
-                onChange={(e) => handleChange('newPassword', e.target.value)}
-                error={errors.newPassword}
-                autoComplete="new-password"
-              />
-
-              <ProgressBar value={getPasswordStrength(values.newPassword)} />
-
-              <div className="mt-2 mb-3 small">
-                <div className={passwordChecks.minLength ? 'text-success' : 'text-danger'}>
-                  {passwordChecks.minLength ? '✔' : '✖'} At least 12 characters
-                </div>
-                <div className={passwordChecks.uppercase ? 'text-success' : 'text-danger'}>
-                  {passwordChecks.uppercase ? '✔' : '✖'} At least one uppercase letter
-                </div>
-                <div className={passwordChecks.lowercase ? 'text-success' : 'text-danger'}>
-                  {passwordChecks.lowercase ? '✔' : '✖'} At least one lowercase letter
-                </div>
-                <div className={passwordChecks.number ? 'text-success' : 'text-danger'}>
-                  {passwordChecks.number ? '✔' : '✖'} At least one number
-                </div>
-                <div className={passwordChecks.specialChar ? 'text-success' : 'text-danger'}>
-                  {passwordChecks.specialChar ? '✔' : '✖'} At least one special character
-                </div>
-              </div>
-
-              <PasswordField
-                label="Confirm New Password"
-                value={values.confirmNewPassword}
-                onChange={(e) => handleChange('confirmNewPassword', e.target.value)}
-                error={errors.confirmNewPassword}
-                autoComplete="new-password"
-              />
-
-              {values.confirmNewPassword && (
-                <div className={`mb-3 small ${passwordsMatch ? 'text-success' : 'text-danger'}`}>
-                  {passwordsMatch ? '✔' : '✖'} Passwords match
+        <div className="settings-card-stack">
+          <section className="settings-card">
+            <div className="settings-card__content">
+              {success && (
+                <div className="alert alert-success" role="alert">
+                  {success}
                 </div>
               )}
 
-              <div className="d-flex gap-2 mt-3">
-                <Button type="submit" loading={loading}>
-                  Change Password
-                </Button>
-                <Button type="button" variant="secondary" onClick={() => navigate('/')}>
-                  Cancel
-                </Button>
-              </div>
-            </Form>
-          </div>
+              <Form onSubmit={handleSubmit} error={error}>
+                <PasswordField
+                  label={t('settings.changePassword.currentLabel')}
+                  value={values.currentPassword}
+                  onChange={(e) => handleChange('currentPassword', e.target.value)}
+                  error={errors.currentPassword}
+                  autoComplete="current-password"
+                />
+
+                <PasswordField
+                  label={t('settings.changePassword.newLabel')}
+                  value={values.newPassword}
+                  onChange={(e) => handleChange('newPassword', e.target.value)}
+                  error={errors.newPassword}
+                  autoComplete="new-password"
+                />
+
+                <ProgressBar
+                  value={getPasswordStrength(values.newPassword)}
+                  label={t('auth.passwordStrength')}
+                />
+
+                <div className="mt-2 mb-3 small">...</div>
+
+                <PasswordField
+                  label={t('settings.changePassword.confirmLabel')}
+                  value={values.confirmNewPassword}
+                  onChange={(e) => handleChange('confirmNewPassword', e.target.value)}
+                  error={errors.confirmNewPassword}
+                  autoComplete="new-password"
+                />
+
+                {values.confirmNewPassword && (
+                  <div
+                    className={`auth-check mb-3 ${
+                      passwordsMatch ? 'auth-check--valid' : 'auth-check--invalid'
+                    }`}
+                  >
+                    <span className="auth-check__icon">{passwordsMatch ? 'OK' : 'NO'}</span>
+
+                    <span>{t('auth.passwordChecks.match')}</span>
+                  </div>
+                )}
+
+                <div className="d-flex gap-2 mt-3">
+                  <Button
+                    type="submit"
+                    loading={loading}
+                    className="btn btn-primary bold settings-page__button"
+                  >
+                    {t('settings.changePassword.submit')}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    onClick={() => navigate('/settings')}
+                    className="btn btn-primary bold settings-page__button"
+                  >
+                    {t('settings.changePassword.cancel')}
+                  </Button>
+                </div>
+              </Form>
+            </div>
+          </section>
         </div>
-      </div>
-    </>
+      </section>
+    </DashboardLayout>
   );
 }

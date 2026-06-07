@@ -1,8 +1,15 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
-import { CourseDto } from '../../types/dto';
+import { useTranslation } from 'react-i18next';
+import { CourseDto, TaskDto } from '../../types/dto';
+import { api } from '../../services/api';
 import EditCourseModal from './EditCourseModal';
 import DeleteCourseModal from './DeleteCourseModal';
+import ShareCourseModal from './ShareCourseModal';
+import ProgressRing from '../shared/ProgressRing';
+import { withOpacity } from '../../utils/courseColors';
+import { formatDate } from '../../utils/formatDate';
+import { useAuth } from '../../context/useAuth';
 
 type CourseCardProps = {
   course: CourseDto;
@@ -10,80 +17,151 @@ type CourseCardProps = {
   onDeleted: (id: string) => void;
 };
 
-/**
- * CourseCard
- *
- * Renders a single course as a collapsible card row inside the course list.
- *
- * Responsibilities:
- * - Display the course name as a link to the detail page
- * - Show the formatted creation date
- * - Toggle expanded state to reveal course content
- * - Open the EditCourseModal and notify the parent when the course is updated
- * - Open the DeleteCourseModal and notify the parent when the course is deleted
- *
- * Workflow:
- * 1. Course data is received via props
- * 2. Clicking the header row toggles the expanded state
- * 3. Clicking the course name navigates to /courses/:id without toggling
- * 4. Clicking the edit button opens the EditCourseModal
- * 5. Clicking the delete button opens the DeleteCourseModal
- */
+const STATUS_BADGE: Record<TaskDto['status'], string> = {
+  OPEN: 'bg-secondary',
+  IN_PROGRESS: 'bg-primary',
+  DONE: 'bg-success',
+};
+
 export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [tasks, setTasks] = useState<TaskDto[] | null>(null);
+  const [tasksLoading, setTasksLoading] = useState(false);
+  const { t } = useTranslation();
+  const progress = course.taskProgress ?? {
+    totalTasks: 0,
+    completedTasks: 0,
+    openTasks: 0,
+    inProgressTasks: 0,
+    completionPercentage: 0,
+  };
 
-  const formattedDate = new Date(course.createdAt).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  function handleToggle() {
+    setExpanded((prev) => {
+      if (!prev && tasks === null) {
+        setTasksLoading(true);
+        api
+          .get<TaskDto[]>(`/courses/${course.id}/tasks`)
+          .then(setTasks)
+          .catch(() => setTasks([]))
+          .finally(() => setTasksLoading(false));
+      }
+      return !prev;
+    });
+  }
+
+  const formattedDate = formatDate(course.createdAt);
 
   function handleUpdated(updated: CourseDto) {
     onUpdated(updated);
     setEditOpen(false);
   }
 
+  const { user } = useAuth();
+  const isOwner = user?.id === course.ownerId;
+
+  const courseAccentStyle = {
+    '--course-accent-color': course.color,
+    '--course-accent-border-color': withOpacity(course.color, 0.2),
+  };
+
   return (
     <>
-      <div className="course-card rounded mb-2">
+      <div
+        className="course-card panel mb-2"
+        style={courseAccentStyle as CSSProperties}
+        data-testid="course-card"
+      >
+        <Link
+          to={`/courses/${course.id}`}
+          className="course-card__link-overlay"
+          aria-label={t('courses.card.openAria')}
+        />
         <div className="d-flex align-items-center justify-content-between p-3">
           <div className="d-flex align-items-center gap-3">
-            {/* Progress ring placeholder — will show completion percentage once progress data exists */}
-            <div className="course-card__progress-ring rounded-circle flex-shrink-0" />
+            <ProgressRing
+              openTasks={progress.openTasks}
+              inProgressTasks={progress.inProgressTasks}
+              completedTasks={progress.completedTasks}
+              totalTasks={progress.totalTasks}
+              accentColor={course.color}
+              className="course-card__progress-ring flex-shrink-0"
+              label={t('courses.card.progressLabel', {
+                open: progress.openTasks,
+                inProgress: progress.inProgressTasks,
+                completed: progress.completedTasks,
+              })}
+            />
             <div>
-              {/* Course name links to the detail page */}
-              <Link
-                to={`/courses/${course.id}`}
-                className="course-card__name fw-semibold text-white text-decoration-none"
-              >
-                {course.name}
-              </Link>
-              <div className="course-card__date text-secondary">Added {formattedDate}</div>
+              <div className="d-flex align-items-center gap-2 mb-1 flex-shrink-0">
+                <span
+                  className="course-card__color-dot"
+                  style={{ backgroundColor: course.color }}
+                  aria-hidden="true"
+                />
+
+                <Link
+                  to={`/courses/${course.id}`}
+                  className="course-card__name fw-semibold text-decoration-none"
+                >
+                  {course.name}
+                </Link>
+              </div>
+              <div className="course-card__date">
+                {t('courses.card.addedDate', { date: formattedDate })}
+              </div>
+              <div className="course-card__progress-text">
+                {t('courses.card.progressText', {
+                  open: progress.openTasks,
+                  inProgress: progress.inProgressTasks,
+                  completed: progress.completedTasks,
+                })}
+              </div>
             </div>
           </div>
 
-          <div className="d-flex align-items-center gap-2">
-            <button
-              className="btn btn-sm btn-link text-secondary p-0"
-              onClick={() => setEditOpen(true)}
-              aria-label="Edit course"
+          <div className="d-flex align-items-center gap-2 flex-shrink-0">
+            <Link
+              to={`/courses/${course.id}`}
+              className="btn btn-sm btn-link text-secondary p-0 text-decoration-none"
+              aria-label={t('courses.card.openAria')}
             >
-              <i className="fa-solid fa-pen-to-square" />
-            </button>
+              {t('courses.card.openLabel')}
+            </Link>
+            {isOwner && (
+              <button
+                className="btn btn-sm btn-link text-secondary p-0 course-card__action"
+                onClick={() => setEditOpen(true)}
+                aria-label={t('courses.card.editAria')}
+                data-testid="course-edit-button"
+              >
+                <i className="fa-solid fa-pen-to-square" />
+              </button>
+            )}
             <button
-              className="btn btn-sm btn-link text-danger p-0"
+              className="btn btn-sm btn-link text-danger p-0 course-card__action"
               onClick={() => setDeleteOpen(true)}
-              aria-label="Delete course"
+              aria-label={t(isOwner ? 'courses.card.deleteAria' : 'courses.card.leaveAria')}
+              data-testid="course-delete-button"
             >
-              <i className="fa-solid fa-trash" />
+              <i className={`fa-solid ${isOwner ? 'fa-trash' : 'fa-right-from-bracket'}`} />
             </button>
-            {/* Toggle button to expand/collapse course content */}
+            {isOwner && (
+              <button
+                className="btn btn-sm btn-link text-secondary p-0"
+                onClick={() => setShareOpen(true)}
+                aria-label={t('courses.card.shareAria')}
+              >
+                <i className="fa-solid fa-share-alt" />
+              </button>
+            )}
             <button
-              className="btn btn-sm btn-link text-secondary p-0"
-              onClick={() => setExpanded((v) => !v)}
-              aria-label="Toggle course"
+              className="btn btn-sm btn-link text-secondary p-0 course-card__action"
+              onClick={handleToggle}
+              aria-label={t('courses.card.toggleAria')}
               aria-expanded={expanded}
             >
               <i
@@ -95,7 +173,48 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
 
         {expanded && (
           <div className="px-3 pb-3">
-            <p className="course-card__empty text-secondary mb-0">No items yet.</p>
+            {tasksLoading && (
+              <div className="d-flex justify-content-center py-2">
+                <div className="spinner-border spinner-border-sm text-secondary" role="status">
+                  <span className="visually-hidden">{t('courses.card.loadingTasks')}</span>
+                </div>
+              </div>
+            )}
+
+            {!tasksLoading && tasks !== null && tasks.length === 0 && (
+              <p className="course-card__empty mb-0">{t('courses.card.noTasks')}</p>
+            )}
+
+            {!tasksLoading && tasks !== null && tasks.length > 0 && (
+              <>
+                <ul className="list-unstyled mb-2">
+                  {tasks.map((task) => (
+                    <li
+                      key={task.id}
+                      className="course-card__task d-flex align-items-center justify-content-between py-1"
+                    >
+                      <span className="course-card__task-title">{task.title}</span>
+                      <div className="d-flex align-items-center gap-2">
+                        {task.dueDate && (
+                          <span className="course-card__task-date">{formatDate(task.dueDate)}</span>
+                        )}
+                        <span
+                          className={`course-card__task-status badge ${STATUS_BADGE[task.status]}`}
+                        >
+                          {t(`courses.card.status.${task.status}`)}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to={`/courses/${course.id}`}
+                  className="course-card__tasks-link text-decoration-none course-card__foreground"
+                >
+                  {t('courses.card.viewAllTasks')}
+                </Link>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -111,10 +230,13 @@ export default function CourseCard({ course, onUpdated, onDeleted }: CourseCardP
       {deleteOpen && (
         <DeleteCourseModal
           course={course}
+          isOwner={isOwner}
           onClose={() => setDeleteOpen(false)}
           onDeleted={onDeleted}
         />
       )}
+
+      {shareOpen && <ShareCourseModal course={course} onClose={() => setShareOpen(false)} />}
     </>
   );
 }

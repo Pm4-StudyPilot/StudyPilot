@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "studypilot": {
+      "command": "bun",
+      "args": ["--cwd", "/Users/anes/private/StudyPilot", "mcp/src/index.ts"]
+    }
+  }
+}

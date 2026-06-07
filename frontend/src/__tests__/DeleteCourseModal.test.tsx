@@ -19,6 +19,7 @@ vi.mock('../services/api', () => ({
 const mockCourse = {
   id: 'c1',
   name: 'Machine Learning',
+  color: '#6C63FF',
   ownerId: 'u1',
   createdAt: '2026-03-26T12:00:00.000Z',
   updatedAt: '2026-03-26T12:00:00.000Z',
@@ -132,5 +133,20 @@ describe('DeleteCourseModal', () => {
     });
 
     expect(mockOnDeleted).not.toHaveBeenCalled();
+  });
+
+  it('shows leave copy and action for shared courses', () => {
+    render(
+      <DeleteCourseModal
+        course={mockCourse}
+        isOwner={false}
+        onClose={mockOnClose}
+        onDeleted={mockOnDeleted}
+      />
+    );
+
+    expect(screen.getByText(/leave course/i)).toBeInTheDocument();
+    expect(screen.getByText(/personal tasks/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^leave$/i })).toBeInTheDocument();
   });
 });

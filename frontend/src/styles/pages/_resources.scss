@@ -1,0 +1,60 @@
+/**
+ * ResourcesPage
+ *
+ * Styles for uploaded documents and AI-generated resources.
+ */
+
+.resource-file-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.resource-document-card {
+  min-height: 5.5rem;
+}
+
+.resource-document-card__content {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.resource-document-card__course {
+  color: var(--color-primary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+
+  &:hover {
+    color: var(--color-text-primary);
+  }
+}
+
+.resource-document-card .course-document-item__icon-button {
+  border: 0;
+  background: transparent;
+  color: var(--color-text-secondary);
+  padding: 0.35rem;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-primary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--danger:hover {
+    color: var(--color-danger);
+  }
+}
+
+@media (max-width: 1200px) {
+  .resource-file-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "identifierRequired": "E-Mail oder Benutzername ist erforderlich",
+  "passwordRequired": "Passwort ist erforderlich",
+  "currentPasswordRequired": "Aktuelles Passwort ist erforderlich",
+  "emailInvalid": "Ungültige E-Mail-Adresse",
+  "usernameMin": "Benutzername muss mindestens 3 Zeichen lang sein",
+  "passwordMin": "Passwort muss mindestens 12 Zeichen lang sein",
+  "passwordUppercase": "Passwort muss mindestens einen Großbuchstaben enthalten",
+  "passwordLowercase": "Passwort muss mindestens einen Kleinbuchstaben enthalten",
+  "passwordNumber": "Passwort muss mindestens eine Zahl enthalten",
+  "passwordSpecial": "Passwort muss mindestens ein Sonderzeichen enthalten",
+  "passwordsDoNotMatch": "Passwörter stimmen nicht überein",
+  "courseNameRequired": "Kursname ist erforderlich",
+  "courseColorRequired": "Kursfarbe ist erforderlich",
+  "taskTitleRequired": "Aufgabentitel ist erforderlich",
+  "quizTitleRequired": "Quiz-Titel ist erforderlich",
+  "questionTitleRequired": "Fragetitel ist erforderlich",
+  "answerContentRequired": "Antwortinhalt ist erforderlich",
+  "failedToCreateQuestion": "Frage konnte nicht erstellt werden",
+  "failedToSaveQuestion": "Frage konnte nicht gespeichert werden",
+  "failedToSaveAnswer": "Antwort konnte nicht gespeichert werden",
+  "shareUsernameRequired": "Benutzername oder E-Mail erforderlich"
+}

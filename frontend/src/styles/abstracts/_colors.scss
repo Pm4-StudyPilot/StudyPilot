@@ -1,0 +1,125 @@
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --color-app-bg: #0d0d0f;
+  --color-panel-bg: #111115;
+  --color-card-bg: #232329;
+  --color-input-bg: #26262d;
+  --color-overlay: rgba(8, 8, 12, 0.78);
+  --color-white: #fff;
+
+  /* Brand / Accent */
+  --color-primary-bold: #ff4b26;
+  --color-primary: #ff886b;
+  --color-primary-accent: rgb(255 75 38 / 0.12);
+  /* Text that sits on the bright brand orange (solid buttons) — kept dark in
+     both themes for WCAG AA contrast against #ff4b26. */
+  --color-on-primary: #15151a;
+  /* Background for muted/secondary badges — dark enough for white badge text. */
+  --color-badge-muted: #5b5560;
+  --color-secondary-light: #a7bcff;
+  --color-secondary: #448aff;
+  --color-secondary-accent: rgba(68, 138, 255, 0.18);
+  --color-tertiary: #4caf50;
+  --color-tertiary-light: #b8ffa5;
+  --color-tertiary-accent: rgba(76, 175, 80, 0.18);
+  --color-quaternary: #b784ff;
+  --color-quarternary-accent: rgba(183, 132, 255, 0.2);
+
+  --color-danger: #df687d;
+  --color-success: #b7f2bd;
+  --color-warning: #f1c48d;
+
+  /* Text */
+  --color-text-primary: #f2f0f3;
+  --color-text-secondary: #b7b1bb;
+  --color-text-muted: #97909f;
+
+  /* Structure */
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-divider: rgba(255, 255, 255, 0.06);
+  --color-item: #15151a;
+
+  --border-warning: 1px solid rgba(255, 165, 0, 0.18);
+  --background-warning: rgba(255, 166, 0, 0.08);
+  --background-success: rgba(76, 175, 80, 0.2);
+
+  /* Effects */
+  --color-shadow-soft: rgba(0, 0, 0, 0.28);
+  --color-glow-soft: rgba(255, 255, 255, 0.04);
+  --color-glow-primary: rgba(255, 75, 38, 0.22);
+
+  --background-shiny: linear-gradient(270deg, rgba(35, 35, 41, 0.98), rgba(32, 32, 37, 0.94));
+  --background-shinier: linear-gradient(
+    270deg,
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.04)
+  );
+  --background-shiniest: linear-gradient(
+    270deg,
+    rgba(255, 255, 255, 0.09),
+    rgba(255, 255, 255, 0.06)
+  );
+  --background-moody:
+    radial-gradient(circle at top left, rgba(255, 75, 38, 0.08), transparent 28%),
+    linear-gradient(180deg, #0d0d0f 0%, #0b0b0d 100%);
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --color-app-bg: #f5f4f7;
+  --color-panel-bg: #ffffff;
+  --color-card-bg: #ffffff;
+  --color-input-bg: #f1eff4;
+  --color-overlay: rgba(20, 20, 28, 0.45);
+  --color-white: #fff;
+
+  /* Brand / Accent — keep brand orange for solids/backgrounds, darken text-facing tones for contrast on white */
+  --color-primary-bold: #ff4b26;
+  --color-primary: #c2421e;
+  --color-primary-accent: rgb(255 75 38 / 0.1);
+  --color-on-primary: #15151a;
+  --color-badge-muted: #5d5862;
+  --color-secondary-light: #1f5bc4;
+  --color-secondary: #1f5bc4;
+  --color-secondary-accent: rgba(44, 110, 224, 0.12);
+  --color-tertiary: #1f7a36;
+  --color-tertiary-light: #1f7a36;
+  --color-tertiary-accent: rgba(46, 156, 74, 0.14);
+  --color-quaternary: #5f31b8;
+  --color-quarternary-accent: rgba(125, 78, 217, 0.14);
+
+  --color-danger: #a82a40;
+  --color-success: #1f7a36;
+  --color-warning: #8a5a0f;
+
+  /* Text */
+  --color-text-primary: #15151a;
+  --color-text-secondary: #3a373f;
+  --color-text-muted: #5d5862;
+
+  /* Structure */
+  --color-border: rgba(15, 15, 25, 0.12);
+  --color-divider: rgba(15, 15, 25, 0.08);
+  --color-item: #efedf2;
+
+  --border-warning: 1px solid rgba(200, 130, 0, 0.3);
+  --background-warning: rgba(255, 166, 0, 0.14);
+  --background-success: rgba(46, 156, 74, 0.16);
+
+  /* Effects */
+  --color-shadow-soft: rgba(15, 15, 25, 0.1);
+  --color-glow-soft: rgba(15, 15, 25, 0.04);
+  --color-glow-primary: rgba(255, 75, 38, 0.2);
+
+  --background-shiny: linear-gradient(270deg, rgba(255, 255, 255, 1), rgba(245, 244, 247, 0.98));
+  --background-shinier: linear-gradient(270deg, rgba(15, 15, 25, 0.04), rgba(15, 15, 25, 0.02));
+  --background-shiniest: linear-gradient(270deg, rgba(15, 15, 25, 0.07), rgba(15, 15, 25, 0.04));
+  --background-moody:
+    radial-gradient(circle at top left, rgba(255, 75, 38, 0.07), transparent 28%),
+    linear-gradient(180deg, #f7f6f8 0%, #efedf3 100%);
+}

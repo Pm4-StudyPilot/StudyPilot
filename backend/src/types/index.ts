@@ -1,4 +1,4 @@
-import { Role } from '../generated/prisma/client';
+import { Role } from '../generated/prisma/enums';
 
 // --- Internal types ---
 
@@ -30,10 +30,12 @@ export interface LoginRequest {
 
 export interface CreateCourseRequest {
   name: string;
+  color?: string;
 }
 
 export interface UpdateCourseRequest {
   name: string;
+  color?: string;
 }
 
 export interface ChangePasswordRequest {
@@ -55,6 +57,48 @@ export interface ResetPasswordRequest {
   newPassword: string;
 }
 
+export interface CreateQuizRequest {
+  title: string;
+  description?: string;
+  isOrderRandom?: boolean;
+}
+
+export interface UpdateQuizRequest {
+  title?: string;
+  description?: string | null;
+  isOrderRandom?: boolean;
+}
+
+export interface CreateQuestionRequest {
+  title: string;
+  description?: string;
+  type: QuestionType;
+}
+
+export interface UpdateQuestionRequest {
+  title?: string;
+  description?: string | null;
+  type?: QuestionType;
+}
+
+export interface ReorderQuestionsRequest {
+  order: string[];
+}
+
+export interface CreateAnswerRequest {
+  content: string;
+  isCorrect: boolean;
+}
+
+export interface UpdateAnswerRequest {
+  content?: string | null;
+  isCorrect?: boolean;
+}
+
+export interface ReorderAnswersRequest {
+  order: string[];
+}
+
 export interface CreateTaskRequest {
   title: string;
   description?: string;
@@ -72,6 +116,10 @@ export interface UpdateTaskRequest {
 
 export interface PatchTaskCompletionRequest {
   completed: boolean;
+}
+
+export interface ReorderTasksRequest {
+  order: string[];
 }
 
 // --- Response DTOs ---
@@ -105,12 +153,57 @@ export interface TaskDto {
   updatedAt: Date;
 }
 
+export interface QuizDto {
+  id: string;
+  title: string;
+  description: string | null;
+  isOrderRandom: boolean;
+  courseId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type QuestionType = 'MULTIPLE_CHOICE' | 'SINGLE_CHOICE' | 'CARD';
+
+export interface QuestionDto {
+  id: string;
+  title: string;
+  description: string;
+  position: number;
+  type: QuestionType;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface QuestionWithAnswersDto extends QuestionDto {
+  answers: AnswerDto[];
+}
+
+export interface AnswerDto {
+  id: string;
+  content: string;
+  isCorrect: boolean;
+  position: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface CourseDto {
   id: string;
   name: string;
+  color: string;
   ownerId: string;
   createdAt: Date;
   updatedAt: Date;
+  taskProgress: CourseTaskProgressDto;
+}
+
+export interface CourseTaskProgressDto {
+  totalTasks: number;
+  openTasks: number;
+  inProgressTasks: number;
+  completedTasks: number;
+  completionPercentage: number;
 }
 
 // --- Object Storage ---

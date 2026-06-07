@@ -1,20 +1,62 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter } from 'react-router-dom';
 import CourseCard from '../components/courses/CourseCard';
 import { CourseDto } from '../types/dto';
+import { api } from '../services/api';
+
+const authState = vi.hoisted(() => ({
+  user: {
+    id: 'u1',
+    email: 'owner@example.com',
+    username: 'owner',
+    role: 'USER',
+  },
+}));
+
+vi.mock('../services/api', () => ({
+  api: {
+    get: vi.fn(),
+  },
+}));
+
+vi.mock('../context/useAuth', () => ({
+  useAuth: () => ({
+    user: authState.user,
+    token: 'token',
+    login: vi.fn(),
+    logout: vi.fn(),
+    updateUser: vi.fn(),
+  }),
+}));
 
 const mockCourse: CourseDto = {
   id: 'c1',
   name: 'Machine Learning Fundamentals',
+  color: '#6C63FF',
   ownerId: 'u1',
   createdAt: '2026-03-26T12:00:00.000Z',
   updatedAt: '2026-03-26T12:00:00.000Z',
+  taskProgress: {
+    totalTasks: 5,
+    openTasks: 2,
+    inProgressTasks: 1,
+    completedTasks: 2,
+    completionPercentage: 40,
+  },
 };
 
 const mockOnUpdated = vi.fn();
 const mockOnDeleted = vi.fn();
+
+function renderCourseCard(course: CourseDto = mockCourse) {
+  return render(
+    <MemoryRouter>
+      <CourseCard course={course} onUpdated={mockOnUpdated} onDeleted={mockOnDeleted} />
+    </MemoryRouter>
+  );
+}
 
 /**
  * CourseCard component tests.
@@ -29,6 +71,8 @@ const mockOnDeleted = vi.fn();
 describe('CourseCard', () => {
   afterEach(() => {
     cleanup();
+    vi.clearAllMocks();
+    authState.user.id = 'u1';
   });
 
   /**
@@ -41,11 +85,7 @@ describe('CourseCard', () => {
    * - The course name is visible
    */
   it('renders the course name', () => {
-    render(
-      <MemoryRouter>
-        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} onDeleted={mockOnDeleted} />
-      </MemoryRouter>
-    );
+    renderCourseCard();
 
     expect(screen.getByText('Machine Learning Fundamentals')).toBeInTheDocument();
   });
@@ -60,13 +100,40 @@ describe('CourseCard', () => {
    * - The formatted creation date is visible
    */
   it('renders the formatted creation date', () => {
-    render(
-      <MemoryRouter>
-        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} onDeleted={mockOnDeleted} />
-      </MemoryRouter>
-    );
+    renderCourseCard();
 
     expect(screen.getByText(/added/i)).toBeInTheDocument();
+  });
+
+  it('renders the course progress summary', () => {
+    renderCourseCard();
+
+    expect(screen.getByText(/2 open · 1 in progress · 2 completed/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/2 open, 1 in progress, 2 completed/i)).toBeInTheDocument();
+  });
+
+  it('shows the share action for the course owner', () => {
+    renderCourseCard();
+
+    expect(screen.getByRole('button', { name: /share course/i })).toBeInTheDocument();
+  });
+
+  it('hides the share action for shared courses', () => {
+    authState.user.id = 'u2';
+
+    renderCourseCard();
+
+    expect(screen.queryByRole('button', { name: /share course/i })).not.toBeInTheDocument();
+  });
+
+  it('hides course edit and shows leave action for shared courses', () => {
+    authState.user.id = 'u2';
+
+    renderCourseCard();
+
+    expect(screen.queryByRole('button', { name: /edit course/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete course/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /leave course/i })).toBeInTheDocument();
   });
 
   /**
@@ -79,34 +146,30 @@ describe('CourseCard', () => {
    * - The "No items yet." text is not visible
    */
   it('is collapsed by default', () => {
-    render(
-      <MemoryRouter>
-        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} onDeleted={mockOnDeleted} />
-      </MemoryRouter>
-    );
+    renderCourseCard();
 
-    expect(screen.queryByText(/no items yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/no tasks yet/i)).not.toBeInTheDocument();
   });
 
   /**
-   * Test case: Expand on click
+   * Test case: Expand on click — shows empty state when course has no tasks
    *
    * Scenario:
-   * The toggle button is clicked.
+   * The toggle button is clicked and the API returns an empty task list.
    *
    * Expected behavior:
-   * - The "No items yet." placeholder becomes visible
+   * - The "No tasks yet." placeholder becomes visible
    */
-  it('expands when the toggle button is clicked', () => {
-    render(
-      <MemoryRouter>
-        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} onDeleted={mockOnDeleted} />
-      </MemoryRouter>
-    );
+  it('expands when the toggle button is clicked', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([]);
+
+    renderCourseCard();
 
     fireEvent.click(screen.getByRole('button', { name: /toggle course/i }));
 
-    expect(screen.getByText(/no items yet/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/no tasks yet/i)).toBeInTheDocument();
+    });
   });
 
   /**
@@ -116,18 +179,17 @@ describe('CourseCard', () => {
    * The toggle button is clicked twice.
    *
    * Expected behavior:
-   * - The "No items yet." placeholder is hidden again
+   * - The task list is hidden again
    */
-  it('collapses when the toggle button is clicked again', () => {
-    render(
-      <MemoryRouter>
-        <CourseCard course={mockCourse} onUpdated={mockOnUpdated} onDeleted={mockOnDeleted} />
-      </MemoryRouter>
-    );
+  it('collapses when the toggle button is clicked again', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([]);
+
+    renderCourseCard();
 
     fireEvent.click(screen.getByRole('button', { name: /toggle course/i }));
-    fireEvent.click(screen.getByRole('button', { name: /toggle course/i }));
+    await waitFor(() => expect(screen.getByText(/no tasks yet/i)).toBeInTheDocument());
 
-    expect(screen.queryByText(/no items yet/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /toggle course/i }));
+    expect(screen.queryByText(/no tasks yet/i)).not.toBeInTheDocument();
   });
 });

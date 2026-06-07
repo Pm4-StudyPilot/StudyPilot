@@ -1,0 +1,38 @@
+:root {
+  /* Shape */
+  --radius-card: 1.3rem;
+  --radius-pill: 999px;
+
+  /* Spacing */
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+
+  /* Fixed assistant input */
+  --ai-input-bottom-offset: calc(var(--space-lg) + env(safe-area-inset-bottom, 0px));
+  --ai-input-form-height: calc(2.25rem + var(--space-sm) + var(--space-sm) + 2px);
+  --ai-input-content-offset: calc(
+    var(--ai-input-bottom-offset) + var(--ai-input-form-height) + var(--space-lg)
+  );
+
+  /* Type scale */
+  --font-size-xs: 0.7rem;
+  --font-size-sm: 0.85rem;
+  --font-size-md: 0.875rem;
+  --font-size-base: 0.9rem;
+  --font-size-lg: 0.95rem;
+
+  /* Effects (color-agnostic — values reference theme-aware --color-* tokens) */
+  --shadow-soft: 0 12px 30px var(--color-shadow-soft);
+  --glow-primary: 0 0 18px var(--color-glow-primary);
+  --glow-secondary: 0 0 18px var(--color-glow-secondary);
+  --glow-tertiary: 0 0 18px var(--color-glow-tertiary);
+  --glow-quaternary: 0 0 18px var(--color-glow-quaternary);
+  --shadow-focus-accent: 0 0 0 0.2rem var(--color-primary-accent);
+
+  /* Compatibility aliases for existing component styles */
+  --color-background: var(--color-app-bg);
+  --color-panel: var(--color-panel-bg);
+  --color-surface: var(--color-card-bg);
+  --color-accent: var(--color-primary);
+}

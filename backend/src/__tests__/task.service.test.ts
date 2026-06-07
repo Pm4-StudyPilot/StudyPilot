@@ -21,7 +21,11 @@ type MockCourse = { id: string; name: string; ownerId: string };
 
 type MockDb = {
   course: {
+    findUnique?: (args: unknown) => Promise<MockCourse | null>;
     findFirst?: (args: unknown) => Promise<MockCourse | null>;
+  };
+  courseShare: {
+    findFirst?: (args: unknown) => Promise<{ id: string } | null>;
   };
   task: {
     create?: (args: unknown) => Promise<MockTask>;
@@ -31,6 +35,7 @@ type MockDb = {
     deleteMany?: (args: unknown) => Promise<{ count: number }>;
     aggregate?: (args: unknown) => Promise<{ _max: { position: number | null } }>;
   };
+  $transaction?: (fns: unknown[]) => Promise<unknown[]>;
 };
 
 function createMockTask(overrides: Partial<MockTask> = {}): MockTask {
@@ -52,10 +57,13 @@ function createMockTask(overrides: Partial<MockTask> = {}): MockTask {
 
 describe('TaskService', () => {
   it('should return null when creating a task for a course the user does not own', async () => {
-    const findFirst = mock(async () => null);
+    const course: MockCourse = { id: 'c1', name: 'Biology', ownerId: 'u1' };
+    const findUnique = mock(async () => course);
+    const courseShareFindFirst = mock(async () => null);
 
     const db: MockDb = {
-      course: { findFirst },
+      course: { findUnique },
+      courseShare: { findFirst: courseShareFindFirst },
       task: {},
     };
 
@@ -63,18 +71,19 @@ describe('TaskService', () => {
     const result = await service.create({ title: 'Test' }, 'c1', 'u2');
 
     expect(result).toBeNull();
-    expect(findFirst).toHaveBeenCalledWith({ where: { id: 'c1', ownerId: 'u2' } });
   });
 
   it('should create a task with position 0 when course has no tasks yet', async () => {
     const course: MockCourse = { id: 'c1', name: 'Biology', ownerId: 'u1' };
     const created = createMockTask();
-    const courseFindFirst = mock(async () => course);
+    const courseFindUnique = mock(async () => course);
+    const courseShareFindFirst = mock(async () => null);
     const aggregate = mock(async () => ({ _max: { position: null } }));
     const create = mock(async () => created);
 
     const db: MockDb = {
-      course: { findFirst: courseFindFirst },
+      course: { findUnique: courseFindUnique },
+      courseShare: { findFirst: courseShareFindFirst },
       task: { aggregate, create },
     };
 
@@ -90,12 +99,14 @@ describe('TaskService', () => {
   it('should create a task appended after existing tasks', async () => {
     const course: MockCourse = { id: 'c1', name: 'Biology', ownerId: 'u1' };
     const created = createMockTask({ position: 3 });
-    const courseFindFirst = mock(async () => course);
+    const courseFindUnique = mock(async () => course);
+    const courseShareFindFirst = mock(async () => null);
     const aggregate = mock(async () => ({ _max: { position: 2 } }));
     const create = mock(async () => created);
 
     const db: MockDb = {
-      course: { findFirst: courseFindFirst },
+      course: { findUnique: courseFindUnique },
+      courseShare: { findFirst: courseShareFindFirst },
       task: { aggregate, create },
     };
 
@@ -116,6 +127,7 @@ describe('TaskService', () => {
 
     const db: MockDb = {
       course: {},
+      courseShare: {},
       task: { findMany },
     };
 
@@ -124,8 +136,44 @@ describe('TaskService', () => {
 
     expect(result).toEqual(tasks);
     expect(findMany).toHaveBeenCalledWith({
-      where: { courseId: 'c1', course: { ownerId: 'u1' } },
+      where: { courseId: 'c1', userId: 'u1' },
       orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
+    });
+  });
+
+  it('should list overdue tasks for the user, sorted oldest-first', async () => {
+    const tasks = [
+      createMockTask({
+        id: 't1',
+        dueDate: new Date('2026-04-10T00:00:00Z'),
+        status: 'OPEN',
+      }),
+      createMockTask({
+        id: 't2',
+        dueDate: new Date('2026-04-12T00:00:00Z'),
+        status: 'IN_PROGRESS',
+        priority: 'HIGH',
+      }),
+    ];
+    const findMany = mock(async () => tasks);
+
+    const db: MockDb = {
+      course: {},
+      courseShare: {},
+      task: { findMany },
+    };
+
+    const service = new TaskService(db as unknown as ConstructorParameters<typeof TaskService>[0]);
+    const result = await service.findOverdueByUser('u1');
+
+    expect(result).toEqual(tasks);
+    expect(findMany).toHaveBeenCalledWith({
+      where: {
+        userId: 'u1',
+        dueDate: { lt: expect.any(Date) },
+        status: { not: 'DONE' },
+      },
+      orderBy: [{ dueDate: 'asc' }, { priority: 'desc' }],
     });
   });
 
@@ -134,6 +182,7 @@ describe('TaskService', () => {
 
     const db: MockDb = {
       course: {},
+      courseShare: {},
       task: { findFirst },
     };
 
@@ -148,6 +197,7 @@ describe('TaskService', () => {
 
     const db: MockDb = {
       course: {},
+      courseShare: {},
       task: { findFirst },
     };
 
@@ -165,6 +215,7 @@ describe('TaskService', () => {
 
     const db: MockDb = {
       course: {},
+      courseShare: {},
       task: { findFirst, update },
     };
 
@@ -186,6 +237,7 @@ describe('TaskService', () => {
 
     const db: MockDb = {
       course: {},
+      courseShare: {},
       task: { findFirst, update },
     };
 
@@ -204,6 +256,7 @@ describe('TaskService', () => {
 
     const db: MockDb = {
       course: {},
+      courseShare: {},
       task: { findFirst },
     };
 
@@ -218,6 +271,7 @@ describe('TaskService', () => {
 
     const db: MockDb = {
       course: {},
+      courseShare: {},
       task: { deleteMany },
     };
 
@@ -226,7 +280,7 @@ describe('TaskService', () => {
 
     expect(result).toBe(true);
     expect(deleteMany).toHaveBeenCalledWith({
-      where: { id: 't1', course: { ownerId: 'u1' } },
+      where: { id: 't1', userId: 'u1' },
     });
   });
 
@@ -235,6 +289,7 @@ describe('TaskService', () => {
 
     const db: MockDb = {
       course: {},
+      courseShare: {},
       task: { deleteMany },
     };
 
@@ -242,5 +297,60 @@ describe('TaskService', () => {
     const result = await service.deleteForOwner('t1', 'u2');
 
     expect(result).toBe(false);
+  });
+
+  it('should return false when reordering tasks for a course the user does not own', async () => {
+    const findUnique = mock(async () => null);
+
+    const db: MockDb = {
+      course: { findUnique },
+      courseShare: {},
+      task: {},
+    };
+
+    const service = new TaskService(db as unknown as ConstructorParameters<typeof TaskService>[0]);
+    const result = await service.reorderTasks('c1', 'u2', ['t1', 't2']);
+
+    expect(result).toBe(false);
+  });
+
+  it('should return false when provided task ids do not match the course tasks', async () => {
+    const course: MockCourse = { id: 'c1', name: 'Biology', ownerId: 'u1' };
+    const courseFindUnique = mock(async () => course);
+    const courseShareFindFirst = mock(async () => null);
+    const findMany = mock(async () => [createMockTask({ id: 't1' }), createMockTask({ id: 't2' })]);
+
+    const db: MockDb = {
+      course: { findUnique: courseFindUnique },
+      courseShare: { findFirst: courseShareFindFirst },
+      task: { findMany },
+    };
+
+    const service = new TaskService(db as unknown as ConstructorParameters<typeof TaskService>[0]);
+    const result = await service.reorderTasks('c1', 'u1', ['t1', 't3']);
+
+    expect(result).toBe(false);
+  });
+
+  it('should update positions atomically when reordering owned tasks', async () => {
+    const course: MockCourse = { id: 'c1', name: 'Biology', ownerId: 'u1' };
+    const courseFindUnique = mock(async () => course);
+    const courseShareFindFirst = mock(async () => null);
+    const findMany = mock(async () => [createMockTask({ id: 't1' }), createMockTask({ id: 't2' })]);
+    const update = mock(async (args: unknown) => args as MockTask);
+    const $transaction = mock(async () => []);
+
+    const db: MockDb = {
+      course: { findUnique: courseFindUnique },
+      courseShare: { findFirst: courseShareFindFirst },
+      task: { findMany, update },
+      $transaction,
+    };
+
+    const service = new TaskService(db as unknown as ConstructorParameters<typeof TaskService>[0]);
+    const result = await service.reorderTasks('c1', 'u1', ['t2', 't1']);
+
+    expect(result).toBe(true);
+    expect($transaction).toHaveBeenCalledTimes(1);
   });
 });
