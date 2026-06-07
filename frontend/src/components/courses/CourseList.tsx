@@ -122,19 +122,36 @@ export default function CourseList({ searchTerm = '' }: CourseListProps) {
     setModalOpen(false);
   }
 
-  function handleUpdated(updated: CourseDto) {
-    setCourses((prev) => prev.map((course) => (course.id === updated.id ? updated : course)));
-
+  function applyCourseUpdate(course: CourseDto) {
+    setCourses((prev) => prev.map((c) => (c.id === course.id ? course : c)));
     setCourseSearchData((prev) =>
-      prev.map((entry) =>
-        entry.course.id === updated.id
-          ? {
-              ...entry,
-              course: updated,
-            }
-          : entry
-      )
+      prev.map((entry) => (entry.course.id === course.id ? { ...entry, course } : entry))
     );
+  }
+
+  /**
+   * Called by EditCourseModal (via CourseCard) after a successful PATCH.
+   *
+   * Two-step refresh:
+   * 1. Apply the PATCH response optimistically so the new name/color appear
+   *    immediately when the modal closes.
+   * 2. Refetch the course from GET /courses/:id so user-scoped fields like
+   *    task progress match what the list endpoint would return. The PATCH
+   *    response computes task progress from all users' tasks, while the GET
+   *    filters by the authenticated user — without this refetch the progress
+   *    ring can jump to incorrect numbers on shared courses.
+   *
+   * The refetch is best-effort: if it fails the optimistic update remains.
+   */
+  async function handleUpdated(updated: CourseDto) {
+    applyCourseUpdate(updated);
+
+    try {
+      const refreshed = await api.get<CourseDto>(`/courses/${updated.id}`);
+      applyCourseUpdate(refreshed);
+    } catch {
+      // Optimistic update stays. Next list refresh will reconcile.
+    }
   }
 
   function handleDeleted(id: string) {
