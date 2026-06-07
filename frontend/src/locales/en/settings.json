@@ -15,6 +15,11 @@
     "subtitle": "Update your password to keep your account secure.",
     "change": "Change Password"
   },
+  "deleteAccount": {
+    "title": "Delete Account",
+    "subtitle": "Delete your account and free your email and username for a new registration.",
+    "action": "Delete Account"
+  },
   "changePassword": {
     "back": "Back to Settings",
     "eyebrow": "Security",
