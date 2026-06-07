@@ -1,7 +1,7 @@
 import { matchPath } from 'react-router-dom';
 
 // Routes on which the AI input should be visible.
-export const AI_INPUT_VISIBLE_ROUTES = ['/', '/courses', '/courses/:id'];
+export const AI_INPUT_VISIBLE_ROUTES = ['/', '/courses', '/courses/:id', 'resources'];
 
 /** Returns whether the AI input should be visible for the given pathname. */
 export function isAiInputVisible(pathname: string): boolean {
