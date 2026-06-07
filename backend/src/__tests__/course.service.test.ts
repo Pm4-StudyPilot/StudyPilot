@@ -24,7 +24,7 @@ type MockTask = {
 };
 
 type MockCourseDb = {
-  course: {
+  course?: {
     create?: (args: {
       data: { name: string; color: string; ownerId: string };
       select: unknown;
@@ -47,13 +47,23 @@ type MockCourseDb = {
       data: { name: string; color?: string };
       select: unknown;
     }) => Promise<MockCourse & { tasks: MockTask[] }>;
+    delete?: (args: { where: { id: string } }) => Promise<unknown>;
     deleteMany?: (args: { where: { id: string; ownerId?: string } }) => Promise<{ count: number }>;
   };
   courseShare?: {
     findFirst?: (args: {
       where: { courseId: string; sharedWithUserId: string };
     }) => Promise<{ id: string } | null>;
+    deleteMany?: (args: {
+      where: { courseId: string; sharedWithUserId: string };
+    }) => Promise<{ count: number }>;
   };
+  task?: {
+    deleteMany?: (args: {
+      where: { courseId: string; userId: string };
+    }) => Promise<{ count: number }>;
+  };
+  $transaction?: <T>(fn: (tx: MockCourseDb) => Promise<T>) => Promise<T>;
 };
 
 function createMockCourse(
@@ -424,5 +434,132 @@ describe('CourseService', () => {
         ownerId: 'u1',
       },
     });
+  });
+
+  it('should hard delete an owned course and delete stored document objects', async () => {
+    const findUnique = mock(async () => ({
+      ownerId: 'u1',
+      documents: [
+        {
+          id: 'doc-1',
+          bucket: 'documents',
+          objectKey: 'courses/c1/doc-1.pdf',
+        },
+        {
+          id: 'doc-2',
+          bucket: 'documents',
+          objectKey: 'courses/c1/doc-2.pdf',
+        },
+      ],
+    }));
+    const deleteCourse = mock(async () => ({}));
+    const deleteObject = mock(async () => undefined);
+
+    const db: MockCourseDb = {
+      course: {
+        findUnique,
+        delete: deleteCourse,
+      },
+    };
+
+    const service = new CourseService(
+      db as unknown as ConstructorParameters<typeof CourseService>[0],
+      { delete: deleteObject }
+    );
+    const result = await service.removeForUser('c1', 'u1');
+
+    expect(result).toBe('deleted');
+    expect(deleteCourse).toHaveBeenCalledWith({
+      where: { id: 'c1' },
+    });
+    expect(deleteObject).toHaveBeenCalledTimes(2);
+    expect(deleteObject).toHaveBeenCalledWith('documents', 'courses/c1/doc-1.pdf');
+    expect(deleteObject).toHaveBeenCalledWith('documents', 'courses/c1/doc-2.pdf');
+  });
+
+  it('should leave a shared course by deleting only share and current user tasks', async () => {
+    const findUnique = mock(async () => ({
+      ownerId: 'owner',
+      documents: [
+        {
+          id: 'doc-1',
+          bucket: 'documents',
+          objectKey: 'courses/c1/doc-1.pdf',
+        },
+      ],
+    }));
+    const deleteShare = mock(async () => ({ count: 1 }));
+    const deleteTasks = mock(async () => ({ count: 3 }));
+    const deleteObject = mock(async () => undefined);
+
+    const tx: MockCourseDb = {
+      courseShare: {
+        deleteMany: deleteShare,
+      },
+      task: {
+        deleteMany: deleteTasks,
+      },
+    };
+
+    const db: MockCourseDb = {
+      course: {
+        findUnique,
+      },
+      $transaction: mock(async (fn) => fn(tx)),
+    };
+
+    const service = new CourseService(
+      db as unknown as ConstructorParameters<typeof CourseService>[0],
+      { delete: deleteObject }
+    );
+    const result = await service.removeForUser('c1', 'shared-user');
+
+    expect(result).toBe('left');
+    expect(deleteShare).toHaveBeenCalledWith({
+      where: {
+        courseId: 'c1',
+        sharedWithUserId: 'shared-user',
+      },
+    });
+    expect(deleteTasks).toHaveBeenCalledWith({
+      where: {
+        courseId: 'c1',
+        userId: 'shared-user',
+      },
+    });
+    expect(deleteObject).not.toHaveBeenCalled();
+  });
+
+  it('should not leave a course when the user has no share', async () => {
+    const findUnique = mock(async () => ({
+      ownerId: 'owner',
+      documents: [],
+    }));
+    const deleteShare = mock(async () => ({ count: 0 }));
+    const deleteTasks = mock(async () => ({ count: 0 }));
+
+    const tx: MockCourseDb = {
+      courseShare: {
+        deleteMany: deleteShare,
+      },
+      task: {
+        deleteMany: deleteTasks,
+      },
+    };
+
+    const db: MockCourseDb = {
+      course: {
+        findUnique,
+      },
+      $transaction: mock(async (fn) => fn(tx)),
+    };
+
+    const service = new CourseService(
+      db as unknown as ConstructorParameters<typeof CourseService>[0]
+    );
+    const result = await service.removeForUser('c1', 'stranger');
+
+    expect(result).toBeNull();
+    expect(deleteTasks).not.toHaveBeenCalled();
   });
 });

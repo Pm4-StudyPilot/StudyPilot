@@ -7,7 +7,7 @@ const courseList = mock(async () => []);
 const courseFind = mock(async () => ({ id: 'c1', name: 'Biology' }));
 const courseCreate = mock(async () => ({ id: 'c1', name: 'Biology' }));
 const courseUpdate = mock(async () => ({ id: 'c1', name: 'Bio 2' }));
-const courseDelete = mock(async () => true);
+const courseRemove = mock(async () => 'deleted');
 const courseShare = mock(async () => ({
   id: 's1',
   courseId: 'c1',
@@ -58,7 +58,7 @@ class CourseService {
   findByIdForUser = courseFind;
   create = courseCreate;
   updateForOwner = courseUpdate;
-  deleteForOwner = courseDelete;
+  removeForUser = courseRemove;
 }
 class ShareError extends Error {
   public type: 'CourseNotFound' | 'UserNotFound' | 'SelfShare' | 'AlreadyShared';
@@ -168,7 +168,7 @@ beforeEach(() => {
     courseFind,
     courseCreate,
     courseUpdate,
-    courseDelete,
+    courseRemove,
     courseShare,
     courseUnshare,
     courseSharedUsers,
@@ -214,10 +214,10 @@ describe('course tools', () => {
     expect(textOf(result)).toBe('Not found or you do not have permission.');
   });
 
-  it('delete_course returns { deleted } from deleteForOwner', async () => {
+  it('delete_course returns the action from removeForUser', async () => {
     const result = await handlerFor('delete_course')({ userId: 'u1', courseId: 'c1' });
-    expect(courseDelete).toHaveBeenCalledWith('c1', 'u1');
-    expect(textOf(result)).toBe('{"deleted":true}');
+    expect(courseRemove).toHaveBeenCalledWith('c1', 'u1');
+    expect(textOf(result)).toBe('{"action":"deleted"}');
   });
 
   it('share_course calls shareWith(courseId, userId, usernameOrEmail)', async () => {

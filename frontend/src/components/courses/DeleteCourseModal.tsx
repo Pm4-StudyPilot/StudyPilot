@@ -7,11 +7,17 @@ import { CourseDto } from '../../types/dto';
 
 interface DeleteCourseModalProps {
   course: CourseDto;
+  isOwner?: boolean;
   onClose: () => void;
   onDeleted: (id: string) => void;
 }
 
-export default function DeleteCourseModal({ course, onClose, onDeleted }: DeleteCourseModalProps) {
+export default function DeleteCourseModal({
+  course,
+  isOwner = true,
+  onClose,
+  onDeleted,
+}: DeleteCourseModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { t } = useTranslation();
@@ -31,10 +37,10 @@ export default function DeleteCourseModal({ course, onClose, onDeleted }: Delete
   }
 
   return (
-    <Modal title={t('courses.delete.title')} onClose={onClose}>
+    <Modal title={t(isOwner ? 'courses.delete.title' : 'courses.leave.title')} onClose={onClose}>
       <p className="delete-course-modal__message text-center mb-4">
         <Trans
-          i18nKey="courses.delete.confirm"
+          i18nKey={isOwner ? 'courses.delete.confirm' : 'courses.leave.confirm'}
           values={{ name: course.name }}
           components={{ strong: <span className="fw-semibold text-white" /> }}
         />
@@ -52,7 +58,7 @@ export default function DeleteCourseModal({ course, onClose, onDeleted }: Delete
           loading={loading}
           onClick={handleDelete}
         >
-          {t('common.buttons.delete')}
+          {t(isOwner ? 'common.buttons.delete' : 'common.buttons.leave')}
         </Button>
         <Button type="button" variant="secondary" className="w-100" onClick={onClose}>
           {t('common.buttons.cancel')}

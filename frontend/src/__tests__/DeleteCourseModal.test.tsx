@@ -134,4 +134,19 @@ describe('DeleteCourseModal', () => {
 
     expect(mockOnDeleted).not.toHaveBeenCalled();
   });
+
+  it('shows leave copy and action for shared courses', () => {
+    render(
+      <DeleteCourseModal
+        course={mockCourse}
+        isOwner={false}
+        onClose={mockOnClose}
+        onDeleted={mockOnDeleted}
+      />
+    );
+
+    expect(screen.getByText(/leave course/i)).toBeInTheDocument();
+    expect(screen.getByText(/personal tasks/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^leave$/i })).toBeInTheDocument();
+  });
 });

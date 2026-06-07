@@ -1,4 +1,5 @@
 import { describe, it, expect, afterEach } from 'bun:test';
+import path from 'node:path';
 import { resolveMcpEntry, childEnv } from '../mcp';
 
 const originalEntry = process.env.MCP_SERVER_ENTRY;
@@ -16,7 +17,7 @@ describe('resolveMcpEntry', () => {
 
   it('falls back to the sibling mcp workspace entry', () => {
     delete process.env.MCP_SERVER_ENTRY;
-    expect(resolveMcpEntry()).toMatch(/mcp\/src\/index\.ts$/);
+    expect(path.normalize(resolveMcpEntry())).toEndWith(path.join('mcp', 'src', 'index.ts'));
   });
 });
 

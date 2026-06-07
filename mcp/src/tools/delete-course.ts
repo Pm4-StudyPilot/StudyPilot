@@ -10,9 +10,9 @@ const handler = async ({
   userId: string;
   courseId: string;
 }): Promise<CallToolResult> => {
-  const deleted = await new CourseService().deleteForOwner(courseId, userId);
+  const action = await new CourseService().removeForUser(courseId, userId);
   return {
-    content: [{ type: 'text', text: JSON.stringify({ deleted }) }],
+    content: [{ type: 'text', text: JSON.stringify({ action }) }],
   };
 };
 
@@ -22,7 +22,7 @@ export function registerDeleteCourse(server: McpServer): void {
     {
       title: 'Delete Course',
       description:
-        'Delete a course and all of its tasks, quizzes, and documents. The user must own the course.',
+        'Delete a course when the user owns it, or leave a shared course when the user has shared access.',
       inputSchema: { userId: z.string(), courseId: z.string() } as never,
     },
     handler as never
