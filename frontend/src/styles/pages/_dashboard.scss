@@ -419,6 +419,14 @@
   }
 }
 
+.dashboard-recent-courses {
+  &__title {
+    margin: 0 0 1rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+}
+
 .dashboard-course-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
