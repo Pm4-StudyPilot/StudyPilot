@@ -28,6 +28,10 @@ vi.mock('../context/useTheme', () => ({
   }),
 }));
 
+vi.mock('../components/shared/layout/NotificationBell', () => ({
+  default: () => null,
+}));
+
 vi.mock('../components/courses/DeleteDocumentModal', () => ({
   default: ({
     document,

@@ -9,6 +9,7 @@ import enQuizzes from './en/quizzes.json';
 import enSettings from './en/settings.json';
 import enCalendar from './en/calendar.json';
 import enAi from './en/ai.json';
+import enNotifications from './en/notifications.json';
 
 import deCommon from './de/common.json';
 import deAuth from './de/auth.json';
@@ -21,6 +22,7 @@ import deQuizzes from './de/quizzes.json';
 import deSettings from './de/settings.json';
 import deCalendar from './de/calendar.json';
 import deAi from './de/ai.json';
+import deNotifications from './de/notifications.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'de'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -37,6 +39,7 @@ const enTranslation = {
   settings: enSettings,
   calendar: enCalendar,
   ai: enAi,
+  notifications: enNotifications,
 };
 
 const deTranslation = {
@@ -51,6 +54,7 @@ const deTranslation = {
   settings: deSettings,
   calendar: deCalendar,
   ai: deAi,
+  notifications: deNotifications,
 };
 
 export const resources = {

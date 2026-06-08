@@ -38,6 +38,23 @@ export interface CourseTaskProgressDto {
   completionPercentage: number;
 }
 
+export type NotificationType = 'COURSE_SHARED';
+
+export interface NotificationDto {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  data: {
+    courseName?: string;
+    sharedByUsername?: string;
+  } | null;
+  courseId: string | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 export type TaskStatus = 'OPEN' | 'IN_PROGRESS' | 'DONE';
 
