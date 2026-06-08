@@ -16,6 +16,7 @@ import { CourseDto, QuizDto, TaskDto } from '../types/dto';
 import { withOpacity } from '../utils/courseColors';
 import { formatDate } from '../utils/formatDate';
 import { useAuth } from '../context/useAuth';
+import { buildTaskProgress, EMPTY_TASK_PROGRESS } from '../utils/taskProgress';
 
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -43,33 +44,69 @@ export default function CourseDetailPage() {
 
   useEffect(() => {
     if (!id) return;
+    let isCancelled = false;
 
     api
       .get<CourseDto>(`/courses/${id}`)
-      .then(setCourse)
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : t('courses.detail.loadFailed'));
+      .then((loadedCourse) => {
+        if (!isCancelled) setCourse(loadedCourse);
       })
-      .finally(() => setLoading(false));
+      .catch((err: unknown) => {
+        if (!isCancelled) {
+          setError(err instanceof Error ? err.message : t('courses.detail.loadFailed'));
+        }
+      })
+      .finally(() => {
+        if (!isCancelled) setLoading(false);
+      });
 
     api
       .get<TaskDto[]>(`/courses/${id}/tasks`)
-      .then(setTasks)
-      .catch((err: unknown) => {
-        setTasksError(err instanceof Error ? err.message : t('courses.detail.loadTasksFailed'));
+      .then((loadedTasks) => {
+        if (!isCancelled) setTasks(loadedTasks);
       })
-      .finally(() => setTasksLoading(false));
+      .catch((err: unknown) => {
+        if (!isCancelled) {
+          setTasksError(err instanceof Error ? err.message : t('courses.detail.loadTasksFailed'));
+        }
+      })
+      .finally(() => {
+        if (!isCancelled) setTasksLoading(false);
+      });
 
     api
       .get<QuizDto[]>(`/courses/${id}/quizzes`)
-      .then((quizzes) => setCourseFeedItems(quizzes.map((quiz) => ({ type: 'quiz', data: quiz }))))
-      .catch((err) => {
-        setCourseFeedError(
-          err instanceof Error ? err.message : t('courses.detail.loadMaterialsFailed')
-        );
+      .then((quizzes) => {
+        if (!isCancelled) {
+          setCourseFeedItems(quizzes.map((quiz) => ({ type: 'quiz', data: quiz })));
+        }
       })
-      .finally(() => setCourseFeedLoading(false));
+      .catch((err) => {
+        if (!isCancelled) {
+          setCourseFeedError(
+            err instanceof Error ? err.message : t('courses.detail.loadMaterialsFailed')
+          );
+        }
+      })
+      .finally(() => {
+        if (!isCancelled) setCourseFeedLoading(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
   }, [id, t]);
+
+  async function refreshCourse() {
+    if (!id) return;
+
+    try {
+      const refreshed = await api.get<CourseDto>(`/courses/${id}`);
+      setCourse(refreshed);
+    } catch {
+      // The task state has already been updated locally; the next load will reconcile course metadata.
+    }
+  }
 
   function handleUploadSuccess() {
     setDocumentsRefreshKey((prev) => prev + 1);
@@ -78,14 +115,17 @@ export default function CourseDetailPage() {
   function handleTaskCreated(task: TaskDto) {
     setTasks((prev) => [...prev, task]);
     setCreateTaskModalOpen(false);
+    void refreshCourse();
   }
 
   function handleTaskUpdated(task: TaskDto) {
     setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
+    void refreshCourse();
   }
 
   function handleTaskDeleted(taskId: string) {
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    void refreshCourse();
   }
 
   function handleTasksReordered(reordered: TaskDto[]) {
@@ -115,28 +155,24 @@ export default function CourseDetailPage() {
 
   const formattedDate = course ? formatDate(course.createdAt) : '';
 
-  const progress = course?.taskProgress ?? {
-    totalTasks: 0,
-    completedTasks: 0,
-    openTasks: 0,
-    inProgressTasks: 0,
-    completionPercentage: 0,
-  };
+  const progress =
+    tasksLoading && course?.taskProgress ? course.taskProgress : buildTaskProgress(tasks);
+  const safeProgress = course ? progress : EMPTY_TASK_PROGRESS;
 
   const courseMeta = useMemo(() => {
     if (!course) return [];
 
     const tasksLabel = t(
-      progress.totalTasks === 1 ? 'courses.detail.metaTasks' : 'courses.detail.metaTasks_other',
-      { count: progress.totalTasks }
+      safeProgress.totalTasks === 1 ? 'courses.detail.metaTasks' : 'courses.detail.metaTasks_other',
+      { count: safeProgress.totalTasks }
     );
 
     return [
       tasksLabel,
-      t('courses.detail.metaCompleted', { count: progress.completedTasks }),
+      t('courses.detail.metaCompleted', { count: safeProgress.completedTasks }),
       t('courses.detail.metaCreated', { date: formattedDate }),
     ];
-  }, [course, progress.totalTasks, progress.completedTasks, formattedDate, t]);
+  }, [course, safeProgress.totalTasks, safeProgress.completedTasks, formattedDate, t]);
 
   return (
     <DashboardLayout
