@@ -1,5 +1,6 @@
 import { useRef, useState, ChangeEvent, DragEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { translateApiMessage } from '../../utils/apiMessages';
 
 type DocumentUploadFormProps = {
   courseId: string;
@@ -49,7 +50,7 @@ export default function DocumentUploadForm({ courseId, onUploadSuccess }: Docume
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || t('courses.upload.failed'));
+        throw new Error(translateApiMessage(error.message || t('courses.upload.failed')));
       }
 
       const result = await response.json();
@@ -58,7 +59,9 @@ export default function DocumentUploadForm({ courseId, onUploadSuccess }: Docume
       setSelectedFile(null);
       onUploadSuccess();
     } catch (error) {
-      setFormMessage(error instanceof Error ? error.message : t('courses.upload.failed'));
+      setFormMessage(
+        translateApiMessage(error instanceof Error ? error.message : t('courses.upload.failed'))
+      );
     } finally {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';

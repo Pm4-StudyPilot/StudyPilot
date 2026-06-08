@@ -1,4 +1,6 @@
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { translateApiMessage } from '../../utils/apiMessages';
 
 /**
  * Generic upload button component.
@@ -57,6 +59,7 @@ export default function UploadButton({
   className,
   accept,
 }: UploadButtonProps) {
+  const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +102,7 @@ export default function UploadButton({
       setResult(uploadResult);
       onSuccess?.(uploadResult);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      const message = translateApiMessage(err instanceof Error ? err.message : String(err));
       setError(message);
       onError?.(message);
     } finally {
@@ -127,13 +130,17 @@ export default function UploadButton({
         {uploading ? (
           <>
             <span className="spinner-border spinner-border-sm me-2" role="status" />
-            Uploading...
+            {t('common.upload.uploading')}
           </>
         ) : (
           children
         )}
       </button>
-      {result && <p className="task-list__label text-success mt-2 mb-0">Uploaded: {result.key}</p>}
+      {result && (
+        <p className="task-list__label text-success mt-2 mb-0">
+          {t('common.upload.uploaded', { key: result.key })}
+        </p>
+      )}
       {error && <p className="task-list__label text-danger mt-2 mb-0">{error}</p>}
     </div>
   );
