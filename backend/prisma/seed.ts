@@ -61,6 +61,23 @@ async function main() {
   });
   logger.info({ id: demoUser.id }, 'Created demo user');
 
+  const sharingDemoUserPassword = await bcrypt.hash('UserPassword_123', 10);
+  const sharingDemoUser = await prisma.user.upsert({
+    where: { email: 'gordon@blackmesa.com' },
+    update: {
+      username: 'Gordon',
+      password: sharingDemoUserPassword,
+      role: Role.USER,
+    },
+    create: {
+      email: 'gordon@blackmesa.com',
+      username: 'Gordon',
+      password: sharingDemoUserPassword,
+      role: Role.USER,
+    },
+  });
+  logger.info({ id: sharingDemoUser.id }, 'Created sharing demo user');
+
   const courses = [
     { name: 'Introduction to Computer Science', color: '#6C63FF', ownerId: admin.id },
     { name: 'Advanced Mathematics', color: '#4DA3FF', ownerId: admin.id },
@@ -69,6 +86,7 @@ async function main() {
     { name: 'Visual Computing 1', color: '#6C63FF', ownerId: demoUser.id },
     { name: 'Artificial Intelligence 1', color: '#00C2A8', ownerId: demoUser.id },
     { name: 'Computertechnik 2', color: '#FF8A5B', ownerId: demoUser.id },
+    { name: 'Digital Image Processing', color: '#4DA3FF', ownerId: sharingDemoUser.id },
   ];
 
   for (const course of courses) {
@@ -358,6 +376,61 @@ async function main() {
           priority: 'LOW' as const,
           status: 'DONE' as const,
           position: 3,
+          completed: true,
+        },
+      ],
+    },
+    {
+      courseName: 'Digital Image Processing',
+      ownerId: sharingDemoUser.id,
+      tasks: [
+        {
+          title: 'Midterm und Lab 6 vorbereiten',
+          description:
+            'Wiederhole Intensitaetstransformationen, Spatial Domain Processing und Color Image Processing.',
+          dueDate: createRelativeDate(2),
+          priority: 'HIGH' as const,
+          status: 'IN_PROGRESS' as const,
+          position: 0,
+          completed: false,
+        },
+        {
+          title: 'Color Image Processing Zusammenfassung schreiben',
+          description:
+            'Fasse Farbraeume, Kanaele und typische Farboperationen fuer die Pruefungsvorbereitung zusammen.',
+          dueDate: createRelativeDate(4),
+          priority: 'HIGH' as const,
+          status: 'OPEN' as const,
+          position: 1,
+          completed: false,
+        },
+        {
+          title: 'Finding Lines and Edges Aufgaben loesen',
+          description:
+            'Bearbeite Beispiele zu Kanten, Gradienten und Linienerkennung aus der Uebung.',
+          dueDate: createRelativeDate(7),
+          priority: 'MEDIUM' as const,
+          status: 'OPEN' as const,
+          position: 2,
+          completed: false,
+        },
+        {
+          title: 'Segmentation und Feature Extraction repetieren',
+          description:
+            'Bereite Stichworte zu Segmentierung, Merkmalen und Klassifikation fuer die zweite Kurshaelfte vor.',
+          dueDate: createRelativeDate(11),
+          priority: 'MEDIUM' as const,
+          status: 'OPEN' as const,
+          position: 3,
+          completed: false,
+        },
+        {
+          title: 'Mini Project: JPEG Compression Idee skizzieren',
+          description: 'Notiere eine kurze Projektidee zu JPEG-Kompression oder Image Formation.',
+          dueDate: createRelativeDate(-1),
+          priority: 'LOW' as const,
+          status: 'DONE' as const,
+          position: 4,
           completed: true,
         },
       ],
@@ -756,6 +829,150 @@ async function main() {
                 {
                   content:
                     'Interrupt-Latenz bestimmt, wie schnell ein System auf externe Ereignisse reagiert. Cache kann Zugriffe beschleunigen, aber auch Timing schwerer vorhersagbar machen.',
+                  isCorrect: true,
+                  position: 0,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      courseName: 'Digital Image Processing',
+      ownerId: sharingDemoUser.id,
+      quizzes: [
+        {
+          title: 'DIP Midterm Check',
+          description:
+            'Repetition zu Intensitaetstransformationen, Spatial Domain Processing und Farbbildern.',
+          isOrderRandom: false,
+          questions: [
+            {
+              title: 'Was ist das Ziel einer Intensitaetstransformation?',
+              description:
+                'Denke an Operationen, die Pixelwerte veraendern, ohne die Bildgeometrie zu verschieben.',
+              type: 'SINGLE_CHOICE' as const,
+              position: 0,
+              answers: [
+                {
+                  content:
+                    'Pixelwerte werden angepasst, um Kontrast, Helligkeit oder Dynamikbereich zu veraendern.',
+                  isCorrect: true,
+                  position: 0,
+                },
+                {
+                  content: 'Das Bild wird immer in ein 3D-Modell umgerechnet.',
+                  isCorrect: false,
+                  position: 1,
+                },
+                {
+                  content: 'Alle Kanten werden automatisch als Vektorgrafik gespeichert.',
+                  isCorrect: false,
+                  position: 2,
+                },
+              ],
+            },
+            {
+              title: 'Welche Themen gehoeren zum Spatial Domain Processing?',
+              description: 'Waehle alle passenden Antworten aus.',
+              type: 'MULTIPLE_CHOICE' as const,
+              position: 1,
+              answers: [
+                {
+                  content: 'Filteroperationen direkt auf Bildpixeln',
+                  isCorrect: true,
+                  position: 0,
+                },
+                {
+                  content: 'Glaettung oder Schaerfung mit lokalen Nachbarschaften',
+                  isCorrect: true,
+                  position: 1,
+                },
+                {
+                  content: 'Morphologische Operationen wie Erosion und Dilatation',
+                  isCorrect: true,
+                  position: 2,
+                },
+                {
+                  content: 'Ausschliesslich Netzwerk-Routing zwischen Servern',
+                  isCorrect: false,
+                  position: 3,
+                },
+              ],
+            },
+            {
+              title: 'Color Image Processing',
+              description: 'Erklaere kurz, warum Farbraeume und einzelne Farbkanaele wichtig sind.',
+              type: 'CARD' as const,
+              position: 2,
+              answers: [
+                {
+                  content:
+                    'Farbraeume beschreiben Farben unterschiedlich, zum Beispiel RGB oder HSV. Einzelne Kanaele koennen getrennt verarbeitet werden, um Farbe, Helligkeit oder Segmentierung gezielter zu steuern.',
+                  isCorrect: true,
+                  position: 0,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          title: 'DIP Pipeline und Mini Project',
+          description:
+            'Quiz zu Kanten, Segmentierung, Feature Extraction, Klassifikation und JPEG-Kompression.',
+          isOrderRandom: true,
+          questions: [
+            {
+              title: 'Wozu dienen Edge-Detection-Verfahren?',
+              description: 'Denke an lokale Helligkeitsaenderungen und Strukturen in Bildern.',
+              type: 'SINGLE_CHOICE' as const,
+              position: 0,
+              answers: [
+                {
+                  content:
+                    'Sie markieren starke lokale Aenderungen, die oft Objektgrenzen oder Linien entsprechen.',
+                  isCorrect: true,
+                  position: 0,
+                },
+                {
+                  content: 'Sie ersetzen jede Datei automatisch durch ein kleineres JPEG.',
+                  isCorrect: false,
+                  position: 1,
+                },
+                {
+                  content: 'Sie entfernen zwingend alle Farben aus einem Bild.',
+                  isCorrect: false,
+                  position: 2,
+                },
+              ],
+            },
+            {
+              title: 'Welche Schritte koennen in einer Bildanalyse-Pipeline vorkommen?',
+              description: 'Mehrere Antworten koennen richtig sein.',
+              type: 'MULTIPLE_CHOICE' as const,
+              position: 1,
+              answers: [
+                { content: 'Segmentation', isCorrect: true, position: 0 },
+                { content: 'Feature Extraction', isCorrect: true, position: 1 },
+                { content: 'Classification', isCorrect: true, position: 2 },
+                {
+                  content: 'Manuelles Abschalten der Datenbankmigration',
+                  isCorrect: false,
+                  position: 3,
+                },
+              ],
+            },
+            {
+              title: 'JPEG Compression und Mini Project',
+              description:
+                'Beschreibe kurz, warum JPEG fuer ein Mini Project interessant sein kann.',
+              type: 'CARD' as const,
+              position: 2,
+              answers: [
+                {
+                  content:
+                    'JPEG zeigt zentrale DIP-Konzepte wie Transformation, Quantisierung und verlustbehaftete Kompression. In einem Mini Project kann man sichtbar untersuchen, wie Qualitaet und Dateigroesse zusammenhaengen.',
                   isCorrect: true,
                   position: 0,
                 },
