@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Logo from '../Logo';
 import LanguageSwitcher from './LanguageSwitcher';
+import NotificationBell from './NotificationBell';
 import { isAiInputVisible } from '../aiInputVisibility';
 import { useAuth } from '../../../context/useAuth';
 import { useTheme } from '../../../context/useTheme';
@@ -165,6 +166,7 @@ export default function DashboardLayout({
 
           <div className="dashboard-topbar__actions">
             <LanguageSwitcher />
+            {user && <NotificationBell />}
             <button
               type="button"
               className="dashboard-topbar__icon dashboard-topbar__theme-toggle"
