@@ -1,0 +1,11 @@
+{
+  "title": "Benachrichtigungen",
+  "bellAria": "Benachrichtigungen, {{count}} ungelesen",
+  "empty": "Noch keine Benachrichtigungen.",
+  "loadFailed": "Benachrichtigungen konnten nicht geladen werden.",
+  "unreadCount": "{{count}} ungelesen",
+  "courseShared": {
+    "title": "Kurs geteilt",
+    "message": "{{sharedByUsername}} hat \"{{courseName}}\" mit dir geteilt."
+  }
+}
