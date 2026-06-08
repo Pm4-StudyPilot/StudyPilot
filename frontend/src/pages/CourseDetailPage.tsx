@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/shared/layout/DashboardLayout';
 import DocumentUploadForm from '../components/courses/DocumentUploadForm';
@@ -8,6 +8,7 @@ import CourseFeed, { CourseFeedItem } from '../components/courses/CourseFeed';
 import CreateTaskModal from '../components/tasks/CreateTaskModal';
 import CreateQuizModal from '../components/quizzes/CreateQuizModal';
 import ShareCourseModal from '../components/courses/ShareCourseModal';
+import DeleteCourseModal from '../components/courses/DeleteCourseModal';
 import TaskList from '../components/tasks/TaskList';
 import ProgressRing from '../components/shared/ProgressRing';
 import { api } from '../services/api';
@@ -18,6 +19,7 @@ import { useAuth } from '../context/useAuth';
 
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { t } = useTranslation();
 
   const [course, setCourse] = useState<CourseDto | null>(null);
@@ -34,6 +36,7 @@ export default function CourseDetailPage() {
   const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
   const [createQuizModalOpen, setCreateQuizModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const { user } = useAuth();
   const isOwner = user?.id === course?.ownerId;
@@ -92,6 +95,10 @@ export default function CourseDetailPage() {
   function handleQuizCreated(quiz: QuizDto) {
     setCourseFeedItems((prev) => [...prev, { type: 'quiz', data: quiz }]);
     setCreateQuizModalOpen(false);
+  }
+
+  function handleCourseRemoved() {
+    navigate('/courses');
   }
 
   const normalizedCourseSearch = courseSearchTerm.trim().toLowerCase();
@@ -177,12 +184,20 @@ export default function CourseDetailPage() {
                 <div className="course-detail__title-row">
                   <h1 className="course-detail__title">{course.name}</h1>
                 </div>
-                {isOwner && (
-                  <button className="btn btn-primary" onClick={() => setShareModalOpen(true)}>
-                    <i className="fa-solid fa-share-alt me-2" />
-                    {t('courses.detail.share')}
+                <div className="d-flex align-items-center gap-2 flex-wrap">
+                  {isOwner && (
+                    <button className="btn btn-primary" onClick={() => setShareModalOpen(true)}>
+                      <i className="fa-solid fa-share-alt me-2" />
+                      {t('courses.detail.share')}
+                    </button>
+                  )}
+                  <button className="btn btn-danger" onClick={() => setDeleteModalOpen(true)}>
+                    <i
+                      className={`fa-solid ${isOwner ? 'fa-trash' : 'fa-right-from-bracket'} me-2`}
+                    />
+                    {t(isOwner ? 'courses.detail.delete' : 'courses.detail.leave')}
                   </button>
-                )}
+                </div>
               </div>
 
               <aside
@@ -346,6 +361,14 @@ export default function CourseDetailPage() {
         )}
         {shareModalOpen && course && (
           <ShareCourseModal course={course} onClose={() => setShareModalOpen(false)} />
+        )}
+        {deleteModalOpen && course && (
+          <DeleteCourseModal
+            course={course}
+            isOwner={isOwner}
+            onClose={() => setDeleteModalOpen(false)}
+            onDeleted={handleCourseRemoved}
+          />
         )}
       </section>
     </DashboardLayout>

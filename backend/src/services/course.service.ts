@@ -1,7 +1,9 @@
 import { prisma } from '../config/database';
+import { storage } from '../config/minio';
 import { CourseDto, CourseTaskProgressDto } from '../types';
 import type { PrismaClient } from '../generated/prisma/client';
 import { resolveCourseColor } from '../utils/courseColor';
+import { logger } from '../lib/logger';
 
 const COURSE_OVERVIEW_SELECT = {
   id: true,
@@ -28,7 +30,10 @@ type CourseOverviewRecord = {
 };
 
 export class CourseService {
-  constructor(private readonly db: PrismaClient = prisma) {}
+  constructor(
+    private readonly db: PrismaClient = prisma,
+    private readonly objectStorage: Pick<typeof storage, 'delete'> = storage
+  ) {}
 
   private buildTaskProgress(tasks: Array<{ status: string }>): CourseTaskProgressDto {
     const totalTasks = tasks.length;
@@ -202,6 +207,77 @@ export class CourseService {
     });
 
     return result.count > 0;
+  }
+
+  async removeForUser(id: string, userId: string): Promise<'deleted' | 'left' | null> {
+    const course = await this.db.course.findUnique({
+      where: { id },
+      select: {
+        ownerId: true,
+        documents: {
+          select: {
+            id: true,
+            bucket: true,
+            objectKey: true,
+          },
+        },
+      },
+    });
+
+    if (!course) {
+      return null;
+    }
+
+    if (course.ownerId === userId) {
+      await this.db.course.delete({
+        where: { id },
+      });
+
+      await Promise.all(
+        course.documents.map(async (document) => {
+          try {
+            await this.objectStorage.delete(document.bucket, document.objectKey);
+          } catch (storageError) {
+            logger.error(
+              {
+                err: storageError,
+                documentId: document.id,
+                courseId: id,
+                bucket: document.bucket,
+                objectKey: document.objectKey,
+              },
+              'Failed to delete course document object from storage'
+            );
+          }
+        })
+      );
+
+      return 'deleted';
+    }
+
+    const leaveResult = await this.db.$transaction(async (tx) => {
+      const shareDelete = await tx.courseShare.deleteMany({
+        where: {
+          courseId: id,
+          sharedWithUserId: userId,
+        },
+      });
+
+      if (shareDelete.count === 0) {
+        return null;
+      }
+
+      await tx.task.deleteMany({
+        where: {
+          courseId: id,
+          userId,
+        },
+      });
+
+      return 'left' as const;
+    });
+
+    return leaveResult;
   }
 
   // Backward compatibility aliases
