@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { CourseShareService, ShareError } from '../services/course-share.service';
+import { NotificationType } from '../services/notification.service';
 
 type MockCourseRecord = {
   id: string;
+  name?: string;
   ownerId: string;
 };
 
@@ -42,6 +44,11 @@ type MockSharedCourseRecord = MockCourseShareRecord & {
 const mockCourseFindFirst = mock(async (): Promise<MockCourseRecord | null> => null);
 
 const mockUserFindFirst = mock(async (): Promise<MockUserRecord | null> => null);
+const mockUserFindUnique = mock(
+  async (): Promise<Pick<MockUserRecord, 'username'> | null> => ({
+    username: 'owner',
+  })
+);
 
 const mockCourseShareFindFirst = mock(async (): Promise<MockCourseShareRecord | null> => null);
 
@@ -60,6 +67,20 @@ const mockCourseShareDeleteMany = mock(async (): Promise<{ count: number }> => (
 const mockCourseShareFindMany = mock(
   async (): Promise<Array<MockCourseShareWithUsersRecord | MockSharedCourseRecord>> => []
 );
+const mockCreateCourseSharedNotification = mock(async () => ({
+  id: 'notification-1',
+  userId: 'user-shared',
+  type: NotificationType.CourseShared,
+  title: 'Course shared',
+  message: 'owner shared "Biology" with you.',
+  data: {
+    courseName: 'Biology',
+    sharedByUsername: 'owner',
+  },
+  courseId: 'course-1',
+  readAt: null,
+  createdAt: new Date('2026-01-01T00:00:00.000Z'),
+}));
 
 function buildService(): CourseShareService {
   const db = {
@@ -68,6 +89,7 @@ function buildService(): CourseShareService {
     },
     user: {
       findFirst: mockUserFindFirst,
+      findUnique: mockUserFindUnique,
     },
     courseShare: {
       findFirst: mockCourseShareFindFirst,
@@ -78,7 +100,8 @@ function buildService(): CourseShareService {
   };
 
   return new CourseShareService(
-    db as unknown as ConstructorParameters<typeof CourseShareService>[0]
+    db as unknown as ConstructorParameters<typeof CourseShareService>[0],
+    { createCourseSharedNotification: mockCreateCourseSharedNotification }
   );
 }
 
@@ -88,10 +111,12 @@ describe('CourseShareService', () => {
   beforeEach(() => {
     mockCourseFindFirst.mockClear();
     mockUserFindFirst.mockClear();
+    mockUserFindUnique.mockClear();
     mockCourseShareFindFirst.mockClear();
     mockCourseShareCreate.mockClear();
     mockCourseShareDeleteMany.mockClear();
     mockCourseShareFindMany.mockClear();
+    mockCreateCourseSharedNotification.mockClear();
 
     service = buildService();
   });
@@ -100,6 +125,7 @@ describe('CourseShareService', () => {
     it('should share a course with a user by username', async () => {
       mockCourseFindFirst.mockResolvedValueOnce({
         id: 'course-1',
+        name: 'Biology',
         ownerId: 'user-owner',
       });
 
@@ -118,6 +144,7 @@ describe('CourseShareService', () => {
           id: 'course-1',
           ownerId: 'user-owner',
         },
+        select: { id: true, name: true },
       });
 
       expect(mockUserFindFirst).toHaveBeenCalledWith({
@@ -140,6 +167,12 @@ describe('CourseShareService', () => {
           sharedByUserId: 'user-owner',
         },
       });
+      expect(mockCreateCourseSharedNotification).toHaveBeenCalledWith({
+        recipientId: 'user-shared',
+        courseId: 'course-1',
+        courseName: 'Biology',
+        sharedByUsername: 'owner',
+      });
 
       expect(share.courseId).toBe('course-1');
       expect(share.sharedWithUserId).toBe('user-shared');
@@ -149,6 +182,7 @@ describe('CourseShareService', () => {
     it('should share a course with a user by email', async () => {
       mockCourseFindFirst.mockResolvedValueOnce({
         id: 'course-1',
+        name: 'Biology',
         ownerId: 'user-owner',
       });
 
@@ -190,7 +224,9 @@ describe('CourseShareService', () => {
           id: 'non-existent-id',
           ownerId: 'user-owner',
         },
+        select: { id: true, name: true },
       });
+      expect(mockUserFindUnique).not.toHaveBeenCalled();
       expect(mockUserFindFirst).not.toHaveBeenCalled();
       expect(mockCourseShareFindFirst).not.toHaveBeenCalled();
       expect(mockCourseShareCreate).not.toHaveBeenCalled();
@@ -214,8 +250,10 @@ describe('CourseShareService', () => {
           id: 'course-1',
           ownerId: 'not-owner',
         },
+        select: { id: true, name: true },
       });
 
+      expect(mockUserFindUnique).not.toHaveBeenCalled();
       expect(mockUserFindFirst).not.toHaveBeenCalled();
       expect(mockCourseShareCreate).not.toHaveBeenCalled();
     });
@@ -330,6 +368,7 @@ describe('CourseShareService', () => {
       );
 
       expect(mockCourseShareCreate).not.toHaveBeenCalled();
+      expect(mockCreateCourseSharedNotification).not.toHaveBeenCalled();
     });
   });
 

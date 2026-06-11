@@ -513,6 +513,116 @@ describe('CourseList', () => {
   });
 
   /**
+   * Test case: Refetch course after editing (KAN-213)
+   *
+   * Scenario:
+   * The PATCH response and the GET response differ — for example because
+   * the PATCH endpoint computes task progress against all users while the
+   * GET endpoint scopes it to the current user. Without a refetch the UI
+   * would show stale/incorrect numbers.
+   *
+   * Expected behavior:
+   * - The PATCH response is applied first (optimistic).
+   * - GET /courses/:id is then called for the edited course.
+   * - The refetched response replaces the optimistic value.
+   */
+  it('refetches the course after editing and shows the refetched value', async () => {
+    mockCourseListApi();
+
+    vi.mocked(api.patch).mockResolvedValueOnce({
+      ...courseFixtures[0],
+      name: 'Optimistic Name',
+    });
+
+    // Wire up the single-course GET that the refetch will trigger
+    const originalImpl = vi.mocked(api.get).getMockImplementation();
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/courses/c1') {
+        return Promise.resolve({
+          ...courseFixtures[0],
+          name: 'Refetched Name',
+        });
+      }
+      return originalImpl ? originalImpl(url) : Promise.resolve([]);
+    });
+
+    render(
+      <MemoryRouter>
+        <CourseList />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Machine Learning')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getAllByLabelText(/edit course/i)[0]);
+    fireEvent.change(screen.getByLabelText(/course name/i), {
+      target: { value: 'Edited Name' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    // The refetched name wins over the PATCH response
+    await waitFor(() => {
+      expect(screen.getByText('Refetched Name')).toBeInTheDocument();
+    });
+
+    expect(api.get).toHaveBeenCalledWith('/courses/c1');
+    expect(screen.queryByText('Optimistic Name')).not.toBeInTheDocument();
+  });
+
+  /**
+   * Test case: Refetch failure keeps the optimistic update (KAN-213)
+   *
+   * Scenario:
+   * GET /courses/:id fails after a successful PATCH.
+   *
+   * Expected behavior:
+   * - The optimistic update from the PATCH response remains visible.
+   * - The user is not blocked or shown an error for the failed refetch
+   *   (the saved data is already applied; the next list reload will reconcile).
+   */
+  it('keeps the optimistic update if the refetch fails', async () => {
+    mockCourseListApi();
+
+    vi.mocked(api.patch).mockResolvedValueOnce({
+      ...courseFixtures[0],
+      name: 'Optimistic Name',
+    });
+
+    const originalImpl = vi.mocked(api.get).getMockImplementation();
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/courses/c1') {
+        return Promise.reject(new Error('Network down'));
+      }
+      return originalImpl ? originalImpl(url) : Promise.resolve([]);
+    });
+
+    render(
+      <MemoryRouter>
+        <CourseList />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Machine Learning')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getAllByLabelText(/edit course/i)[0]);
+    fireEvent.change(screen.getByLabelText(/course name/i), {
+      target: { value: 'Edited Name' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Optimistic Name')).toBeInTheDocument();
+    });
+
+    expect(api.get).toHaveBeenCalledWith('/courses/c1');
+    expect(screen.queryByText('Machine Learning')).not.toBeInTheDocument();
+  });
+
+  /**
    * Test case: Delete course
    *
    * Scenario:
