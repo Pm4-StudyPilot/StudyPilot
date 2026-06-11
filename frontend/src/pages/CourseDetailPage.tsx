@@ -15,6 +15,7 @@ import { api } from '../services/api';
 import { CourseDto, QuizDto, TaskDto } from '../types/dto';
 import { withOpacity } from '../utils/courseColors';
 import { formatDate } from '../utils/formatDate';
+import { trackVisitedCourse } from '../utils/recentCourses';
 import { useAuth } from '../context/useAuth';
 import { buildTaskProgress, EMPTY_TASK_PROGRESS } from '../utils/taskProgress';
 
@@ -101,7 +102,12 @@ export default function CourseDetailPage() {
     api
       .get<CourseDto>(`/courses/${id}`)
       .then((loadedCourse) => {
-        if (!isCancelled) setCourse(loadedCourse);
+        if (!isCancelled) {
+          setCourse(loadedCourse);
+          if (loadedCourse?.id) {
+            trackVisitedCourse(loadedCourse.id);
+          }
+        }
       })
       .catch((err: unknown) => {
         if (!isCancelled) {
