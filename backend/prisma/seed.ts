@@ -270,7 +270,7 @@ async function main() {
           title: 'Bildverarbeitung: Filter und Segmentierung zusammenfassen',
           description:
             'Erstelle eine kurze Zusammenfassung zu Kontrastanpassung, Rotation und Segmentierung.',
-          dueDate: createRelativeDate(9),
+          dueDate: createRelativeDate(3),
           priority: 'MEDIUM' as const,
           status: 'OPEN' as const,
           position: 2,

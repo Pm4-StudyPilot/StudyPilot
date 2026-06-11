@@ -1,3 +1,5 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+
 type ProgressRingProps = {
   openTasks: number;
   inProgressTasks: number;
@@ -26,6 +28,20 @@ function calculateSegmentPercentages(
   };
 }
 
+function shouldSkipProgressAnimation() {
+  const prefersReducedMotion =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canAnimate =
+    typeof requestAnimationFrame === 'function' &&
+    typeof cancelAnimationFrame === 'function' &&
+    typeof performance !== 'undefined' &&
+    typeof performance.now === 'function';
+
+  return prefersReducedMotion || !canAnimate;
+}
+
 export default function ProgressRing({
   openTasks,
   inProgressTasks,
@@ -36,18 +52,58 @@ export default function ProgressRing({
   size = 40,
   className,
 }: ProgressRingProps) {
-  const segments = calculateSegmentPercentages(
-    openTasks,
-    inProgressTasks,
-    completedTasks,
-    totalTasks
+  const targetSegments = useMemo(
+    () => calculateSegmentPercentages(openTasks, inProgressTasks, completedTasks, totalTasks),
+    [openTasks, inProgressTasks, completedTasks, totalTasks]
   );
+  const [segments, setSegments] = useState(targetSegments);
+  const segmentsRef = useRef(targetSegments);
   const classes = ['progress-ring', className].filter(Boolean).join(' ');
+  const skipAnimation = shouldSkipProgressAnimation();
+
+  useEffect(() => {
+    if (skipAnimation) {
+      segmentsRef.current = targetSegments;
+      return;
+    }
+
+    const startSegments = segmentsRef.current;
+    const duration = 520;
+    const startTime = performance.now();
+
+    function animateFrame(now: number) {
+      const elapsed = Math.min((now - startTime) / duration, 1);
+      const easedProgress = 1 - Math.pow(1 - elapsed, 3);
+      const nextSegments = {
+        open: startSegments.open + (targetSegments.open - startSegments.open) * easedProgress,
+        inProgress:
+          startSegments.inProgress +
+          (targetSegments.inProgress - startSegments.inProgress) * easedProgress,
+        completed:
+          startSegments.completed +
+          (targetSegments.completed - startSegments.completed) * easedProgress,
+      };
+
+      segmentsRef.current = nextSegments;
+      setSegments(nextSegments);
+
+      if (elapsed < 1) {
+        animationFrame = requestAnimationFrame(animateFrame);
+      }
+    }
+
+    let animationFrame = requestAnimationFrame(animateFrame);
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [skipAnimation, targetSegments]);
 
   // Build conic-gradient: OPEN (grey) -> IN_PROGRESS (blue) -> DONE (green) -> unfilled (dark)
-  const openEnd = segments.open;
-  const inProgressEnd = openEnd + segments.inProgress;
-  const completedEnd = inProgressEnd + segments.completed;
+  const displayedSegments = skipAnimation ? targetSegments : segments;
+  const openEnd = displayedSegments.open;
+  const inProgressEnd = openEnd + displayedSegments.inProgress;
+  const completedEnd = inProgressEnd + displayedSegments.completed;
 
   const gradient = `conic-gradient(
     var(--progress-open-color) 0% ${openEnd}%,

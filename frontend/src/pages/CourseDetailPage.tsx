@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/shared/layout/DashboardLayout';
@@ -17,6 +17,58 @@ import { withOpacity } from '../utils/courseColors';
 import { formatDate } from '../utils/formatDate';
 import { useAuth } from '../context/useAuth';
 import { buildTaskProgress, EMPTY_TASK_PROGRESS } from '../utils/taskProgress';
+
+function shouldSkipProgressAnimation() {
+  const prefersReducedMotion =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canAnimate =
+    typeof requestAnimationFrame === 'function' &&
+    typeof cancelAnimationFrame === 'function' &&
+    typeof performance !== 'undefined' &&
+    typeof performance.now === 'function';
+
+  return prefersReducedMotion || !canAnimate;
+}
+
+function useAnimatedPercentage(targetValue: number) {
+  const [animatedValue, setAnimatedValue] = useState(targetValue);
+  const animatedValueRef = useRef(targetValue);
+  const skipAnimation = shouldSkipProgressAnimation();
+
+  useEffect(() => {
+    if (skipAnimation) {
+      animatedValueRef.current = targetValue;
+      return;
+    }
+
+    const startValue = animatedValueRef.current;
+    const duration = 520;
+    const startTime = performance.now();
+
+    function animateFrame(now: number) {
+      const elapsed = Math.min((now - startTime) / duration, 1);
+      const easedProgress = 1 - Math.pow(1 - elapsed, 3);
+      const nextValue = startValue + (targetValue - startValue) * easedProgress;
+
+      animatedValueRef.current = nextValue;
+      setAnimatedValue(nextValue);
+
+      if (elapsed < 1) {
+        animationFrame = requestAnimationFrame(animateFrame);
+      }
+    }
+
+    let animationFrame = requestAnimationFrame(animateFrame);
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [skipAnimation, targetValue]);
+
+  return Math.round(skipAnimation ? targetValue : animatedValue);
+}
 
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -158,6 +210,7 @@ export default function CourseDetailPage() {
   const progress =
     tasksLoading && course?.taskProgress ? course.taskProgress : buildTaskProgress(tasks);
   const safeProgress = course ? progress : EMPTY_TASK_PROGRESS;
+  const displayedCompletionPercentage = useAnimatedPercentage(safeProgress.completionPercentage);
 
   const courseMeta = useMemo(() => {
     if (!course) return [];
@@ -256,7 +309,7 @@ export default function CourseDetailPage() {
                     size={148}
                   />
                   <div className="course-detail__progress-center">
-                    <strong>{progress.completionPercentage}%</strong>
+                    <strong>{displayedCompletionPercentage}%</strong>
                     <span>{t('courses.detail.percentLabel')}</span>
                   </div>
                 </div>
