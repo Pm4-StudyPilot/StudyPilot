@@ -8,19 +8,19 @@ import DashboardLayout from '../components/shared/layout/DashboardLayout';
 import { api } from '../services/api';
 import { CourseDto, TaskDto } from '../types/dto';
 import { formatDate } from '../utils/formatDate';
+import { getRecentCourseIds } from '../utils/recentCourses';
+
+/**
+ * How many recently visited courses to display in the dashboard's
+ * "Recent courses" section.
+ */
+const RECENT_COURSES_LIMIT = 3;
 
 type DashboardAssignment = {
   id: string;
   title: string;
   meta: string;
   status: 'urgent' | 'done';
-};
-
-type DashboardSearchMatch = {
-  id: string;
-  title: string;
-  meta: string;
-  type: 'task' | 'document' | 'quiz';
 };
 
 type DocumentDto = {
@@ -76,6 +76,11 @@ function createTaskMeta(task: TaskDto, t: TFunction): string {
   });
 }
 
+/**
+ * Selects the two most-relevant upcoming tasks for a course:
+ * not-done tasks first (sorted by due date), then done tasks.
+ * Used inside the featured (most-recently-visited) course card.
+ */
 function buildFeaturedAssignments(tasks: TaskDto[], t: TFunction): DashboardAssignment[] {
   return [...tasks]
     .sort((a, b) => {
@@ -133,48 +138,6 @@ function buildCourseSupportMeta(data: DashboardCourseData, t: TFunction): string
   return t('home.noSupportContent');
 }
 
-function getDashboardMatches(
-  data: DashboardCourseData,
-  searchTerm: string,
-  t: TFunction
-): DashboardSearchMatch[] {
-  const normalized = searchTerm.trim().toLowerCase();
-  if (!normalized) return [];
-
-  const taskMatches = data.tasks
-    .filter((task) => task.title.toLowerCase().includes(normalized))
-    .map((task) => ({
-      id: task.id,
-      title: task.title,
-      meta: t('home.matchType.task'),
-      type: 'task' as const,
-    }));
-
-  const documentMatches = data.documents
-    .filter(
-      (document) =>
-        document.filename.toLowerCase().includes(normalized) ||
-        document.fileType?.toLowerCase().includes(normalized)
-    )
-    .map((document) => ({
-      id: document.id,
-      title: document.filename,
-      meta: t('home.matchType.document'),
-      type: 'document' as const,
-    }));
-
-  const quizMatches = data.quizzes
-    .filter((quiz) => quiz.title.toLowerCase().includes(normalized))
-    .map((quiz) => ({
-      id: quiz.id,
-      title: quiz.title,
-      meta: t('home.matchType.quiz'),
-      type: 'quiz' as const,
-    }));
-
-  return [...taskMatches, ...documentMatches, ...quizMatches].slice(0, 2);
-}
-
 function collectDashboardWarnings(data: DashboardCourseData[], t: TFunction): string[] {
   const warnings = new Set<string>();
 
@@ -223,13 +186,13 @@ async function loadDashboardCourseData(courses: CourseDto[], t: TFunction) {
   return results;
 }
 
-function FeaturedCourseCard({
-  data,
-  searchTerm = '',
-}: {
-  data: DashboardCourseData;
-  searchTerm?: string;
-}) {
+/**
+ * The featured card highlights one course (the most recently visited).
+ * It surfaces the course's progress ring and its two most-urgent tasks
+ * inline so the user can jump straight into work without opening the
+ * course detail page first.
+ */
+function FeaturedCourseCard({ data }: { data: DashboardCourseData }) {
   const { t } = useTranslation();
   const progress = data.course.taskProgress ?? {
     totalTasks: 0,
@@ -239,9 +202,7 @@ function FeaturedCourseCard({
     completionPercentage: 0,
   };
 
-  const searchMatches = getDashboardMatches(data, searchTerm, t);
-  const assignments =
-    searchMatches.length > 0 ? searchMatches : buildFeaturedAssignments(data.tasks, t);
+  const assignments = buildFeaturedAssignments(data.tasks, t);
 
   const quizSummary =
     data.quizzes.length > 0
@@ -249,8 +210,6 @@ function FeaturedCourseCard({
           count: data.quizzes.length,
         })
       : t('home.quizCountZero');
-
-  const sectionLabel = searchTerm.trim() ? t('home.searchResults') : t('home.recentAssignments');
 
   return (
     <Link
@@ -266,7 +225,7 @@ function FeaturedCourseCard({
           <span>{quizSummary}</span>
         </div>
         <h2 className="dashboard-featured-card__title">{data.course.name}</h2>
-        <div className="dashboard-featured-card__section-label">{sectionLabel}</div>
+        <div className="dashboard-featured-card__section-label">{t('home.recentAssignments')}</div>
         {assignments.length > 0 ? (
           <div className="dashboard-featured-card__assignments">
             {assignments.map((assignment) => (
@@ -324,7 +283,7 @@ function FeaturedCourseCard({
   );
 }
 
-function CompactCourseCard({ data }: { data: DashboardCourseData; index: number }) {
+function CompactCourseCard({ data }: { data: DashboardCourseData }) {
   const { t } = useTranslation();
   const progress = data.course.taskProgress ?? {
     totalTasks: 0,
@@ -472,9 +431,33 @@ export default function HomePage() {
       })
     : dashboardCourses;
 
-  const featuredCourse = filteredDashboardCourses[0] ?? null;
+  /**
+   * Recently visited courses, in visit order, capped at RECENT_COURSES_LIMIT
+   * and intersected with the courses we actually have data for (in case the
+   * user visited a course that has since been deleted).
+   *
+   * The localStorage read happens inside the memo so it reruns whenever the
+   * loaded course set changes — which is the same moment we'd want to surface
+   * a freshly-visited course on remount.
+   */
+  const recentDashboardCourses = useMemo(() => {
+    const recentCourseIds = getRecentCourseIds();
+    const byId = new Map(dashboardCourses.map((entry) => [entry.course.id, entry]));
+    const ordered: DashboardCourseData[] = [];
 
-  const compactCourses = filteredDashboardCourses.slice(1, 4);
+    for (const id of recentCourseIds) {
+      const entry = byId.get(id);
+      if (entry) ordered.push(entry);
+      if (ordered.length >= RECENT_COURSES_LIMIT) break;
+    }
+
+    return ordered;
+  }, [dashboardCourses]);
+
+  // While searching, show all matching courses. Otherwise show the recent set.
+  const visibleCourses = normalizedDashboardSearch
+    ? filteredDashboardCourses
+    : recentDashboardCourses;
 
   const averageProgress =
     dashboardCourses.length > 0
@@ -564,27 +547,45 @@ export default function HomePage() {
             <div className="dashboard-state panel dashboard-state--error">{error}</div>
           )}
 
-          {!loading && !error && featuredCourse && (
-            <>
-              <FeaturedCourseCard data={featuredCourse} searchTerm={dashboardSearchTerm} />
+          {!loading && !error && dashboardCourses.length > 0 && (
+            <section
+              className="dashboard-recent-courses"
+              aria-labelledby="dashboard-recent-heading"
+            >
+              <h2 id="dashboard-recent-heading" className="dashboard-recent-courses__title">
+                {normalizedDashboardSearch
+                  ? t('home.searchResultsHeading')
+                  : t('home.recentCoursesHeading')}
+              </h2>
 
-              <div className="dashboard-course-grid">
-                {compactCourses.map((entry, index) => (
-                  <CompactCourseCard key={entry.course.id} data={entry} index={index + 1} />
-                ))}
-              </div>
-            </>
+              {visibleCourses.length > 0 && (
+                <>
+                  <FeaturedCourseCard data={visibleCourses[0]} />
+
+                  {visibleCourses.length > 1 && (
+                    <div className="dashboard-course-grid">
+                      {visibleCourses.slice(1).map((entry) => (
+                        <CompactCourseCard key={entry.course.id} data={entry} />
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {visibleCourses.length === 0 && normalizedDashboardSearch && (
+                <div className="dashboard-state">
+                  <h2>{t('home.noResults')}</h2>
+                  <p>{t('home.noResultsHint')}</p>
+                </div>
+              )}
+
+              {visibleCourses.length === 0 && !normalizedDashboardSearch && (
+                <div className="dashboard-state panel">
+                  <p className="mb-0">{t('home.noRecentCourses')}</p>
+                </div>
+              )}
+            </section>
           )}
-
-          {!loading &&
-            !error &&
-            dashboardCourses.length > 0 &&
-            filteredDashboardCourses.length === 0 && (
-              <div className="dashboard-state">
-                <h2>{t('home.noResults')}</h2>
-                <p>{t('home.noResultsHint')}</p>
-              </div>
-            )}
 
           {!loading && !error && dashboardCourses.length === 0 && (
             <div className="dashboard-state panel">
