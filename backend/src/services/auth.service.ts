@@ -102,6 +102,7 @@ export class AuthService {
     const user = await prisma.user.findFirst({
       where: {
         OR: [{ email: normalizedIdentifier.toLowerCase() }, { username: normalizedIdentifier }],
+        deletedAt: null,
       },
     });
 
@@ -158,12 +159,14 @@ export class AuthService {
     const result: { emailExists?: boolean; usernameExists?: boolean } = {};
 
     if (email) {
-      const existingEmail = await prisma.user.findUnique({ where: { email } });
+      const existingEmail = await prisma.user.findFirst({ where: { email, deletedAt: null } });
       result.emailExists = !!existingEmail;
     }
 
     if (username) {
-      const existingUsername = await prisma.user.findUnique({ where: { username } });
+      const existingUsername = await prisma.user.findFirst({
+        where: { username, deletedAt: null },
+      });
       result.usernameExists = !!existingUsername;
     }
 
@@ -185,7 +188,7 @@ export class AuthService {
    * @param email The email address to send the reset link to
    */
   async requestPasswordReset(email: string): Promise<void> {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findFirst({ where: { email, deletedAt: null } });
 
     if (!user) {
       // Return silently – do not reveal whether the email exists
@@ -221,8 +224,8 @@ export class AuthService {
    * @throws Error if the token is invalid or expired
    */
   async resetPassword(token: string, newPassword: string): Promise<void> {
-    const user = await prisma.user.findUnique({
-      where: { passwordResetToken: token },
+    const user = await prisma.user.findFirst({
+      where: { passwordResetToken: token, deletedAt: null },
     });
 
     if (!user || !user.passwordResetExpires) {

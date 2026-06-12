@@ -11,6 +11,7 @@ import { api } from '../services/api';
  * - mockNavigate simulates navigation to the change password page
  */
 const mockUpdateUser = vi.fn();
+const mockLogout = vi.fn();
 const mockNavigate = vi.fn();
 
 let mockUser: {
@@ -35,6 +36,7 @@ vi.mock('../context/useAuth', () => ({
   useAuth: () => ({
     user: mockUser,
     updateUser: mockUpdateUser,
+    logout: mockLogout,
   }),
 }));
 
@@ -62,6 +64,7 @@ vi.mock('react-router-dom', async () => {
 vi.mock('../services/api', () => ({
   api: {
     patch: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
@@ -152,6 +155,12 @@ describe('SettingsPage', () => {
     expect(
       screen.getByRole('button', {
         name: /change password/i,
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('button', {
+        name: /delete account/i,
       })
     ).toBeInTheDocument();
   });
@@ -349,5 +358,32 @@ describe('SettingsPage', () => {
     );
 
     expect(mockNavigate).toHaveBeenCalledWith('/settings/password');
+  });
+
+  /**
+   * Test case: Delete account.
+   *
+   * Expected behavior:
+   * - DELETE /users/me is called
+   * - AuthContext logout is called
+   * - user is redirected to login
+   */
+  it('deletes the account and redirects to login', async () => {
+    vi.mocked(api.delete).mockResolvedValue(undefined);
+
+    renderPage();
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /delete account/i,
+      })
+    );
+
+    await waitFor(() => {
+      expect(api.delete).toHaveBeenCalledWith('/users/me');
+    });
+
+    expect(mockLogout).toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith('/login');
   });
 });
