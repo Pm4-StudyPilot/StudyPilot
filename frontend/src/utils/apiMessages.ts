@@ -54,7 +54,7 @@ const API_MESSAGE_KEYS: Record<string, string> = {
   'Failed to fetch question': 'common.apiMessages.fetchQuestionFailed',
   'Failed to fetch questions': 'common.apiMessages.fetchQuestionsFailed',
   'Failed to fetch quiz': 'common.apiMessages.fetchQuizFailed',
-  'Failed to fetch quizs': 'common.apiMessages.fetchQuizzesFailed',
+  'Failed to fetch quizzes': 'common.apiMessages.fetchQuizzesFailed',
   'Failed to fetch shared courses': 'common.apiMessages.fetchSharedCoursesFailed',
   'Failed to fetch shared users': 'common.apiMessages.fetchSharedUsersFailed',
   'Failed to fetch task': 'common.apiMessages.fetchTaskFailed',
