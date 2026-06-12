@@ -15,6 +15,11 @@
     "subtitle": "Aktualisiere dein Passwort, um dein Konto zu schützen.",
     "change": "Passwort ändern"
   },
+  "deleteAccount": {
+    "title": "Konto löschen",
+    "subtitle": "Lösche dein Konto und gib deine E-Mail sowie deinen Benutzernamen für eine neue Registrierung frei.",
+    "action": "Konto löschen"
+  },
   "changePassword": {
     "back": "Zurück zu den Einstellungen",
     "eyebrow": "Sicherheit",
