@@ -27,27 +27,50 @@ function copyEnvExample() {
 function symlinkBeEnv() {
   const beEnvSrc = path.join(root, '.env');
   const beEnvDest = path.join(root, 'backend', '.env');
+  let existingStat = null;
 
-  if (fs.existsSync(beEnvDest)) {
-    const existingStat = fs.lstatSync(beEnvDest);
+  try {
+    existingStat = fs.lstatSync(beEnvDest);
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      throw error;
+    }
+  }
 
+  if (existingStat) {
     if (existingStat.isSymbolicLink()) {
-      const existing = fs.readlinkSync(beEnvDest);
+      const existing = path.resolve(path.dirname(beEnvDest), fs.readlinkSync(beEnvDest));
       if (existing === beEnvSrc) {
         console.log('\nbackend/.env already symlinked to root .env, skipping');
       } else {
         console.log('\nbackend/.env exists and points elsewhere, skipping');
       }
     } else {
-      console.log('\nbackend/.env already exists, skipping symlink');
+      if (fs.existsSync(beEnvSrc)) {
+        const rootEnv = fs.readFileSync(beEnvSrc, 'utf8');
+        const backendEnv = fs.readFileSync(beEnvDest, 'utf8');
+
+        if (backendEnv === rootEnv) {
+          console.log('\nbackend/.env already exists as a regular file matching root .env');
+        } else {
+          console.log('\nbackend/.env exists as a regular file and differs from root .env');
+          console.log('Keeping backend/.env unchanged; make sure its DATABASE_URL matches Docker');
+        }
+      } else {
+        console.log('\nbackend/.env already exists as a regular file, skipping symlink');
+      }
     }
   } else if (fs.existsSync(beEnvSrc)) {
     try {
-      fs.symlinkSync(beEnvSrc, beEnvDest);
+      fs.symlinkSync(beEnvSrc, beEnvDest, 'file');
       console.log('\nSymlinked backend/.env -> root .env');
-    } catch {
+    } catch (error) {
+      if (error.code !== 'EPERM') {
+        throw error;
+      }
+
       fs.copyFileSync(beEnvSrc, beEnvDest);
-      console.log('\nSymlink unavailable, copied root .env to backend/.env');
+      console.log('\nCopied root .env -> backend/.env because symlinks are not permitted');
     }
   } else {
     console.log('\nroot .env not found, skipping backend env setup');
@@ -57,6 +80,11 @@ function symlinkBeEnv() {
 function installDeps() {
   console.log('\nInstalling dependencies...');
   run('npm install');
+}
+
+function startServices() {
+  console.log('\nStarting local services...');
+  run('docker compose up -d postgres minio');
 }
 
 function runMigrations() {
@@ -76,6 +104,7 @@ function main() {
   copyEnvExample();
   symlinkBeEnv();
   installDeps();
+  startServices();
   runMigrations();
   setupHusky();
 

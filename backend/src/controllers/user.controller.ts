@@ -102,4 +102,22 @@ export class UserController {
       res.status(500).json({ message: 'Failed to update profile' });
     }
   }
+
+  async deleteAccount(req: Request, res: Response): Promise<void> {
+    try {
+      const authUser = req.user as AuthenticatedUser;
+      const user = await this.userService.findById(authUser.id);
+
+      if (!user) {
+        res.status(404).json({ message: 'User not found' });
+        return;
+      }
+
+      await this.userService.deleteAccount(user.id);
+      res.json({ message: 'User was deleted successfully', id: authUser.id });
+    } catch (error: unknown) {
+      logger.error({ error }, '[UserController#deleteAccount]');
+      res.status(500).json({ message: 'Failed to delete user' });
+    }
+  }
 }
