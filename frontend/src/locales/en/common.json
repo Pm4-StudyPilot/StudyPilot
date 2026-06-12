@@ -70,7 +70,7 @@
     "fetchTasksFailed": "Failed to fetch tasks",
     "fetchUserFailed": "Failed to fetch user",
     "fileRequired": "File is required.",
-    "fileTooLarge": "File is too large. Maximum size is 10 MB.",
+    "fileTooLarge": "File is too large. Maximum size is 50 MB.",
     "getUploadUrlFailed": "Failed to get upload URL",
     "idRequired": "id is required.",
     "internalServerError": "Internal server error",
