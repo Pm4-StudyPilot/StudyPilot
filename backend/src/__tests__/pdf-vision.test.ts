@@ -37,7 +37,14 @@ mock.module('@google/generative-ai/server', () => ({
   },
 }));
 
-const { transcribePdf, MAX_PDF_BYTES, INLINE_PDF_BYTES } = await import('../lib/pdf-vision');
+const { transcribePdf } = await import('../lib/pdf-vision');
+
+// Mirror the production thresholds as literals. We intentionally do NOT import
+// them: under CI's bun, destructuring these named consts from a dynamically
+// imported (and mock.module'd) module yielded `undefined`, which silently broke
+// the size-routing assertions.
+const MAX_PDF_BYTES = 50 * 1024 * 1024;
+const INLINE_PDF_BYTES = 7 * 1024 * 1024;
 
 beforeEach(() => {
   process.env.GOOGLE_API_KEY = 'test-key';
@@ -64,9 +71,13 @@ const fakeBufferOfLength = (length: number) => ({ length }) as unknown as Buffer
 
 describe('transcribePdf', () => {
   it('throws for a PDF larger than the max (no upload attempted)', async () => {
-    await expect(transcribePdf(fakeBufferOfLength(MAX_PDF_BYTES + 1), 'huge.pdf')).rejects.toThrow(
-      'too large'
+    // Capture the outcome via then(onFulfilled, onRejected) so the assertion
+    // does not depend on the `.rejects` matcher.
+    const outcome = await transcribePdf(fakeBufferOfLength(MAX_PDF_BYTES + 1), 'huge.pdf').then(
+      () => 'resolved',
+      (error: Error) => error.message
     );
+    expect(outcome).toContain('too large');
     expect(mockUploadFile).not.toHaveBeenCalled();
     expect(mockGenerateContent).not.toHaveBeenCalled();
   });
