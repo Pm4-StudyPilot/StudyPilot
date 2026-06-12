@@ -39,6 +39,11 @@ setupSocketHandlers(io);
 
 const PORT = process.env.PORT || 3000;
 
+// AI chat turns can run for minutes when reading a large PDF (Gemini vision).
+// Node's default request timeout (5 min) would abort them. Derive from the
+// tool-call budget and double it so the request always outlives the tool call.
+httpServer.requestTimeout = (Number(process.env.MCP_TOOL_TIMEOUT_MS) || 300_000) * 2;
+
 httpServer.listen(PORT, () => {
   logger.info({ port: PORT }, 'Server started');
 });

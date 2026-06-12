@@ -17,7 +17,7 @@ const documentController = new DocumentController();
  *   instead of being stored on the local filesystem
  *
  * Validation:
- * - Maximum file size: 10 MB
+ * - Maximum file size: 50 MB
  * - Allowed file formats:
  *   - PDF
  *   - Word (.doc, .docx)
@@ -27,7 +27,7 @@ const documentController = new DocumentController();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10 MB
+    fileSize: 50 * 1024 * 1024, // 50 MB
   },
   fileFilter: (_req, file, cb) => {
     const allowedMimeTypes = [
@@ -72,7 +72,7 @@ function handleDocumentUpload(req: Request, res: Response, next: NextFunction): 
 
     if (error instanceof multer.MulterError) {
       if (error.code === 'LIMIT_FILE_SIZE') {
-        res.status(400).json({ message: 'File is too large. Maximum size is 10 MB.' });
+        res.status(400).json({ message: 'File is too large. Maximum size is 50 MB.' });
         return;
       }
 

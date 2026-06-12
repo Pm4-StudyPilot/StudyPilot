@@ -15,12 +15,12 @@
     .form-control {
       background-color: var(--color-surface);
       border-color: var(--color-border);
-      color: var(--color-white);
+      color: var(--color-text-primary);
 
       &:focus {
         background-color: var(--color-surface);
         border-color: var(--color-accent);
-        color: var(--color-white);
+        color: var(--color-text-primary);
         box-shadow: var(--shadow-focus-accent);
       }
     }

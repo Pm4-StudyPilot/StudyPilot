@@ -196,9 +196,9 @@ describe('ResourcesPage', () => {
       expect(api.get).toHaveBeenCalledWith('/documents?sort=createdAt:desc&limit=3');
     });
 
+    expect(await screen.findByText('07 - Advanced Scrum.pdf')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Resources' })).toBeInTheDocument();
     expect(screen.getByText('My Uploads')).toBeInTheDocument();
-    expect(screen.getByText('07 - Advanced Scrum.pdf')).toBeInTheDocument();
     expect(screen.getByText('04 - DevOps.pdf')).toBeInTheDocument();
     expect(screen.getByText('AI Creations')).toBeInTheDocument();
   });
@@ -254,9 +254,9 @@ describe('ResourcesPage', () => {
       expect(api.get).toHaveBeenCalledWith('/documents?sort=createdAt:desc&limit=50');
     });
 
+    expect(await screen.findByText('Unknown Upload')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /show recent/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /course/i })).toBeInTheDocument();
-    expect(screen.getByText('Unknown Upload')).toBeInTheDocument();
   });
 
   /**
@@ -291,7 +291,7 @@ describe('ResourcesPage', () => {
       expect(api.get).toHaveBeenCalledWith('/documents?sort=createdAt:desc&limit=3');
     });
 
-    expect(screen.getByRole('button', { name: /view all/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /view all/i })).toBeInTheDocument();
   });
 
   /**
