@@ -1,6 +1,7 @@
 import { prisma } from '../config/database';
 import {
   CreateQuestionRequest,
+  CreateQuestionWithAnswersRequest,
   QuestionDto,
   QuestionWithAnswersDto,
   UpdateQuestionRequest,
@@ -41,6 +42,60 @@ export class QuestionService {
         quizId: quizId,
       },
     }) as Promise<QuestionDto>;
+  }
+
+  /**
+   * Creates many questions (each with its answers) for a quiz in a single
+   * transaction. Used by the agent's quiz generator to persist a whole quiz at
+   * once. Throws on validation failure; returns `null` when the user has no
+   * access to the quiz's course.
+   */
+  async createManyWithAnswers(
+    quizId: string,
+    userId: string,
+    questions: CreateQuestionWithAnswersRequest[]
+  ): Promise<QuestionWithAnswersDto[] | null> {
+    const quiz = await this.db.quiz.findFirst({ where: { id: quizId }, include: { course: true } });
+    if (!quiz) return null;
+
+    const hasAccess = await this.courseShareService.checkAccess(quiz.courseId, userId);
+    if (!hasAccess) return null;
+
+    if (questions.length === 0) {
+      throw new Error('Provide at least one question.');
+    }
+    questions.forEach((question, index) => validateQuestion(question, index));
+
+    const maxResult = await this.db.question.aggregate({
+      where: { quizId },
+      _max: { position: true },
+    });
+    let nextPosition = (maxResult._max.position ?? -1) + 1;
+
+    return this.db.$transaction(async (tx) => {
+      const created: QuestionWithAnswersDto[] = [];
+      for (const question of questions) {
+        const row = await tx.question.create({
+          data: {
+            title: question.title.trim(),
+            description: question.description?.trim() ?? null,
+            type: question.type,
+            position: nextPosition++,
+            quizId,
+            answers: {
+              create: question.answers.map((answer, position) => ({
+                content: answer.content.trim(),
+                isCorrect: answer.isCorrect,
+                position,
+              })),
+            },
+          },
+          include: { answers: { orderBy: [{ position: 'asc' }] } },
+        });
+        created.push(row as QuestionWithAnswersDto);
+      }
+      return created;
+    });
   }
 
   async updateForOwner(
@@ -142,5 +197,44 @@ export class QuestionService {
         where: { id },
       })
       .then((result) => result.count > 0);
+  }
+}
+
+/**
+ * Validates a question for bulk creation, enforcing the answer rules each type
+ * needs to be playable. Throws a descriptive error (including the question's
+ * 1-based index) on the first violation.
+ */
+function validateQuestion(question: CreateQuestionWithAnswersRequest, index: number): void {
+  const label = `Question ${index + 1}`;
+  if (!question.title.trim()) {
+    throw new Error(`${label}: title is required.`);
+  }
+  const correct = question.answers.filter((answer) => answer.isCorrect).length;
+  switch (question.type) {
+    case 'SINGLE_CHOICE':
+      if (question.answers.length < 2) {
+        throw new Error(`${label}: SINGLE_CHOICE needs at least 2 answers.`);
+      }
+      if (correct !== 1) {
+        throw new Error(`${label}: SINGLE_CHOICE needs exactly one correct answer.`);
+      }
+      break;
+    case 'MULTIPLE_CHOICE':
+      if (question.answers.length < 2) {
+        throw new Error(`${label}: MULTIPLE_CHOICE needs at least 2 answers.`);
+      }
+      if (correct < 1) {
+        throw new Error(`${label}: MULTIPLE_CHOICE needs at least one correct answer.`);
+      }
+      break;
+    case 'CARD':
+      if (question.answers.length < 1) {
+        throw new Error(`${label}: CARD needs at least one answer (the card back).`);
+      }
+      break;
+  }
+  if (question.answers.some((answer) => !answer.content.trim())) {
+    throw new Error(`${label}: every answer needs content.`);
   }
 }

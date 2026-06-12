@@ -3,10 +3,12 @@ import { MemorySaver } from '@langchain/langgraph';
 import { getModel } from './model';
 import { getMcpTools } from './mcp';
 import { buildAgentTools } from './tools';
+import { buildGenerateQuizTool } from './quiz-agent';
 import { buildSystemPrompt } from './prompt';
 
 async function build() {
-  const tools = buildAgentTools(await getMcpTools());
+  const wrapped = buildAgentTools(await getMcpTools());
+  const tools = [...wrapped, buildGenerateQuizTool(wrapped)];
   return createReactAgent({
     llm: getModel(),
     tools,

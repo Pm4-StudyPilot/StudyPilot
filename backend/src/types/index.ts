@@ -85,6 +85,17 @@ export interface ReorderQuestionsRequest {
   order: string[];
 }
 
+export interface CreateQuestionWithAnswersRequest {
+  title: string;
+  description?: string;
+  type: QuestionType;
+  answers: CreateAnswerRequest[];
+}
+
+export interface CreateQuestionsBulkRequest {
+  questions: CreateQuestionWithAnswersRequest[];
+}
+
 export interface CreateAnswerRequest {
   content: string;
   isCorrect: boolean;

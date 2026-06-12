@@ -17,6 +17,7 @@ import { registerDeleteTask } from './delete-task';
 import { registerListQuizzes } from './list-quizzes';
 import { registerGetQuiz } from './get-quiz';
 import { registerCreateQuiz } from './create-quiz';
+import { registerAddQuizQuestions } from './add-quiz-questions';
 import { registerUpdateQuiz } from './update-quiz';
 import { registerDeleteQuiz } from './delete-quiz';
 import { registerListDocuments } from './list-documents';
@@ -44,6 +45,7 @@ export function registerTools(server: McpServer): void {
   registerListQuizzes(server);
   registerGetQuiz(server);
   registerCreateQuiz(server);
+  registerAddQuizQuestions(server);
   registerUpdateQuiz(server);
   registerDeleteQuiz(server);
   // Documents (read-only)
