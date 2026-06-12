@@ -24,6 +24,8 @@ type MockResetRecord = {
   passwordResetExpires: Date | null;
 };
 
+type MockFindFirstRecord = MockUserRecord | MockAvailabilityRecord | MockResetRecord;
+
 /**
  * Mock functions for external dependencies.
  *
@@ -53,8 +55,7 @@ const mockVerify = mock((token: string, secret: string) => {
   return { userId: 1, email: 'test@students.zhaw.ch', role: 'student' };
 });
 
-const mockFindFirst = mock(async (): Promise<MockUserRecord | null> => null);
-const mockFindUnique = mock(async (): Promise<MockAvailabilityRecord | null> => null);
+const mockFindFirst = mock(async (): Promise<MockFindFirstRecord | null> => null);
 const mockUpdate = mock(async () => ({}));
 
 const mockSendPasswordResetEmail = mock(async () => undefined);
@@ -87,7 +88,6 @@ mock.module('../config/database', () => ({
     user: {
       create: mockCreate,
       findFirst: mockFindFirst,
-      findUnique: mockFindUnique,
       update: mockUpdate,
     },
   },
@@ -128,7 +128,6 @@ describe('AuthService', () => {
     mockVerify.mockClear();
     mockCreate.mockClear();
     mockFindFirst.mockClear();
-    mockFindUnique.mockClear();
     mockUpdate.mockClear();
     mockSendPasswordResetEmail.mockClear();
 
@@ -214,6 +213,7 @@ describe('AuthService', () => {
       expect(mockFindFirst).toHaveBeenCalledWith({
         where: {
           OR: [{ email: 'test@students.zhaw.ch' }, { username: 'TEST@students.zhaw.ch' }],
+          deletedAt: null,
         },
       });
       expect(mockCompare).toHaveBeenCalledWith('Strong@Password123!', 'hashed-password');
@@ -257,6 +257,7 @@ describe('AuthService', () => {
       expect(mockFindFirst).toHaveBeenCalledWith({
         where: {
           OR: [{ email: 'testuser' }, { username: 'testuser' }],
+          deletedAt: null,
         },
       });
       expect(mockCompare).toHaveBeenCalledWith('Strong@Password123!', 'hashed-password');
@@ -281,6 +282,23 @@ describe('AuthService', () => {
       await expect(service.login('unknown-user', 'Strong@Password123!')).rejects.toThrow(
         'Invalid credentials'
       );
+    });
+
+    it('should reject deleted users because only active accounts are queried', async () => {
+      mockFindFirst.mockResolvedValueOnce(null);
+
+      const service = new AuthService();
+
+      await expect(service.login('deleted-user', 'Strong@Password123!')).rejects.toThrow(
+        'Invalid credentials'
+      );
+
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: {
+          OR: [{ email: 'deleted-user' }, { username: 'deleted-user' }],
+          deletedAt: null,
+        },
+      });
     });
 
     /**
@@ -327,7 +345,7 @@ describe('AuthService', () => {
      * - Availability result is returned correctly
      */
     it('should return emailExists and usernameExists', async () => {
-      mockFindUnique
+      mockFindFirst
         .mockResolvedValueOnce({ id: '1' }) // email exists
         .mockResolvedValueOnce(null); // username does not exist
 
@@ -335,11 +353,11 @@ describe('AuthService', () => {
 
       const result = await service.checkAvailability('test@students.zhaw.ch', 'newuser');
 
-      expect(mockFindUnique).toHaveBeenNthCalledWith(1, {
-        where: { email: 'test@students.zhaw.ch' },
+      expect(mockFindFirst).toHaveBeenNthCalledWith(1, {
+        where: { email: 'test@students.zhaw.ch', deletedAt: null },
       });
-      expect(mockFindUnique).toHaveBeenNthCalledWith(2, {
-        where: { username: 'newuser' },
+      expect(mockFindFirst).toHaveBeenNthCalledWith(2, {
+        where: { username: 'newuser', deletedAt: null },
       });
       expect(result).toEqual({
         emailExists: true,
@@ -358,14 +376,14 @@ describe('AuthService', () => {
      * - Result contains only emailExists
      */
     it('should check only email if username is not provided', async () => {
-      mockFindUnique.mockResolvedValueOnce(null);
+      mockFindFirst.mockResolvedValueOnce(null);
 
       const service = new AuthService();
 
       const result = await service.checkAvailability('free@students.zhaw.ch');
 
-      expect(mockFindUnique).toHaveBeenCalledWith({
-        where: { email: 'free@students.zhaw.ch' },
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: { email: 'free@students.zhaw.ch', deletedAt: null },
       });
       expect(result).toEqual({
         emailExists: false,
@@ -389,7 +407,7 @@ describe('AuthService', () => {
      * - The same token is passed to the email service
      */
     it('should update user with reset token and send email when user exists', async () => {
-      mockFindUnique.mockResolvedValueOnce({
+      mockFindFirst.mockResolvedValueOnce({
         id: '1',
         email: 'test@students.zhaw.ch',
         password: 'hashed-password',
@@ -401,8 +419,8 @@ describe('AuthService', () => {
       const service = new AuthService();
       await service.requestPasswordReset('test@students.zhaw.ch');
 
-      expect(mockFindUnique).toHaveBeenCalledWith({
-        where: { email: 'test@students.zhaw.ch' },
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: { email: 'test@students.zhaw.ch', deletedAt: null },
       });
 
       // Verify the token saved to DB matches the one sent via email
@@ -437,7 +455,7 @@ describe('AuthService', () => {
      * - No email is sent
      */
     it('should return silently without updating DB or sending email when user is not found', async () => {
-      mockFindUnique.mockResolvedValueOnce(null);
+      mockFindFirst.mockResolvedValueOnce(null);
 
       const service = new AuthService();
       await service.requestPasswordReset('unknown@students.zhaw.ch');
@@ -463,7 +481,7 @@ describe('AuthService', () => {
      * - Password is updated and reset token fields are cleared
      */
     it('should hash new password and clear reset token on valid token', async () => {
-      mockFindUnique.mockResolvedValueOnce({
+      mockFindFirst.mockResolvedValueOnce({
         id: '1',
         email: 'test@students.zhaw.ch',
         password: 'hashed-password',
@@ -475,8 +493,8 @@ describe('AuthService', () => {
       const service = new AuthService();
       await service.resetPassword('valid-token', 'NewStrong@Password123!');
 
-      expect(mockFindUnique).toHaveBeenCalledWith({
-        where: { passwordResetToken: 'valid-token' },
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: { passwordResetToken: 'valid-token', deletedAt: null },
       });
       expect(mockHash).toHaveBeenCalledWith('NewStrong@Password123!', 10);
       expect(mockUpdate).toHaveBeenCalledWith({
@@ -500,7 +518,7 @@ describe('AuthService', () => {
      * - No database update is performed
      */
     it('should throw if token is not found', async () => {
-      mockFindUnique.mockResolvedValueOnce(null);
+      mockFindFirst.mockResolvedValueOnce(null);
 
       const service = new AuthService();
 
@@ -522,7 +540,7 @@ describe('AuthService', () => {
      * - No database update is performed
      */
     it('should throw if token is expired', async () => {
-      mockFindUnique.mockResolvedValueOnce({
+      mockFindFirst.mockResolvedValueOnce({
         id: '1',
         email: 'test@students.zhaw.ch',
         password: 'hashed-password',

@@ -38,6 +38,7 @@ model User {
   notifications          Notification[]
   courseSharesReceived   CourseShare[] @relation("SharedWith")
   courseSharesInitiated  CourseShare[] @relation("SharedBy")
+  deletedAt              DateTime?
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
 }

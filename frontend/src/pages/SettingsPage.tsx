@@ -12,13 +12,14 @@ import { UpdateProfileDto, UserDto } from '../types/dto';
 import { createUpdateProfileSchema } from '../validation/schemas';
 
 export default function SettingsPage() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const schema = useMemo(() => createUpdateProfileSchema(t), [t]);
   const { values, errors, handleChange, validate } = useForm<UpdateProfileDto>(schema, {
@@ -52,6 +53,22 @@ export default function SettingsPage() {
       setError(err instanceof Error ? err.message : t('common.somethingWentWrong'));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function deleteAccount() {
+    setError('');
+    setSuccess('');
+    setDeleteLoading(true);
+
+    try {
+      await api.delete<void>('/users/me');
+      logout();
+      navigate('/login');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t('common.somethingWentWrong'));
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -105,7 +122,8 @@ export default function SettingsPage() {
                   <Button
                     type="submit"
                     loading={loading}
-                    className="btn btn-primary bold settings-page__button"
+                    variant="primary"
+                    className="bold settings-page__button"
                   >
                     {t('settings.profile.save')}
                   </Button>
@@ -124,9 +142,29 @@ export default function SettingsPage() {
 
               <Button
                 onClick={() => navigate('/settings/password')}
-                className="btn btn-primary bold settings-page__button"
+                variant="primary"
+                className="bold settings-page__button"
               >
                 {t('settings.security.change')}
+              </Button>
+            </div>
+          </section>
+
+          <section className="settings-card">
+            <div className="settings-card__content">
+              <div className="settings-card__header">
+                <h2 className="settings-card__title">{t('settings.deleteAccount.title')}</h2>
+
+                <p className="settings-card__subtitle">{t('settings.deleteAccount.subtitle')}</p>
+              </div>
+
+              <Button
+                onClick={deleteAccount}
+                loading={deleteLoading}
+                variant="danger"
+                className="bold settings-page__button"
+              >
+                {t('settings.deleteAccount.action')}
               </Button>
             </div>
           </section>

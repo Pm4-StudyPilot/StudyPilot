@@ -9,6 +9,10 @@ type MockUserRecord = {
 };
 
 type MockProfileConflict = Pick<MockUserRecord, 'email' | 'username'>;
+type MockFindFirstRecord =
+  | Partial<MockUserRecord>
+  | MockProfileConflict
+  | Pick<MockUserRecord, 'id'>;
 
 /**
  * Mock functions for external dependencies.
@@ -20,23 +24,21 @@ type MockProfileConflict = Pick<MockUserRecord, 'email' | 'username'>;
 const mockHash = mock(async () => 'hashed-new-password');
 const mockCompare = mock(async () => true);
 
-const mockFindById = mock(
-  async (): Promise<Omit<MockUserRecord, 'password'> | null> => ({
-    id: 'user-1',
-    email: 'test@students.zhaw.ch',
-    username: 'testuser',
-    role: 'USER',
-  })
-);
-
-const mockFindUniqueWithPassword = mock(
-  async (): Promise<Pick<MockUserRecord, 'password'> | null> => ({
-    password: 'hashed-current-password',
-  })
-);
-
-const mockFindFirst = mock(async (): Promise<MockProfileConflict | null> => null);
+const mockFindFirst = mock(async (): Promise<MockFindFirstRecord | null> => null);
 const mockUpdate = mock(async () => ({}));
+const mockCourseShareDeleteMany = mock(async () => ({ count: 0 }));
+const mockTransaction = mock(
+  async (
+    callback: (tx: {
+      user: { update: typeof mockUpdate };
+      courseShare: { deleteMany: typeof mockCourseShareDeleteMany };
+    }) => unknown
+  ) =>
+    callback({
+      user: { update: mockUpdate },
+      courseShare: { deleteMany: mockCourseShareDeleteMany },
+    })
+);
 
 /**
  * Mock bcrypt module.
@@ -51,15 +53,11 @@ mock.module('bcrypt', () => ({
 /**
  * Mock Prisma database module.
  *
- * findUnique is used both for findById (select without password)
- * and for changePassword (select with password).
- * We wire these via mockFindUniqueWithPassword and mockFindById
- * per test via mockResolvedValueOnce.
  */
 mock.module('../config/database', () => ({
   prisma: {
+    $transaction: mockTransaction,
     user: {
-      findUnique: mockFindUniqueWithPassword,
       findFirst: mockFindFirst,
       update: mockUpdate,
     },
@@ -83,10 +81,10 @@ describe('UserService', () => {
   beforeEach(() => {
     mockHash.mockClear();
     mockCompare.mockClear();
-    mockFindById.mockClear();
-    mockFindUniqueWithPassword.mockClear();
     mockFindFirst.mockClear();
     mockUpdate.mockClear();
+    mockCourseShareDeleteMany.mockClear();
+    mockTransaction.mockClear();
 
     mockCompare.mockResolvedValue(true);
     mockFindFirst.mockResolvedValue(null);
@@ -104,18 +102,18 @@ describe('UserService', () => {
      * - User DTO is returned
      */
     it('should return the user DTO when user exists', async () => {
-      mockFindUniqueWithPassword.mockResolvedValueOnce({
+      mockFindFirst.mockResolvedValueOnce({
         id: 'user-1',
         email: 'test@students.zhaw.ch',
         username: 'testuser',
         role: 'USER',
-      } as unknown as Pick<MockUserRecord, 'password'>);
+      });
 
       const service = new UserService();
       const result = await service.findById('user-1');
 
-      expect(mockFindUniqueWithPassword).toHaveBeenCalledWith({
-        where: { id: 'user-1' },
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: { id: 'user-1', deletedAt: null },
         select: {
           id: true,
           email: true,
@@ -142,7 +140,7 @@ describe('UserService', () => {
      * - null is returned
      */
     it('should return null when user does not exist', async () => {
-      mockFindUniqueWithPassword.mockResolvedValueOnce(null);
+      mockFindFirst.mockResolvedValueOnce(null);
 
       const service = new UserService();
       const result = await service.findById('non-existent-id');
@@ -165,7 +163,7 @@ describe('UserService', () => {
      * - User record is updated with the new hashed password
      */
     it('should verify, hash, and update password on success', async () => {
-      mockFindUniqueWithPassword.mockResolvedValueOnce({
+      mockFindFirst.mockResolvedValueOnce({
         password: 'hashed-current-password',
       });
 
@@ -173,8 +171,8 @@ describe('UserService', () => {
 
       await service.changePassword('user-1', 'CurrentPass@123!', 'NewPass@123456!');
 
-      expect(mockFindUniqueWithPassword).toHaveBeenCalledWith({
-        where: { id: 'user-1' },
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: { id: 'user-1', deletedAt: null },
         select: { password: true },
       });
 
@@ -198,7 +196,7 @@ describe('UserService', () => {
      * - bcrypt and update are never called
      */
     it('should throw if user is not found', async () => {
-      mockFindUniqueWithPassword.mockResolvedValueOnce(null);
+      mockFindFirst.mockResolvedValueOnce(null);
 
       const service = new UserService();
 
@@ -221,7 +219,7 @@ describe('UserService', () => {
      * - Password update is never called
      */
     it('should throw if current password is incorrect', async () => {
-      mockFindUniqueWithPassword.mockResolvedValueOnce({
+      mockFindFirst.mockResolvedValueOnce({
         password: 'hashed-current-password',
       });
 
@@ -257,6 +255,7 @@ describe('UserService', () => {
         where: {
           OR: [{ email: 'new@students.zhaw.ch' }, { username: 'newuser' }],
           NOT: { id: 'user-1' },
+          deletedAt: null,
         },
         select: {
           email: true,
@@ -301,6 +300,63 @@ describe('UserService', () => {
         })
       ).rejects.toThrow('Email is already in use');
 
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteAccount', () => {
+    it('should soft delete, anonymize, and return the user when the account exists', async () => {
+      const softDeletedUser = {
+        id: 'user-1',
+        email: 'deleted-user-1@deleted.local',
+        username: 'deleted-user-1',
+        role: 'USER',
+      };
+
+      mockFindFirst.mockResolvedValueOnce({ id: 'user-1' });
+      mockUpdate.mockResolvedValueOnce(softDeletedUser);
+
+      const service = new UserService();
+      const result = await service.deleteAccount('user-1');
+
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: { id: 'user-1', deletedAt: null },
+        select: { id: true },
+      });
+
+      expect(mockTransaction).toHaveBeenCalled();
+      expect(mockCourseShareDeleteMany).toHaveBeenCalledWith({
+        where: { sharedWithUserId: 'user-1' },
+      });
+
+      expect(mockUpdate).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: {
+          email: 'deleted-user-1@deleted.local',
+          username: 'deleted-user-1',
+          passwordResetToken: null,
+          passwordResetExpires: null,
+          deletedAt: expect.any(Date),
+        },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          role: true,
+        },
+      });
+
+      expect(result).toEqual(softDeletedUser);
+    });
+
+    it('should throw when the account does not exist', async () => {
+      mockFindFirst.mockResolvedValueOnce(null);
+
+      const service = new UserService();
+
+      await expect(service.deleteAccount('non-existent-id')).rejects.toThrow('User not found');
+
+      expect(mockTransaction).not.toHaveBeenCalled();
       expect(mockUpdate).not.toHaveBeenCalled();
     });
   });
