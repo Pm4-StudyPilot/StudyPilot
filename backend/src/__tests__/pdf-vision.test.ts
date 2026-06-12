@@ -56,13 +56,14 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  if (originalKey === undefined) delete process.env.GOOGLE_API_KEY;
-  else process.env.GOOGLE_API_KEY = originalKey;
+  // Empty string is treated as "unset" by requireApiKey; avoid `delete`, which
+  // bun's process.env does not honour reliably across versions.
+  process.env.GOOGLE_API_KEY = originalKey ?? '';
 });
 
 describe('transcribePdf', () => {
   it('throws when GOOGLE_API_KEY is not set', async () => {
-    delete process.env.GOOGLE_API_KEY;
+    process.env.GOOGLE_API_KEY = '';
     await expect(transcribePdf(Buffer.from('x'), 'a.pdf')).rejects.toThrow('GOOGLE_API_KEY');
   });
 
