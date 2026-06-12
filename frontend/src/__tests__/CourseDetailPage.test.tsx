@@ -17,6 +17,54 @@ vi.mock('../services/api', () => ({
   },
 }));
 
+vi.mock('../components/tasks/CreateTaskModal', () => ({
+  default: ({
+    onClose,
+    onCreated,
+  }: {
+    onClose: () => void;
+    onCreated: (task: {
+      id: string;
+      title: string;
+      description: string | null;
+      status: 'OPEN' | 'IN_PROGRESS' | 'DONE';
+      priority: 'LOW' | 'MEDIUM' | 'HIGH';
+      dueDate: string | null;
+      position: number;
+      completed: boolean;
+      courseId: string;
+      createdAt: string;
+      updatedAt: string;
+    }) => void;
+  }) => (
+    <div role="dialog" aria-label="New Task">
+      <button
+        type="button"
+        onClick={() =>
+          onCreated({
+            id: 't3',
+            title: 'Finish lab',
+            description: null,
+            status: 'DONE',
+            priority: 'MEDIUM',
+            dueDate: null,
+            position: 2,
+            completed: true,
+            courseId: 'c1',
+            createdAt: '2026-03-28T12:00:00.000Z',
+            updatedAt: '2026-03-28T12:00:00.000Z',
+          })
+        }
+      >
+        Mock create task
+      </button>
+      <button type="button" onClick={onClose}>
+        Mock close task modal
+      </button>
+    </div>
+  ),
+}));
+
 vi.mock('../components/quizzes/CreateQuizModal', () => ({
   default: ({
     onClose,
@@ -493,6 +541,40 @@ describe('CourseDetailPage', () => {
 
     expect(screen.getByText('Newly created quiz')).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: 'New Quiz' })).not.toBeInTheDocument();
+  });
+
+  /**
+   * Test case: Task creation refreshes derived course progress
+   *
+   * Scenario:
+   * The user creates a completed task in the course detail view.
+   *
+   * Expected behavior:
+   * - The task list updates immediately
+   * - The course progress summary updates without a manual page reload
+   * - The page also refetches the course as a best-effort reconciliation
+   */
+  it('updates course progress after creating a task without a page reload', async () => {
+    mockCourseDetailApi();
+
+    renderWithRoute('c1');
+
+    await waitFor(() => {
+      expect(screen.getByText('Read chapter 1')).toBeInTheDocument();
+      expect(screen.getByText('2 tasks - 0 completed - Created 26.03.2026')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add task' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Mock create task' }));
+
+    expect(screen.getByText('Finish lab')).toBeInTheDocument();
+    expect(screen.getByText('3 tasks - 1 completed - Created 26.03.2026')).toBeInTheDocument();
+    expect(screen.getByText('1 completed, 0 in progress, 2 open')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'New Task' })).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(api.get).toHaveBeenCalledWith('/courses/c1');
+    });
   });
 
   /**
