@@ -523,3 +523,131 @@ describe('QuestionService', () => {
     expect($transaction).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('QuestionService.createManyWithAnswers', () => {
+  const quizWithCourse = {
+    id: 'qz1',
+    title: 'Quiz 1',
+    description: null,
+    isOrderRandom: false,
+    courseId: 'c1',
+    course: { id: 'c1', name: 'Biology', ownerId: 'u1' },
+  };
+
+  // Builds a db whose interactive $transaction runs the callback against a tx
+  // that records every question.create call (with its nested answers).
+  function buildBulkDb(maxPosition: number | null, hasAccess: boolean) {
+    const createCalls: Array<{ data: Record<string, unknown> }> = [];
+    const txCreate = mock(async (args: { data: Record<string, unknown> }) => {
+      createCalls.push(args);
+      return { id: `created-${createCalls.length}`, ...args.data, answers: [] };
+    });
+    const db = {
+      course: {},
+      quiz: { findFirst: mock(async () => quizWithCourse) },
+      question: {
+        aggregate: mock(async () => ({ _max: { position: maxPosition } })),
+      },
+      $transaction: mock(async (cb: (tx: unknown) => Promise<unknown>) =>
+        cb({ question: { create: txCreate } })
+      ),
+    };
+    const courseShareService = { checkAccess: mock(async () => hasAccess) };
+    return { db, courseShareService, createCalls, txCreate };
+  }
+
+  function makeService(db: unknown, courseShareService: unknown) {
+    return new QuestionService(
+      db as ConstructorParameters<typeof QuestionService>[0],
+      courseShareService as CourseShareService
+    );
+  }
+
+  it('returns null when the user has no access to the course', async () => {
+    const { db, courseShareService } = buildBulkDb(null, false);
+    const service = makeService(db, courseShareService);
+
+    const result = await service.createManyWithAnswers('qz1', 'u2', [
+      { title: 'Q', type: 'CARD', answers: [{ content: 'back', isCorrect: true }] },
+    ]);
+
+    expect(result).toBeNull();
+    expect(courseShareService.checkAccess).toHaveBeenCalledWith('c1', 'u2');
+  });
+
+  it('throws when given no questions', async () => {
+    const { db, courseShareService } = buildBulkDb(null, true);
+    const service = makeService(db, courseShareService);
+
+    await expect(service.createManyWithAnswers('qz1', 'u1', [])).rejects.toThrow(
+      'at least one question'
+    );
+  });
+
+  it('throws when a SINGLE_CHOICE question does not have exactly one correct answer', async () => {
+    const { db, courseShareService } = buildBulkDb(null, true);
+    const service = makeService(db, courseShareService);
+
+    await expect(
+      service.createManyWithAnswers('qz1', 'u1', [
+        {
+          title: 'Pick one',
+          type: 'SINGLE_CHOICE',
+          answers: [
+            { content: 'a', isCorrect: true },
+            { content: 'b', isCorrect: true },
+          ],
+        },
+      ])
+    ).rejects.toThrow('exactly one correct answer');
+  });
+
+  it('throws when a MULTIPLE_CHOICE question has no correct answer', async () => {
+    const { db, courseShareService } = buildBulkDb(null, true);
+    const service = makeService(db, courseShareService);
+
+    await expect(
+      service.createManyWithAnswers('qz1', 'u1', [
+        {
+          title: 'Pick some',
+          type: 'MULTIPLE_CHOICE',
+          answers: [
+            { content: 'a', isCorrect: false },
+            { content: 'b', isCorrect: false },
+          ],
+        },
+      ])
+    ).rejects.toThrow('at least one correct answer');
+  });
+
+  it('persists questions and nested answers with sequential positions after the max', async () => {
+    const { db, courseShareService, createCalls } = buildBulkDb(2, true);
+    const service = makeService(db, courseShareService);
+
+    const result = await service.createManyWithAnswers('qz1', 'u1', [
+      {
+        title: 'Single',
+        type: 'SINGLE_CHOICE',
+        answers: [
+          { content: 'a', isCorrect: true },
+          { content: 'b', isCorrect: false },
+        ],
+      },
+      {
+        title: 'Card',
+        type: 'CARD',
+        answers: [{ content: 'back', isCorrect: true }],
+      },
+    ]);
+
+    expect(result).toHaveLength(2);
+    expect(db.$transaction).toHaveBeenCalledTimes(1);
+    // Question positions continue from max (2) -> 3, 4
+    expect(createCalls[0]?.data.position).toBe(3);
+    expect(createCalls[1]?.data.position).toBe(4);
+    // First question's answers carry positions 0, 1
+    const firstAnswers = (createCalls[0]?.data.answers as { create: Array<{ position: number }> })
+      .create;
+    expect(firstAnswers.map((a) => a.position)).toEqual([0, 1]);
+  });
+});

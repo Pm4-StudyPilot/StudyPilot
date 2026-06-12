@@ -39,6 +39,9 @@ const taskDelete = mock(async () => true);
 const quizCreate = mock(async () => ({ id: 'q1', title: 'Midterm' }));
 const quizUpdate = mock(async () => ({ id: 'q1', title: 'Midterm 2' }));
 const quizDelete = mock(async () => true);
+const questionCreateMany = mock(async () => [
+  { id: 'newq1', title: 'Q1', type: 'SINGLE_CHOICE', answers: [] },
+]);
 const documentList = mock(async () => []);
 const documentRead = mock(async () => ({
   courseId: 'c1',
@@ -92,6 +95,9 @@ class QuizService {
   updateForOwner = quizUpdate;
   deleteForOwner = quizDelete;
 }
+class QuestionService {
+  createManyWithAnswers = questionCreateMany;
+}
 class DocumentService {
   listByCourse = documentList;
   readCourseDocuments = documentRead;
@@ -103,6 +109,7 @@ mock.module('backend/services', () => ({
   ShareError,
   TaskService,
   QuizService,
+  QuestionService,
   DocumentService,
 }));
 
@@ -156,6 +163,7 @@ const EXPECTED_TOOLS = [
   'list_quizzes',
   'get_quiz',
   'create_quiz',
+  'add_quiz_questions',
   'update_quiz',
   'delete_quiz',
   'list_documents',
@@ -177,6 +185,7 @@ beforeEach(() => {
     quizCreate,
     quizUpdate,
     quizDelete,
+    questionCreateMany,
     documentList,
     documentRead,
   ]) {
@@ -287,6 +296,40 @@ describe('task + quiz write tools', () => {
   it('delete_quiz calls deleteForOwner(quizId, userId)', async () => {
     await handlerFor('delete_quiz')({ userId: 'u1', quizId: 'q1' });
     expect(quizDelete).toHaveBeenCalledWith('q1', 'u1');
+  });
+
+  it('add_quiz_questions calls createManyWithAnswers(quizId, userId, questions)', async () => {
+    const questions = [
+      { title: 'Q1', type: 'CARD', answers: [{ content: 'back', isCorrect: true }] },
+    ];
+    const result = await handlerFor('add_quiz_questions')({
+      userId: 'u1',
+      quizId: 'q1',
+      questions,
+    });
+    expect(questionCreateMany).toHaveBeenCalledWith('q1', 'u1', questions);
+    expect(textOf(result)).toContain('newq1');
+  });
+
+  it('add_quiz_questions returns a permission message when the service returns null', async () => {
+    questionCreateMany.mockResolvedValueOnce(null as never);
+    const result = await handlerFor('add_quiz_questions')({
+      userId: 'u1',
+      quizId: 'x',
+      questions: [],
+    });
+    expect(textOf(result)).toBe('Not found or you do not have permission.');
+  });
+
+  it('add_quiz_questions surfaces validation errors as an error result', async () => {
+    questionCreateMany.mockRejectedValueOnce(new Error('Question 1: title is required.') as never);
+    const result = await handlerFor('add_quiz_questions')({
+      userId: 'u1',
+      quizId: 'q1',
+      questions: [],
+    });
+    expect(result.isError).toBe(true);
+    expect(textOf(result)).toBe('Question 1: title is required.');
   });
 });
 
