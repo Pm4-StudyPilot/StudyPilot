@@ -1,3 +1,5 @@
+import { translateApiMessage, translateApiMessageInPayload } from '../utils/apiMessages';
+
 const API_BASE = '/api';
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -19,14 +21,15 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || `Request failed: ${response.status}`);
+    throw new Error(translateApiMessage(error.message || `Request failed: ${response.status}`));
   }
 
   if (response.status === 204 || response.headers.get('content-length') === '0') {
     return undefined as T;
   }
 
-  return response.json();
+  const payload = await response.json();
+  return translateApiMessageInPayload(payload) as T;
 }
 
 /**
@@ -87,7 +90,7 @@ async function requestBlob(endpoint: string): Promise<BlobResponse> {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || `Request failed: ${response.status}`);
+    throw new Error(translateApiMessage(error.message || `Request failed: ${response.status}`));
   }
 
   const blob = await response.blob();
