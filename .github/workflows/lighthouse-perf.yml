@@ -13,7 +13,10 @@ name: Lighthouse Performance
 
 on:
   push:
-    branches: [main]
+    # `fix/lighthouse-perf-port-binding` is temporary — it lets this workflow be
+    # verified green on the branch before merging. Remove it (back to [main])
+    # when merging.
+    branches: [main, fix/lighthouse-perf-port-binding]
 
 env:
   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/studypilot_test
@@ -90,15 +93,20 @@ jobs:
         run: docker build -t studypilot:lhci .
 
       - name: Start production stack
-        # Host networking: nginx binds :80 and reaches the postgres + minio
-        # service containers on localhost, matching the env above.
+        # Bridge networking (matching prod): nginx binds :80 inside the
+        # container's own netns, where Docker sets ip_unprivileged_port_start=0
+        # so the non-root appuser can bind it — exactly how prod runs the image.
+        # Port 80 is published to the runner for the health check + Lighthouse,
+        # and the postgres + minio service containers (which publish 5432/9000
+        # to the runner host) are reached via host.docker.internal.
         run: |
-          docker run -d --name studypilot-app --network host \
-            -e DATABASE_URL="$DATABASE_URL" \
+          docker run -d --name studypilot-app -p 80:80 \
+            --add-host=host.docker.internal:host-gateway \
+            -e DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/studypilot_test" \
             -e JWT_SECRET="$JWT_SECRET" \
             -e PORT="$PORT" \
             -e FRONTEND_URL="http://localhost" \
-            -e MINIO_ENDPOINT="$MINIO_ENDPOINT" \
+            -e MINIO_ENDPOINT="host.docker.internal" \
             -e MINIO_PORT="$MINIO_PORT" \
             -e MINIO_ACCESS_KEY="$MINIO_ACCESS_KEY" \
             -e MINIO_SECRET_KEY="$MINIO_SECRET_KEY" \
