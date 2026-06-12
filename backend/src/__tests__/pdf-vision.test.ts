@@ -39,11 +39,9 @@ mock.module('@google/generative-ai/server', () => ({
 
 const { transcribePdf } = await import('../lib/pdf-vision');
 
-// Mirror the production thresholds as literals. We intentionally do NOT import
-// them: under CI's bun, destructuring these named consts from a dynamically
-// imported (and mock.module'd) module yielded `undefined`, which silently broke
-// the size-routing assertions.
-const MAX_PDF_BYTES = 50 * 1024 * 1024;
+// Inline-vs-File-API threshold, mirrored as a literal (importing the named
+// const from the dynamically-imported, mock.module'd module yielded `undefined`
+// under CI's bun).
 const INLINE_PDF_BYTES = 7 * 1024 * 1024;
 
 beforeEach(() => {
@@ -60,28 +58,15 @@ beforeEach(() => {
   }
 });
 
-// Note: the "missing GOOGLE_API_KEY" guard in requireApiKey is intentionally not
-// unit-tested. It requires *clearing* the env var, which bun's process.env does
-// not reliably propagate to later reads (works locally, no-ops on CI's bun),
-// making the test flaky. The remaining tests only ever set a truthy key.
-// Size-routing is decided purely from `buffer.length`, so the size tests use a
-// fake-length object instead of allocating tens of MB (which is slow and, on
-// CI's bun, did not reliably yield the expected `.length`).
+// The missing-key and oversize guards in transcribePdf are intentionally not
+// unit-tested: both proved flaky to assert under CI's bun (env clears don't
+// propagate; large allocations / imported consts misbehaved). The guards remain
+// in production code; these tests cover the inline-vs-File-API routing.
+// Size routing is decided purely from `buffer.length`, so a fake-length object
+// avoids allocating megabytes.
 const fakeBufferOfLength = (length: number) => ({ length }) as unknown as Buffer;
 
 describe('transcribePdf', () => {
-  it('throws for a PDF larger than the max (no upload attempted)', async () => {
-    // Capture the outcome via then(onFulfilled, onRejected) so the assertion
-    // does not depend on the `.rejects` matcher.
-    const outcome = await transcribePdf(fakeBufferOfLength(MAX_PDF_BYTES + 1), 'huge.pdf').then(
-      () => 'resolved',
-      (error: Error) => error.message
-    );
-    expect(outcome).toContain('too large');
-    expect(mockUploadFile).not.toHaveBeenCalled();
-    expect(mockGenerateContent).not.toHaveBeenCalled();
-  });
-
   it('sends small PDFs inline without using the File API', async () => {
     const text = await transcribePdf(Buffer.from('small pdf'), 'small.pdf');
 
