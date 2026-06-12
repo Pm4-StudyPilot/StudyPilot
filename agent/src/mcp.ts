@@ -25,6 +25,13 @@ export function childEnv(): Record<string, string> {
   return env;
 }
 
+/**
+ * Per-tool-call timeout for the MCP client. The SDK default is only 60s, which
+ * is too short for `read_course_documents` when it transcribes a large PDF with
+ * Gemini vision (upload + processing + generation). Generous, env-overridable.
+ */
+const TOOL_TIMEOUT_MS = Number(process.env.MCP_TOOL_TIMEOUT_MS) || 300_000;
+
 let toolsPromise: Promise<DynamicStructuredTool[]> | null = null;
 
 /**
@@ -35,6 +42,7 @@ let toolsPromise: Promise<DynamicStructuredTool[]> | null = null;
 export function getMcpTools(): Promise<DynamicStructuredTool[]> {
   if (!toolsPromise) {
     const client = new MultiServerMCPClient({
+      defaultToolTimeout: TOOL_TIMEOUT_MS,
       mcpServers: {
         studypilot: {
           transport: 'stdio',

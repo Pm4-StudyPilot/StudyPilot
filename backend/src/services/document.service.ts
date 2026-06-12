@@ -6,6 +6,7 @@ import { prisma } from '../config/database';
 import { storage } from '../config/minio';
 import { CourseShareService } from './course-share.service';
 import { logger } from '../lib/logger';
+import { transcribePdf } from '../lib/pdf-vision';
 
 /**
  * Input data required to upload a document.
@@ -729,6 +730,20 @@ class DocumentService {
         text,
         metadata: {
           sourceType: 'text',
+        },
+      }));
+    }
+
+    // PDFs are read with Gemini vision rather than officeparser so that scanned
+    // pages, diagrams and tables are captured. The transcribed text is chunked
+    // the same way as every other source.
+    if (readableType === 'pdf') {
+      const text = await transcribePdf(buffer, document.filename);
+      return splitTextIntoChunks(text).map((chunkText, index) => ({
+        index,
+        text: chunkText,
+        metadata: {
+          sourceType: 'pdf',
         },
       }));
     }

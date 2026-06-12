@@ -69,7 +69,7 @@ const mockParseOffice = mock(
       value: [
         {
           text: 'Parsed office text',
-          metadata: { sourceType: 'pdf', pageNumber: 1 },
+          metadata: { sourceType: 'docx', closestHeading: 'Intro' },
           startIndex: 0,
           endIndex: 18,
         },
@@ -78,6 +78,7 @@ const mockParseOffice = mock(
     })),
   })
 );
+const mockTranscribePdf = mock(async (): Promise<string> => 'Gemini transcribed PDF text');
 /**
  * Mock Prisma database module.
  */
@@ -112,6 +113,10 @@ mock.module('officeparser', () => ({
   OfficeParser: {
     parseOffice: mockParseOffice,
   },
+}));
+
+mock.module('../lib/pdf-vision', () => ({
+  transcribePdf: mockTranscribePdf,
 }));
 
 // Import service after mocks are defined
@@ -168,6 +173,7 @@ describe('DocumentService', () => {
     mockStorageDownloadBuffer.mockClear();
     mockStorageDelete.mockClear();
     mockParseOffice.mockClear();
+    mockTranscribePdf.mockClear();
   });
 
   /**
@@ -626,12 +632,6 @@ describe('DocumentService', () => {
 
     for (const testCase of [
       {
-        filename: 'lecture.pdf',
-        fileType: 'application/pdf',
-        expectedFileType: 'pdf',
-        metadata: { sourceType: 'pdf', pageNumber: 2 },
-      },
-      {
         filename: 'summary.docx',
         fileType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         expectedFileType: 'docx',
@@ -697,6 +697,67 @@ describe('DocumentService', () => {
         expect(result.warnings[0]).toContain('Non-fatal parser warning');
       });
     }
+
+    it('should read PDF documents with Gemini vision instead of officeparser', async () => {
+      mockDocumentFindMany.mockResolvedValueOnce([
+        {
+          id: 'doc-pdf',
+          filename: 'lecture.pdf',
+          bucket: 'documents',
+          objectKey: 'courses/course-1/lecture.pdf',
+          fileSize: 2048,
+          fileType: 'application/pdf',
+          createdAt: new Date('2026-04-20T10:00:00.000Z'),
+          courseId: 'course-1',
+        },
+      ]);
+      mockStorageDownloadBuffer.mockResolvedValueOnce(Buffer.from('pdf-bytes'));
+      mockTranscribePdf.mockResolvedValueOnce('Chapter 1\n\nMitochondria are the powerhouse.');
+
+      const { service } = buildServiceWithAccess(true);
+      const result = await service.readCourseDocuments('course-1', 'user-1');
+
+      expect(mockTranscribePdf).toHaveBeenCalledWith(Buffer.from('pdf-bytes'), 'lecture.pdf');
+      expect(mockParseOffice).not.toHaveBeenCalled();
+      expect(result.chunks[0]).toEqual(
+        expect.objectContaining({
+          documentId: 'doc-pdf',
+          filename: 'lecture.pdf',
+          text: expect.stringContaining('Mitochondria'),
+          metadata: expect.objectContaining({ sourceType: 'pdf' }),
+        })
+      );
+      expect(result.errors).toEqual([]);
+    });
+
+    it('should record an error and continue when PDF transcription fails', async () => {
+      mockDocumentFindMany.mockResolvedValueOnce([
+        {
+          id: 'doc-pdf',
+          filename: 'huge.pdf',
+          bucket: 'documents',
+          objectKey: 'courses/course-1/huge.pdf',
+          fileSize: 99,
+          fileType: 'application/pdf',
+          createdAt: new Date('2026-04-20T10:00:00.000Z'),
+          courseId: 'course-1',
+        },
+      ]);
+      mockStorageDownloadBuffer.mockResolvedValueOnce(Buffer.from('pdf-bytes'));
+      mockTranscribePdf.mockRejectedValueOnce(new Error('too large for vision reading'));
+
+      const { service } = buildServiceWithAccess(true);
+      const result = await service.readCourseDocuments('course-1', 'user-1');
+
+      expect(result.chunks).toEqual([]);
+      expect(result.errors).toEqual([
+        expect.objectContaining({
+          documentId: 'doc-pdf',
+          filename: 'huge.pdf',
+          message: expect.stringContaining('too large'),
+        }),
+      ]);
+    });
 
     it('should throw if the user does not have access to the course', async () => {
       const { service, checkAccess } = buildServiceWithAccess(false);
