@@ -25,6 +25,9 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const nextThemeLabel = theme === 'dark' ? 'light' : 'dark';
+  const themeToggleLabel = t('common.theme.switchTo', {
+    mode: t(`common.theme.${nextThemeLabel}`),
+  });
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -56,9 +59,9 @@ export default function Navbar() {
             type="button"
             className="navbar__theme-toggle btn d-flex align-items-center justify-content-center"
             onClick={toggleTheme}
-            aria-label={`Switch to ${nextThemeLabel} mode`}
+            aria-label={themeToggleLabel}
             aria-pressed={theme === 'light'}
-            title={`Switch to ${nextThemeLabel} mode`}
+            title={themeToggleLabel}
           >
             <i className={`fa-solid ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`} />
           </button>

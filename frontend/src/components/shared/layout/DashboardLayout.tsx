@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Logo from '../Logo';
 import LanguageSwitcher from './LanguageSwitcher';
+import NotificationBell from './NotificationBell';
 import { isAiInputVisible } from '../aiInputVisibility';
 import { useAuth } from '../../../context/useAuth';
 import { useTheme } from '../../../context/useTheme';
@@ -60,6 +61,9 @@ export default function DashboardLayout({
   const { t } = useTranslation();
   const username = user?.username ?? 'A';
   const nextThemeLabel = theme === 'dark' ? 'light' : 'dark';
+  const themeToggleLabel = t('common.theme.switchTo', {
+    mode: t(`common.theme.${nextThemeLabel}`),
+  });
   const effectivePlaceholder = searchPlaceholder ?? t('common.search.default');
   const hasAiInput = isAiInputVisible(location.pathname);
 
@@ -165,12 +169,13 @@ export default function DashboardLayout({
 
           <div className="dashboard-topbar__actions">
             <LanguageSwitcher />
+            {user && <NotificationBell />}
             <button
               type="button"
               className="dashboard-topbar__icon dashboard-topbar__theme-toggle"
-              aria-label={`Switch to ${nextThemeLabel} mode`}
+              aria-label={themeToggleLabel}
               aria-pressed={theme === 'light'}
-              title={`Switch to ${nextThemeLabel} mode`}
+              title={themeToggleLabel}
               onClick={toggleTheme}
             >
               <i className={`fa-solid ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`} />
