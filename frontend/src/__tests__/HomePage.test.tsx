@@ -167,9 +167,22 @@ function mockHomePageApi() {
  * - error state
  * - featured course card link target
  */
+/**
+ * Test fixtures use 'c1' and 'c2' as ids. The dashboard's "Recent courses"
+ * section only renders courses the user has visited (tracked in
+ * localStorage), so by default we seed those ids in visit-most-recent-first
+ * order. Individual tests can override the seeded value or clear it to
+ * exercise the empty / partial states.
+ */
+function seedRecentCourses(ids: string[] = ['c1', 'c2']) {
+  window.localStorage.setItem('studypilot.recentCourses', JSON.stringify(ids));
+}
+
 describe('HomePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
+    seedRecentCourses();
   });
 
   afterEach(() => {
@@ -278,9 +291,9 @@ describe('HomePage', () => {
       },
     });
 
-    expect(screen.getByText('Search Results')).toBeInTheDocument();
-    expect(screen.getByText('Train model')).toBeInTheDocument();
-    expect(screen.getByText('Task')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Search results' })).toBeInTheDocument();
+    expect(screen.getByText('Machine Learning')).toBeInTheDocument();
+    expect(screen.queryByText('Physics Engines')).not.toBeInTheDocument();
     expect(screen.getByText('1 of 2 courses shown')).toBeInTheDocument();
   });
 
@@ -288,8 +301,8 @@ describe('HomePage', () => {
    * Test case: Document search.
    *
    * Expected behavior:
-   * - related course remains visible
-   * - matching document is shown in search results
+   * - The matching course is the only one shown
+   * - Section title switches to "Search results"
    */
   it('filters dashboard results by document filename', async () => {
     mockHomePageApi();
@@ -306,9 +319,9 @@ describe('HomePage', () => {
       },
     });
 
-    expect(screen.getByText('Search Results')).toBeInTheDocument();
-    expect(screen.getByText('ML Notes.pdf')).toBeInTheDocument();
-    expect(screen.getByText('Document')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Search results' })).toBeInTheDocument();
+    expect(screen.getByText('Machine Learning')).toBeInTheDocument();
+    expect(screen.queryByText('Physics Engines')).not.toBeInTheDocument();
     expect(screen.getByText('1 of 2 courses shown')).toBeInTheDocument();
   });
 
@@ -316,8 +329,8 @@ describe('HomePage', () => {
    * Test case: Quiz search.
    *
    * Expected behavior:
-   * - related course remains visible
-   * - matching quiz is shown in search results
+   * - The course containing the matching quiz is shown
+   * - Section title switches to "Search results"
    */
   it('filters dashboard results by quiz title', async () => {
     mockHomePageApi();
@@ -334,9 +347,9 @@ describe('HomePage', () => {
       },
     });
 
-    expect(screen.getByText('Search Results')).toBeInTheDocument();
-    expect(screen.getByText('Neural Networks Quiz')).toBeInTheDocument();
-    expect(screen.getByText('Quiz')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Search results' })).toBeInTheDocument();
+    expect(screen.getByText('Machine Learning')).toBeInTheDocument();
+    expect(screen.queryByText('Physics Engines')).not.toBeInTheDocument();
     expect(screen.getByText('1 of 2 courses shown')).toBeInTheDocument();
   });
 
@@ -641,5 +654,66 @@ describe('HomePage', () => {
     expect(featuredCourseLink).toContainElement(screen.getByText('Train model'));
 
     expect(compactCourseLink).toHaveClass('dashboard-course-card');
+  });
+
+  /**
+   * Recent courses section tests (KAN-216)
+   *
+   * The dashboard now wraps the course display in a "Recent courses"
+   * section that surfaces the last visited courses (tracked in
+   * localStorage). The most recent visit is rendered as the featured
+   * card; up to two more appear in the compact grid.
+   */
+  describe('recent courses section', () => {
+    it('renders the "Recent courses" heading by default', async () => {
+      mockHomePageApi();
+      renderPage();
+
+      expect(await screen.findByRole('heading', { name: 'Recent courses' })).toBeInTheDocument();
+    });
+
+    it('orders cards by the localStorage visit history (most recent first)', async () => {
+      // Reverse the default seed: c2 is now the most recently visited
+      window.localStorage.setItem('studypilot.recentCourses', JSON.stringify(['c2', 'c1']));
+
+      mockHomePageApi();
+      renderPage();
+
+      const featuredCourseLink = await screen.findByRole('link', {
+        name: 'Physics Engines',
+      });
+      const compactCourseLink = screen.getByRole('link', { name: 'Machine Learning' });
+
+      expect(featuredCourseLink).toHaveClass('dashboard-featured-card');
+      expect(compactCourseLink).toHaveClass('dashboard-course-card');
+    });
+
+    it('skips courses that have been deleted between the visit and now', async () => {
+      // localStorage has a stale id alongside a real one
+      window.localStorage.setItem(
+        'studypilot.recentCourses',
+        JSON.stringify(['deleted-course', 'c1'])
+      );
+
+      mockHomePageApi();
+      renderPage();
+
+      // c1 should still render as the featured card; the deleted entry is silently dropped
+      const featured = await screen.findByRole('link', { name: 'Machine Learning' });
+      expect(featured).toHaveClass('dashboard-featured-card');
+    });
+
+    it('shows the empty state when no courses have been visited yet', async () => {
+      window.localStorage.clear();
+      mockHomePageApi();
+      renderPage();
+
+      // Wait for the dashboard to finish loading
+      await screen.findByRole('heading', { name: 'Recent courses' });
+
+      expect(screen.getByText('Open a course to see it here.')).toBeInTheDocument();
+      // No featured card rendered in the empty state
+      expect(screen.queryByText('Machine Learning')).not.toBeInTheDocument();
+    });
   });
 });

@@ -1,6 +1,7 @@
 import { prisma } from '../config/database';
 import { logger } from '../lib/logger';
 import type { PrismaClient } from '../generated/prisma/client';
+import { NotificationService } from './notification.service';
 
 export class ShareError extends Error {
   public type: 'CourseNotFound' | 'UserNotFound' | 'SelfShare' | 'AlreadyShared';
@@ -23,7 +24,13 @@ export interface CourseShareDto {
 }
 
 export class CourseShareService {
-  constructor(private readonly db: PrismaClient = prisma) {}
+  constructor(
+    private readonly db: PrismaClient = prisma,
+    private readonly notificationService: Pick<
+      NotificationService,
+      'createCourseSharedNotification'
+    > = new NotificationService(db)
+  ) {}
 
   /**
    * Share a course with another user
@@ -37,8 +44,14 @@ export class CourseShareService {
     // Verify the user is the course owner
     const course = await this.db.course.findFirst({
       where: { id: courseId, ownerId: sharedByUserId },
+      select: { id: true, name: true },
     });
     if (!course) throw new ShareError('CourseNotFound', 'Course not found');
+
+    const sharingUser = await this.db.user.findUnique({
+      where: { id: sharedByUserId },
+      select: { username: true },
+    });
 
     // Find the user to share with by username or email
     const userToShareWith = await this.db.user.findFirst({
@@ -63,13 +76,22 @@ export class CourseShareService {
       throw new ShareError('AlreadyShared', 'Course already shared with this user');
 
     try {
-      return await this.db.courseShare.create({
+      const share = await this.db.courseShare.create({
         data: {
           courseId,
           sharedWithUserId: userToShareWith.id,
           sharedByUserId,
         },
       });
+
+      await this.notificationService.createCourseSharedNotification({
+        recipientId: userToShareWith.id,
+        courseId,
+        courseName: course.name,
+        sharedByUsername: sharingUser?.username ?? 'A StudyPilot user',
+      });
+
+      return share;
     } catch (error: unknown) {
       logger.error({ error }, '[CourseShareService] Failed to share course');
       throw error;

@@ -15,6 +15,7 @@ import { api } from '../services/api';
 import { CourseDto, QuizDto, TaskDto } from '../types/dto';
 import { withOpacity } from '../utils/courseColors';
 import { formatDate } from '../utils/formatDate';
+import { trackVisitedCourse } from '../utils/recentCourses';
 import { useAuth } from '../context/useAuth';
 
 export default function CourseDetailPage() {
@@ -46,7 +47,17 @@ export default function CourseDetailPage() {
 
     api
       .get<CourseDto>(`/courses/${id}`)
-      .then(setCourse)
+      .then((loaded) => {
+        setCourse(loaded);
+        // Record the visit so the dashboard's "Recent courses" section
+        // can surface this course on the next render. Only mark on success
+        // and only when the backend actually returned a course — null
+        // responses mean access-denied/not-found and shouldn't pollute
+        // the recent list.
+        if (loaded?.id) {
+          trackVisitedCourse(loaded.id);
+        }
+      })
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : t('courses.detail.loadFailed'));
       })
