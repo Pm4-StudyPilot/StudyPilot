@@ -61,6 +61,9 @@ export default function DashboardLayout({
   const { t } = useTranslation();
   const username = user?.username ?? 'A';
   const nextThemeLabel = theme === 'dark' ? 'light' : 'dark';
+  const themeToggleLabel = t('common.theme.switchTo', {
+    mode: t(`common.theme.${nextThemeLabel}`),
+  });
   const effectivePlaceholder = searchPlaceholder ?? t('common.search.default');
   const hasAiInput = isAiInputVisible(location.pathname);
 
@@ -170,9 +173,9 @@ export default function DashboardLayout({
             <button
               type="button"
               className="dashboard-topbar__icon dashboard-topbar__theme-toggle"
-              aria-label={`Switch to ${nextThemeLabel} mode`}
+              aria-label={themeToggleLabel}
               aria-pressed={theme === 'light'}
-              title={`Switch to ${nextThemeLabel} mode`}
+              title={themeToggleLabel}
               onClick={toggleTheme}
             >
               <i className={`fa-solid ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`} />
