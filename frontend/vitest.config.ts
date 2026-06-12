@@ -11,6 +11,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test/setup.ts',
+    // Keep the per-test timeout comfortably above the 5s async query timeout
+    // configured in setup.ts so a slow CI render cannot trip the test timeout.
+    testTimeout: 15000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'json-summary'],
