@@ -13,10 +13,7 @@ name: Lighthouse Performance
 
 on:
   push:
-    # `fix/lighthouse-perf-port-binding` is temporary — it lets this workflow be
-    # verified green on the branch before merging. Remove it (back to [main])
-    # when merging.
-    branches: [main, fix/lighthouse-perf-port-binding]
+    branches: [main]
 
 env:
   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/studypilot_test
