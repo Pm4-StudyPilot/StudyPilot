@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/shared/layout/DashboardLayout';
@@ -17,6 +17,59 @@ import { withOpacity } from '../utils/courseColors';
 import { formatDate } from '../utils/formatDate';
 import { trackVisitedCourse } from '../utils/recentCourses';
 import { useAuth } from '../context/useAuth';
+import { buildTaskProgress, EMPTY_TASK_PROGRESS } from '../utils/taskProgress';
+
+function shouldSkipProgressAnimation() {
+  const prefersReducedMotion =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canAnimate =
+    typeof requestAnimationFrame === 'function' &&
+    typeof cancelAnimationFrame === 'function' &&
+    typeof performance !== 'undefined' &&
+    typeof performance.now === 'function';
+
+  return prefersReducedMotion || !canAnimate;
+}
+
+function useAnimatedPercentage(targetValue: number) {
+  const [animatedValue, setAnimatedValue] = useState(targetValue);
+  const animatedValueRef = useRef(targetValue);
+  const skipAnimation = shouldSkipProgressAnimation();
+
+  useEffect(() => {
+    if (skipAnimation) {
+      animatedValueRef.current = targetValue;
+      return;
+    }
+
+    const startValue = animatedValueRef.current;
+    const duration = 520;
+    const startTime = performance.now();
+
+    function animateFrame(now: number) {
+      const elapsed = Math.min((now - startTime) / duration, 1);
+      const easedProgress = 1 - Math.pow(1 - elapsed, 3);
+      const nextValue = startValue + (targetValue - startValue) * easedProgress;
+
+      animatedValueRef.current = nextValue;
+      setAnimatedValue(nextValue);
+
+      if (elapsed < 1) {
+        animationFrame = requestAnimationFrame(animateFrame);
+      }
+    }
+
+    let animationFrame = requestAnimationFrame(animateFrame);
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [skipAnimation, targetValue]);
+
+  return Math.round(skipAnimation ? targetValue : animatedValue);
+}
 
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -44,43 +97,74 @@ export default function CourseDetailPage() {
 
   useEffect(() => {
     if (!id) return;
+    let isCancelled = false;
 
     api
       .get<CourseDto>(`/courses/${id}`)
-      .then((loaded) => {
-        setCourse(loaded);
-        // Record the visit so the dashboard's "Recent courses" section
-        // can surface this course on the next render. Only mark on success
-        // and only when the backend actually returned a course — null
-        // responses mean access-denied/not-found and shouldn't pollute
-        // the recent list.
-        if (loaded?.id) {
-          trackVisitedCourse(loaded.id);
+      .then((loadedCourse) => {
+        if (!isCancelled) {
+          setCourse(loadedCourse);
+          if (loadedCourse?.id) {
+            trackVisitedCourse(loadedCourse.id);
+          }
         }
       })
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : t('courses.detail.loadFailed'));
+        if (!isCancelled) {
+          setError(err instanceof Error ? err.message : t('courses.detail.loadFailed'));
+        }
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!isCancelled) setLoading(false);
+      });
 
     api
       .get<TaskDto[]>(`/courses/${id}/tasks`)
-      .then(setTasks)
-      .catch((err: unknown) => {
-        setTasksError(err instanceof Error ? err.message : t('courses.detail.loadTasksFailed'));
+      .then((loadedTasks) => {
+        if (!isCancelled) setTasks(loadedTasks);
       })
-      .finally(() => setTasksLoading(false));
+      .catch((err: unknown) => {
+        if (!isCancelled) {
+          setTasksError(err instanceof Error ? err.message : t('courses.detail.loadTasksFailed'));
+        }
+      })
+      .finally(() => {
+        if (!isCancelled) setTasksLoading(false);
+      });
 
     api
       .get<QuizDto[]>(`/courses/${id}/quizzes`)
-      .then((quizzes) => setCourseFeedItems(quizzes.map((quiz) => ({ type: 'quiz', data: quiz }))))
-      .catch((err) => {
-        setCourseFeedError(
-          err instanceof Error ? err.message : t('courses.detail.loadMaterialsFailed')
-        );
+      .then((quizzes) => {
+        if (!isCancelled) {
+          setCourseFeedItems(quizzes.map((quiz) => ({ type: 'quiz', data: quiz })));
+        }
       })
-      .finally(() => setCourseFeedLoading(false));
+      .catch((err) => {
+        if (!isCancelled) {
+          setCourseFeedError(
+            err instanceof Error ? err.message : t('courses.detail.loadMaterialsFailed')
+          );
+        }
+      })
+      .finally(() => {
+        if (!isCancelled) setCourseFeedLoading(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
   }, [id, t]);
+
+  async function refreshCourse() {
+    if (!id) return;
+
+    try {
+      const refreshed = await api.get<CourseDto>(`/courses/${id}`);
+      setCourse(refreshed);
+    } catch {
+      // The task state has already been updated locally; the next load will reconcile course metadata.
+    }
+  }
 
   function handleUploadSuccess() {
     setDocumentsRefreshKey((prev) => prev + 1);
@@ -89,14 +173,17 @@ export default function CourseDetailPage() {
   function handleTaskCreated(task: TaskDto) {
     setTasks((prev) => [...prev, task]);
     setCreateTaskModalOpen(false);
+    void refreshCourse();
   }
 
   function handleTaskUpdated(task: TaskDto) {
     setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
+    void refreshCourse();
   }
 
   function handleTaskDeleted(taskId: string) {
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    void refreshCourse();
   }
 
   function handleTasksReordered(reordered: TaskDto[]) {
@@ -126,28 +213,25 @@ export default function CourseDetailPage() {
 
   const formattedDate = course ? formatDate(course.createdAt) : '';
 
-  const progress = course?.taskProgress ?? {
-    totalTasks: 0,
-    completedTasks: 0,
-    openTasks: 0,
-    inProgressTasks: 0,
-    completionPercentage: 0,
-  };
+  const progress =
+    tasksLoading && course?.taskProgress ? course.taskProgress : buildTaskProgress(tasks);
+  const safeProgress = course ? progress : EMPTY_TASK_PROGRESS;
+  const displayedCompletionPercentage = useAnimatedPercentage(safeProgress.completionPercentage);
 
   const courseMeta = useMemo(() => {
     if (!course) return [];
 
     const tasksLabel = t(
-      progress.totalTasks === 1 ? 'courses.detail.metaTasks' : 'courses.detail.metaTasks_other',
-      { count: progress.totalTasks }
+      safeProgress.totalTasks === 1 ? 'courses.detail.metaTasks' : 'courses.detail.metaTasks_other',
+      { count: safeProgress.totalTasks }
     );
 
     return [
       tasksLabel,
-      t('courses.detail.metaCompleted', { count: progress.completedTasks }),
+      t('courses.detail.metaCompleted', { count: safeProgress.completedTasks }),
       t('courses.detail.metaCreated', { date: formattedDate }),
     ];
-  }, [course, progress.totalTasks, progress.completedTasks, formattedDate, t]);
+  }, [course, safeProgress.totalTasks, safeProgress.completedTasks, formattedDate, t]);
 
   return (
     <DashboardLayout
@@ -231,7 +315,7 @@ export default function CourseDetailPage() {
                     size={148}
                   />
                   <div className="course-detail__progress-center">
-                    <strong>{progress.completionPercentage}%</strong>
+                    <strong>{displayedCompletionPercentage}%</strong>
                     <span>{t('courses.detail.percentLabel')}</span>
                   </div>
                 </div>
