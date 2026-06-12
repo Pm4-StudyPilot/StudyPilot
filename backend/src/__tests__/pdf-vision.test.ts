@@ -57,10 +57,16 @@ beforeEach(() => {
 // unit-tested. It requires *clearing* the env var, which bun's process.env does
 // not reliably propagate to later reads (works locally, no-ops on CI's bun),
 // making the test flaky. The remaining tests only ever set a truthy key.
+// Size-routing is decided purely from `buffer.length`, so the size tests use a
+// fake-length object instead of allocating tens of MB (which is slow and, on
+// CI's bun, did not reliably yield the expected `.length`).
+const fakeBufferOfLength = (length: number) => ({ length }) as unknown as Buffer;
+
 describe('transcribePdf', () => {
   it('throws for a PDF larger than the max (no upload attempted)', async () => {
-    const tooBig = Buffer.allocUnsafe(MAX_PDF_BYTES + 1);
-    await expect(transcribePdf(tooBig, 'huge.pdf')).rejects.toThrow('too large');
+    await expect(transcribePdf(fakeBufferOfLength(MAX_PDF_BYTES + 1), 'huge.pdf')).rejects.toThrow(
+      'too large'
+    );
     expect(mockUploadFile).not.toHaveBeenCalled();
     expect(mockGenerateContent).not.toHaveBeenCalled();
   });
@@ -74,8 +80,7 @@ describe('transcribePdf', () => {
   });
 
   it('routes large PDFs through the File API and references them by uri', async () => {
-    const big = Buffer.allocUnsafe(INLINE_PDF_BYTES + 1);
-    const text = await transcribePdf(big, 'big.pdf');
+    const text = await transcribePdf(fakeBufferOfLength(INLINE_PDF_BYTES + 1), 'big.pdf');
 
     expect(text).toBe('transcribed text');
     expect(mockUploadFile).toHaveBeenCalledTimes(1);
