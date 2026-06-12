@@ -80,7 +80,7 @@ const API_MESSAGE_KEYS: Record<string, string> = {
   'Failed to update task completion': 'common.apiMessages.updateTaskCompletionFailed',
   'Failed to upload document.': 'common.apiMessages.uploadDocumentFailed',
   'File is required.': 'common.apiMessages.fileRequired',
-  'File is too large. Maximum size is 10 MB.': 'common.apiMessages.fileTooLarge',
+  'File is too large. Maximum size is 50 MB.': 'common.apiMessages.fileTooLarge',
   'If this email is registered, you will receive a password reset link.':
     'common.apiMessages.passwordResetEmailSent',
   'Internal server error': 'common.apiMessages.internalServerError',

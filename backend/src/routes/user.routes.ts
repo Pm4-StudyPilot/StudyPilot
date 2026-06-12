@@ -93,4 +93,25 @@ userRouter.patch('/me/password', sensitiveLimiter, authenticate, (req, res) =>
   userController.changePassword(req, res)
 );
 
+/**
+ * @openapi
+ * /users/me:
+ *   delete:
+ *     tags:
+ *       - Users
+ *     summary: Delete the currently authenticated user's account
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Account deleted successfully.
+ *       401:
+ *         description: Unauthorized.
+ *       404:
+ *         description: User not found.
+ */
+userRouter.delete('/me', generalLimiter, authenticate, (req, res) =>
+  userController.deleteAccount(req, res)
+);
+
 export { userRouter };
